@@ -1,0 +1,22 @@
+[build-system] 
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "eafpy"
+version = "0.0.0"
+authors = [
+  { name="Fergus Rooney", email="fergus.rooney@outlook.com" }, {name = "Manuel López-Ibáñez", email = "manuel.lopez-ibanez@manchester.ac.uk"}
+]
+description = "Python wrapper for empiracal attainment function (EAF) C library"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/auto-optimization/eafpy"
+"Bug Tracker" = "https://github.com/auto-optimization/eafpy/issues"

@@ -1,6 +1,6 @@
 # eafpy
 # TODO basic Python setup
-- [ ] basic Python package structure (https://packaging.python.org/en/latest/tutorials/packaging-projects/)
+- [x] basic Python package structure (https://packaging.python.org/en/latest/tutorials/packaging-projects/)
 - [ ] setup for testing (https://mathspp.com/blog/how-to-create-a-python-package-in-2022)
 - [ ] github actions that build the package run the testsuite (https://mathspp.com/blog/how-to-create-a-python-package-in-2022)
   - [ ] for Linux
