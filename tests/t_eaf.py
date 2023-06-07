@@ -17,7 +17,7 @@ def test_add_one_six():
     assert eaf.add_one(6) == 7
 
 
-def test_black(x):
+def test_black():
 
     f = {"a": 43, 'c':
                    94
