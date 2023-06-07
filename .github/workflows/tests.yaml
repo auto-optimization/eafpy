@@ -37,8 +37,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: psf/black@stable
-      with:
-        options: "--verbose"
+        with: 
+          options: "--verbose"
+
 
 
   eafpy-build-package:
