@@ -32,12 +32,17 @@ jobs:
       - name: Run tox
         run: tox
 
+  eafpy-lint-black:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: psf/black@stable
+
   eafpy-build-package:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.10"]
-
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
@@ -61,6 +66,9 @@ jobs:
         with:
           name: distributions
           path: dist/
+
+    
+
                 
         
 
