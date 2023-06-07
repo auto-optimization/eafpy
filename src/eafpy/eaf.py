@@ -6,6 +6,4 @@ def add_one(number):
 
 
 def test_black(x):
-    return {"a": 43, 
-            "c": 94,     
-                  'd': 32}
+    return {"a": 43, "c": 94, "d": 32, "f": 41}

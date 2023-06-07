@@ -18,8 +18,5 @@ def test_add_one_six():
 
 
 def test_black():
-
-    f = {"a": 43, 'c':
-                   94
-             , "d": 122}
-    assert True 
+    f = {"a": 43, "c": 94, "d": 122, "fsd": "ddss"}
+    assert True
