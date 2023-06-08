@@ -1,3 +1,5 @@
+[![Package Build Status](https://github.com/auto-optimization/eafpy/actions/workflows/tests.yaml/badge.svg)](https://github.com/auto-optimization/eafpy/actions/workflows/tests.yaml) [![Test Status](https://github.com/auto-optimization/eafpy/actions/workflows/tests.yaml/badge.svg)](https://github.com/auto-optimization/eafpy/actions/workflows/tests.yaml)
+
 # eafpy
 # TODO basic Python setup
 - [x] basic Python package structure (https://packaging.python.org/en/latest/tutorials/packaging-projects/)
@@ -35,7 +37,3 @@ print(x)
   - [ ] Setup github actions / package build for Windows, macOS and Linux.
   - [ ] Once the above is working, we will add more C functions.
 
-
-[![Test Status](https://github.com/auto-optimization/eafpy/actions/workflows/tests.yaml/badge.svg)](https://github.com/auto-optimization/eafpy/actions/workflows/tests.yaml)
-
-[![Package Build Status](https://github.com/auto-optimization/eafpy/actions/workflows/tests.yaml/badge.svg)](https://github.com/auto-optimization/eafpy/actions/workflows/tests.yaml)
