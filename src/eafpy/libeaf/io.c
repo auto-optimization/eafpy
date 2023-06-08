@@ -72,7 +72,6 @@ static inline int skip_comment_line (FILE * instream)
     return fscanf_newline(instream);
 }
 
-
 #define objective_t int
 #define objective_t_scanf_format "%d"
 #define read_objective_t_data read_int_data
@@ -88,6 +87,7 @@ static inline int skip_comment_line (FILE * instream)
 #undef objective_t
 #undef objective_t_scanf_format
 #undef read_objective_t_data
+
 
 #ifndef R_PACKAGE
 extern char *program_invocation_short_name;
@@ -164,6 +164,10 @@ write_sets (FILE *outfile, const double *data, int ncols,
         fprintf (outfile, "\n");
     }
     return 0;
+}
+
+void test_print(int to_print){
+    printf("Printing %d",to_print);
 }
 
 int 

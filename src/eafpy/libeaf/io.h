@@ -34,6 +34,8 @@ read_double_data (const char *filename, double **data_p,
 void vector_fprintf (FILE *stream, const double * vector, int size);
 void vector_printf (const double *vector, int size);
 
+void test_print(int to_print);
+
 int write_sets (FILE *outfile, const double *data, int ncols, 
                 const int *cumsizes, int nruns);
 int write_sets_filtered (FILE *outfile, const double *data, int ncols, 
@@ -48,7 +50,7 @@ read_minmax (const char *str, int *nobj)
     
     if (str == NULL) { /* Default all minimised.  */
         assert (*nobj > 0);
-        minmax = malloc (sizeof(signed char) * *nobj);
+        minmax = (signed char*)malloc (sizeof(signed char) * *nobj);
         for (i = 0; i < *nobj; i++)
             minmax[i] = -1;
         return minmax;
@@ -56,7 +58,7 @@ read_minmax (const char *str, int *nobj)
 
     int len = strlen (str);
     bool all_ignored = true;
-    minmax = malloc (sizeof(signed char) * MAX(len, *nobj));
+    minmax = (signed char*)malloc (sizeof(signed char) * MAX(len, *nobj));
     for (i = 0; i < len; i++) {
         switch (str[i])
         {
@@ -100,14 +102,14 @@ read_bitvector (const char *str, int *nobj)
 
     if (str == NULL) { /* Default all false.  */
         assert (*nobj > 0);
-        vec = malloc (sizeof(bool) * *nobj);
+        vec = (bool*)malloc (sizeof(bool) * *nobj);
         for (i = 0; i < *nobj; i++)
             vec[i] = false;
         return vec;
     }
 
     int len = strlen (str);
-    vec = malloc (sizeof(bool) * len);
+    vec = (bool*)malloc (sizeof(bool) * len);
     for (i = 0; i < len; i++) {
         switch (str[i]) {
           case '1':
