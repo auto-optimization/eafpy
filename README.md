@@ -1,6 +1,6 @@
+# eafpy
 [![Package Build Status](https://github.com/auto-optimization/eafpy/actions/workflows/tests.yaml/badge.svg)](https://github.com/auto-optimization/eafpy/actions/workflows/tests.yaml) [![Test Status](https://github.com/auto-optimization/eafpy/actions/workflows/tests.yaml/badge.svg)](https://github.com/auto-optimization/eafpy/actions/workflows/tests.yaml)
 
-# eafpy
 # TODO basic Python setup
 - [x] basic Python package structure (https://packaging.python.org/en/latest/tutorials/packaging-projects/)
 - [x] setup for testing (https://mathspp.com/blog/how-to-create-a-python-package-in-2022)
