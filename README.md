@@ -10,6 +10,7 @@
   - [x] for macOS
 - [ ] setup for C extensions (see below)
 - [ ] Other nice things to have (but lower priority):
+  - [ ] Coverage: https://github.com/codecov/example-python
   - [ ] Documentation: (short intro: https://docs.python-guide.org/writing/documentation/) Longer: https://py-pkgs.org/06-documentation.html
   - [ ] Tutorial showing how to use the package: add it to the documentation or as a jupyter notebook.
 
