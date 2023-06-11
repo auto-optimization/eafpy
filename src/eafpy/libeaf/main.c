@@ -18,5 +18,20 @@ int main()
         printf("%d ", cumsizes[i]);
     }
     printf("}\n");
+    for (int j = 0; j < num_obj; j++) {
+        printf("obj%-12d ", j+1);
+    }
+    printf("set\n");
+    int set = 1;
+    int i = 0;
+    while (i < cumsizes[num_sets - 1]) {
+        for (int j = 0; j < num_obj; j++) {
+            printf("%-15g ", return_data[i * num_obj + j]);
+        }
+        printf("%d\n", set);
+        i++;
+        if (i == cumsizes[set - 1])
+            set++;
+    }
     return 0;
 }
