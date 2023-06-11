@@ -1,7 +1,7 @@
 #TODO
-* [ ] Update TODO with new plans + README todo
+* [x] Update TODO with new plans + README todo
 
-1.  [ ] Add Linter to the github
+1.  [x] Add Linter to the github
 
 2. [ ] Compile C files
 

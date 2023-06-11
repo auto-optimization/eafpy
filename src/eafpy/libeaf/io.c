@@ -190,3 +190,9 @@ write_sets_filtered (FILE *outfile, const double *data, int ncols,
 }
 #endif // R_PACKAGE
 
+#ifdef PY_PACKAGE
+    int read_datasets(const char *filename, double **returndata){
+         read_double_data(filename, returndata , NULL, NULL, NULL );
+         return 0;
+    }
+#endif
