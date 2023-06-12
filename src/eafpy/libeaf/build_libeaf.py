@@ -7,8 +7,8 @@ ffibuilder = FFI()
 ffibuilder.cdef(
     """
     void test_print(int to_print);
-    int read_datasets(const char *filename, double **returndata);
-    
+    int read_double_data (const char *filename, double **data_p, 
+                  int *nobjs_p, int **cumsizes_p, int *nsets_p);
 """
 )
 
@@ -17,7 +17,7 @@ ffibuilder.cdef(
 # to make the declarated functions, types and globals available,
 # so it is often just the "#include".
 ffibuilder.set_source(
-    "ex_cffi",
+    "libeaf",
     """
      #include "io.h"   // the C header of the library
 """,
