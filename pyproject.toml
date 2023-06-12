@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "pybind11~=2.6.1"]
+requires = ["setuptools>=42", "numpy"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -20,3 +20,13 @@ classifiers = [
 [project.urls]
 "Homepage" = "https://github.com/auto-optimization/eafpy"
 "Bug Tracker" = "https://github.com/auto-optimization/eafpy/issues"
+
+# pyproject.toml
+[tool.pytest.ini_options]
+minversion = "7.0"
+pythonpath = [
+  "src"
+]
+testpaths = [
+    "tests"
+]

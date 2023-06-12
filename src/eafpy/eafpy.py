@@ -1,16 +1,40 @@
-import libeaf
+import eafpy.libeaf
 import numpy as np
-from libeaf import lib, ffi
+from eafpy.libeaf.libeaf import lib, ffi
+import os
 
+"""
+Libeaf contains wrapper functions for the EAF C library. 
+The CFFI library is used to create C binding
 """
 
 
-"""
+def read_datasets(filename):
+    """
+    read_input_data reads an input `.dat` dataset and returns a 2d numpy array.
+    The first n-1 columns contain the numerical data for each of the objectives
+    The last column contains an identifier for which set the data is relevant to.
 
+    For example:
+    Objective 1  |  Objective 2 | Set number
+    [ 8.7475454  |  1.71575862  | 1.        ]
+    [ 0.58799475 |  0.73891181  | 1.        ]
+    [ 8.58848772 |  3.69781313  | 2.        ]
+    [ 1.5964888  |  5.98825094  | 2.        ]
+    """
 
-def read_input_data(filename):
+    # THis is not working -> It is pointing to the eafpy script,
+    # Not the script thag called it originally
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    print(script_dir)
+    file_path = os.path.join(script_dir, filename)
+
+    print(file_path)
+
+    assert os.path.isfile(file_path), f"{file_path} was not found"
+
     # Encode filename to a binary string
-    _filename = filename.encode("utf-8")
+    _filename = file_path.encode("utf-8")
     # Create return pointers for function
     returndata_p = ffi.new("double **", ffi.NULL)
     num_obj_p = ffi.new("int *", 0)
@@ -40,4 +64,4 @@ def read_input_data(filename):
     return return_data
 
 
-read_input_data("input1.dat")
+# datasets = read_datasets("libeaf/input1.dat")

@@ -26,11 +26,6 @@ read_double_data (const char *filename, double **data_p,
 
 void test_print(int to_print);
 
-#define PY_PACKAGE
-#ifdef PY_PACKAGE
-    int read_datasets(const char *filename, double **returndata);
-#endif
-
 
 
 
