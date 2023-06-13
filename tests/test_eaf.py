@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 import eafpy
-from eafpy.eafpy import read_datasets
+from eafpy import eaf
 
 
 def test_libeaf_read_datasets():

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=42", "numpy"]
+requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -11,6 +11,10 @@ authors = [
 description = "Python wrapper for empiracal attainment function (EAF) C library"
 readme = "README.md"
 requires-python = ">=3.7"
+dependencies = [
+    "numpy",
+     "cffi",
+]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -20,6 +24,14 @@ classifiers = [
 [project.urls]
 "Homepage" = "https://github.com/auto-optimization/eafpy"
 "Bug Tracker" = "https://github.com/auto-optimization/eafpy/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+
 
 # pyproject.toml
 [tool.pytest.ini_options]
