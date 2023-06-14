@@ -39,10 +39,11 @@ jobs:
       - uses: psf/black@stable
 
   eafpy-build-package:
-    runs-on: ubuntu-latest
+    runs-on:  ${{ matrix.os }}
     strategy:
       matrix:
         python-version: ["3.10"]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
