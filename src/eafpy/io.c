@@ -90,7 +90,16 @@ static inline int skip_comment_line (FILE * instream)
 
 
 #ifndef R_PACKAGE
+
+/* program_invocation_short_name is not defined on windows systems so is causing
+   Compilation issues. I changed it out for a predefined message
+*/
+#ifdef __linux__
 extern char *program_invocation_short_name;
+#else 
+const char program_invocation_short_name[] = "EAF C library related exe";
+#endif
+
 #include <stdarg.h>
 void fatal_error(const char *format,...)
 {
@@ -189,10 +198,3 @@ write_sets_filtered (FILE *outfile, const double *data, int ncols,
     return 0;
 }
 #endif // R_PACKAGE
-
-#ifdef PY_PACKAGE
-    int read_datasets(const char *filename, double **returndata){
-         read_double_data(filename, returndata , NULL, NULL, NULL );
-         return 0;
-    }
-#endif
