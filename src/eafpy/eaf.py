@@ -1,7 +1,8 @@
 import numpy as np
 import os
 
-print("Eaf.py root directories: " + os.listdir())
+print("Eaf.py root directories: ")
+print(os.listdir())
 from eafpy.c_bindings import lib, ffi
 
 
