@@ -1,6 +1,9 @@
 import numpy as np
-from eafpy.c_bindings import lib, ffi
 import os
+
+print("Eaf.py root directories: " + os.listdir())
+from eafpy.c_bindings import lib, ffi
+
 
 """
 Libeaf contains wrapper functions for the EAF C library. 
