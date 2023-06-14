@@ -1,6 +1,5 @@
 import numpy as np
-from . import c_bindings
-from c_bindings import lib, ffi
+from eafpy.c_bindings import lib, ffi
 import os
 
 """

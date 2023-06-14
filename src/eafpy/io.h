@@ -26,9 +26,6 @@ read_double_data (const char *filename, double **data_p,
 
 void test_print(int to_print);
 
-
-
-
 #ifndef R_PACKAGE
 
 #include <stdlib.h>

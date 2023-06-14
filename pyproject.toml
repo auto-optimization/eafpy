@@ -31,8 +31,6 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
-
-
 # pyproject.toml
 [tool.pytest.ini_options]
 minversion = "7.0"
