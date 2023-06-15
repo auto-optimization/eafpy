@@ -1,8 +1,6 @@
 import numpy as np
 import os
 
-print("Eaf.py root directories: ")
-print(os.listdir())
 from eafpy.c_bindings import lib, ffi
 
 
@@ -26,18 +24,10 @@ def read_datasets(filename):
     [ 1.5964888  |  5.98825094  | 2.        ]
     """
 
-    # THis is not working -> It is pointing to the eafpy script,
-    # Not the    script thag called it originally
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    print(script_dir)
-    file_path = os.path.join(script_dir, filename)
-
-    print(file_path)
-
-    assert os.path.isfile(file_path), f"{file_path} was not found"
+    assert os.path.isfile(filename), f"file {filename} was not found"
 
     # Encode filename to a binary string
-    _filename = file_path.encode("utf-8")
+    _filename = filename.encode("utf-8")
     # Create return pointers for function
     returndata_p = ffi.new("double **", ffi.NULL)
     num_obj_p = ffi.new("int *", 0)
