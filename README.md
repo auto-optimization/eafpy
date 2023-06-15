@@ -13,6 +13,7 @@
   - [ ] Coverage: https://github.com/codecov/example-python
   - [ ] Documentation: (short intro: https://docs.python-guide.org/writing/documentation/) Longer: https://py-pkgs.org/06-documentation.html
   - [ ] Tutorial showing how to use the package: add it to the documentation or as a jupyter notebook.
+  - [ ] Source of good ideas: https://github.com/anyoptimization/pymoo/tree/main
 
 # TODO Setup for C extensions
 

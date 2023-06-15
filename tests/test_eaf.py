@@ -3,8 +3,8 @@ import os
 import numpy as np
 import pytest
 
-import eafpy
-from eafpy import eaf
+# ROONEY: We should rename the package to just eaf
+import eafpy as eaf
 
 
 def test_read_datasets_data():
