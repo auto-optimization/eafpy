@@ -101,18 +101,18 @@ read_datasets_(const char * filename, double **data_p, int *nobjs_p, int *nrows_
     }
     int nrows = cumsizes[num_sets - 1];
     double * newdata = malloc(sizeof(double) * nrows * nobjs);
-    double set = 1;
+    int set = 1;
     int i = 0;
     while (i < nrows) {
         for (int j = 0; j < nobjs; j++) {
             newdata[i * (nobjs+1) + j] = data[i * nobjs + j];
         }
-        newdata[i * (nobjs+1) + nobjs] = set;
+        newdata[i * (nobjs+1) + nobjs] = (double) set;
         i++;
         if (i == cumsizes[set - 1])
             set++;
     }
-    free(*cumsizes);
+    free(cumsizes);
     free(data);
     *data_p = newdata;
     *nobjs_p = nobjs;
