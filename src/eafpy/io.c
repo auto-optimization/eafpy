@@ -88,6 +88,41 @@ static inline int skip_comment_line (FILE * instream)
 #undef objective_t_scanf_format
 #undef read_objective_t_data
 
+int
+read_datasets_(const char * filename, double **data_p, int *nobjs_p, int *nrows_p)
+{
+    double * data = NULL;
+    int *cumsizes = NULL;
+    int num_sets=0;
+    int nobjs = 0;
+    int error = read_double_data(filename, &data, &nobjs, &cumsizes, &num_sets);
+    if (error) {
+        return error;
+    }
+    int nrows = cumsizes[num_sets - 1];
+    double * newdata = malloc(sizeof(double) * nrows * nobjs);
+    double set = 1;
+    int i = 0;
+    while (i < nrows) {
+        for (int j = 0; j < nobjs; j++) {
+            newdata[i * (nobjs+1) + j] = data[i * nobjs + j];
+        }
+        newdata[i * (nobjs+1) + nobjs] = set;
+        i++;
+        if (i == cumsizes[set - 1])
+            set++;
+    }
+    free(*cumsizes);
+    free(data);
+    *data_p = newdata;
+    *nobjs_p = nobjs;
+    *nrows_p = nrows;
+    return 0;
+}
+int
+read_double_data (const char *filename, double **data_p, 
+                  int *nobjs_p, int **cumsizes_p, int *nsets_p);
+
 
 #ifndef R_PACKAGE
 
@@ -175,7 +210,7 @@ write_sets (FILE *outfile, const double *data, int ncols,
     return 0;
 }
 
-void test_print(int to_print){
+void test_print(int to_print){ /* ROONEY: Do you need this? */
     printf("Printing %d",to_print);
 }
 

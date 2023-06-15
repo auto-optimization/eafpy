@@ -24,8 +24,10 @@ def read_datasets(filename):
     [ 1.5964888  |  5.98825094  | 2.        ]
     """
 
-    assert os.path.isfile(filename), f"file {filename} was not found"
-
+    # ROONEY: Instead of assert you should raise the appropriate exception: https://docs.python.org/3/library/exceptions.html In this case FileNotFoundError.
+    # ROONEY: Did you add a test for this error?
+    assert os.path.isfile(filename), f"file {filename} not found"
+    
     # Encode filename to a binary string
     _filename = filename.encode("utf-8")
     # Create return pointers for function
@@ -33,6 +35,7 @@ def read_datasets(filename):
     num_obj_p = ffi.new("int *", 0)
     cumulative_size_p = ffi.new("int **", ffi.NULL)
     num_sets_p = ffi.new("int *", 0)
+    # ROONEY: You need to check the error code and if it is != 0, raise an error. Add a test for this.
     err_code = lib.read_double_data(
         _filename, returndata_p, num_obj_p, cumulative_size_p, num_sets_p
     )
@@ -45,6 +48,11 @@ def read_datasets(filename):
     # Split 1d array into 2d array depending on number of objectives
     dataset_np_2d = dataset_np_1d.reshape(-1, num_obj_p[0])
 
+    ## ROONEY: Do you really need to do all this here? It seems simpler to do
+    ## it directly in C and have a C function that returns the correct data,
+    ## nobjs and nrows, which is the only info that you actually need. I added
+    ## a C function read_datasets_.
+    
     # I could not get the ffi buffer to work for cumsize so I copy manually
     np_cumulative_size = np.empty(num_sets_p[0])
     for i in range(num_sets_p[0]):
