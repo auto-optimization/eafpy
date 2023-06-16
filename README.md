@@ -8,7 +8,7 @@
   - [x] for Linux
   - [x] for Windows
   - [x] for macOS
-- [ ] setup for C extensions (see below)
+- [x] setup for C extensions (see below)
 - [ ] Other nice things to have (but lower priority):
   - [ ] Coverage: https://github.com/codecov/example-python
   - [ ] Documentation: (short intro: https://docs.python-guide.org/writing/documentation/) Longer: https://py-pkgs.org/06-documentation.html
@@ -32,11 +32,11 @@ x = eaf.read_datasets("input1.data")
 # 2.1270029 2.4311417  10
 print(x)
 ```
-  - [ ] The function `read_datasets` will call the C function `read_double_data()` either directly or via another C function (see next point) and setup everything that it needs to return a NumPy matrix.
-  - [ ] You may need to add additional C code to interface between Python and C. This is OK (see how I did it in R: https://github.com/MLopez-Ibanez/eaf/blob/5be4108dc02c10f48ea5ebedbeaaccf504531791/src/Reaf.c#L329)
-  - [ ] Investigate options available (ctype, CFFI or something else): What are the positives and negatives of each option?
-  - [ ] Add a few tests to make sure it is working as expected.
-  - [ ] Setup github actions / package build for Windows, macOS and Linux.
+  - [x] The function `read_datasets` will call the C function `read_double_data()` either directly or via another C function (see next point) and setup everything that it needs to return a NumPy matrix.
+  - [x] You may need to add additional C code to interface between Python and C. This is OK (see how I did it in R: https://github.com/MLopez-Ibanez/eaf/blob/5be4108dc02c10f48ea5ebedbeaaccf504531791/src/Reaf.c#L329)
+  - [x] Investigate options available (ctype, CFFI or something else): What are the positives and negatives of each option?
+  - [x] Add a few tests to make sure it is working as expected.
+  - [x] Setup github actions / package build for Windows, macOS and Linux.
   - [ ] Once the above is working, we will add more C functions.
 
 # Developer instructions
@@ -110,9 +110,8 @@ python3 -m build
 ```
 You can now install the package. Use this command:
 `pip install -e .`
-The `-e` argument means that the installation will automatically update every time you build it again, so you don't have to type this command again.
-
-You can test the installation worked by running the tests 
+It is reccomended to reinstall  the package every time you want to test an update
+You can now test the installation worked by running the tests 
 
 __Run the tests__
 If you have installed the package, you can run the tests by simply going to package root and executing:
@@ -125,3 +124,14 @@ cd to repo root
 tox
 ```
 Some of these tests may fail because Tox is setup to test several different python version that you might not have installed. `tox.ini` is used to configure tox.
+
+__Developing C extension without full package build__
+You can test the c extension without doing the entire build, this can speed up developing the c extension. (You need to have the development requirements installed)
+```
+cd src/eafpy/
+# Compile the C extension with CFFI
+py build_c_eaf.py
+# Now you can open an interpretor and import the package c_bindings
+
+
+```
