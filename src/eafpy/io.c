@@ -89,7 +89,7 @@ static inline int skip_comment_line (FILE * instream)
 #undef read_objective_t_data
 
 int
-read_datasets_(const char * filename, double **data_p, int *nobjs_p, int *nrows_p)
+read_datasets_(const char * filename, double **data_p, int *nobjs_p, int *nrows_p, int * datasize_p)
 {
     double * data = NULL;
     int *cumsizes = NULL;
@@ -100,7 +100,9 @@ read_datasets_(const char * filename, double **data_p, int *nobjs_p, int *nrows_
         return error;
     }
     int nrows = cumsizes[num_sets - 1];
-    double * newdata = malloc(sizeof(double) * nrows * nobjs);
+    int datasize = (nobjs+1)*nrows*sizeof(double);
+
+    double * newdata = malloc(datasize);
     int set = 1;
     int i = 0;
     while (i < nrows) {
@@ -112,11 +114,13 @@ read_datasets_(const char * filename, double **data_p, int *nobjs_p, int *nrows_
         if (i == cumsizes[set - 1])
             set++;
     }
-    free(cumsizes);
     free(data);
+    free(cumsizes);
+
     *data_p = newdata;
     *nobjs_p = nobjs;
     *nrows_p = nrows;
+    *datasize_p = datasize;
     return 0;
 }
 int

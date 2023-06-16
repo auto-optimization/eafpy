@@ -25,7 +25,7 @@ read_double_data (const char *filename, double **data_p,
                   int *nobjs_p, int **cumsizes_p, int *nsets_p);
 
 int
-read_datasets_(const char * filename, double **data_p, int *nobjs_p, int *nrows_p);
+read_datasets_(const char * filename, double **data_p, int *nobjs_p, int *nrows_p, int * datasize_p);
 
 #ifndef R_PACKAGE
 

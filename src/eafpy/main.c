@@ -4,9 +4,9 @@
 */
 #include "io.h"
 
-int main()
-{
-    const char * filename ="input1.dat";
+
+void test_read_double_data(){
+    const char * filename ="uniform-250-10-3d.txt";
     double * return_data = NULL;
     int num_obj = 0;
     int *cumsizes = NULL;
@@ -33,5 +33,39 @@ int main()
         if (i == cumsizes[set - 1])
             set++;
     }
+}
+
+void print_read_datsets(const char * filename){
+    // const char * filename ="uniform-250-10-3d.txt";
+    // const char * filename ="test1.dat";
+    double * return_data = NULL;
+    int num_obj = 0;
+    int num_rows = 0;
+    int datasize = 0;
+
+    int x = read_datasets_(filename, &return_data, &num_obj, &num_rows, &datasize);
+    if(x != 0){
+        printf("error detected %d", x);
+    }
+    // for (int i = 0; i< (num_obj+1)*num_rows; i++ ){
+    //     printf("%-15g ",return_data[i]);
+    // }
+}
+
+int main()
+{   
+    print_read_datsets("read_datasets.dat");
+    printf("Read t1 \n\n\n");
+    print_read_datsets("spherical-250-10-3d.txt");
+    printf("Read t2 \n\n\n");
+    print_read_datsets("uniform-250-10-3d.txt");
+    printf("Read t3 \n\n\n");
+    print_read_datsets("wrots_l10w100_dat");
+    printf("Read t4 \n\n\n");
+
+    print_read_datsets("wrots_l10w100_dat");
+    printf("Read t5 \n\n\n");
+
+
     return 0;
 }
