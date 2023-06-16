@@ -210,10 +210,6 @@ write_sets (FILE *outfile, const double *data, int ncols,
     return 0;
 }
 
-void test_print(int to_print){ /* ROONEY: Do you need this? */
-    printf("Printing %d",to_print);
-}
-
 int 
 write_sets_filtered (FILE *outfile, const double *data, int ncols, 
                      const int *cumsizes, int nruns, const bool *write_p)

@@ -1,2 +1,11 @@
 black >= 23
+setuptools >= 55
+pytest >=7
+pytest-cov >=4
 pre-commit >= 3.3.2
+cffi >= 1
+numpy >= 1
+sphinx
+tox >= 4.5
+virtualenv >= 20
+build

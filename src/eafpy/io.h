@@ -27,8 +27,6 @@ read_double_data (const char *filename, double **data_p,
 int
 read_datasets_(const char * filename, double **data_p, int *nobjs_p, int *nrows_p);
 
-void test_print(int to_print); /* ROONEY: Do you need this? */
-
 #ifndef R_PACKAGE
 
 #include <stdlib.h>

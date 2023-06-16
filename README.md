@@ -39,3 +39,89 @@ print(x)
   - [ ] Setup github actions / package build for Windows, macOS and Linux.
   - [ ] Once the above is working, we will add more C functions.
 
+# Developer instructions
+#### Quick start
+
+```
+pip install -r requirements_dev.txt
+pre-commit install
+py -m build
+pip install -e .
+# Run tests
+py -m pytest-cov
+```
+It's not strictly neccesary to use a virtualenv for the dev requirements (setuptools makes its own virtualenv when building) but it is generally reccomend. I have skipped it for brevity. 
+#### Full instructions
+Pip package manager is required. Ensure and upgrade pip:
+`python3 -m ensurepip --upgrade`
+
+__Install required development packages__
+
+It is reccomended to create a new virtual environment for development. You can do this using virtual env:
+
+`pip install virtualenv`
+
+Create and activate a new virtual environment (You can do this in the repo root. It will create a .gitignore):
+
+```
+virtualenv -p python3 eaf_env
+cd eaf_env/scripts 
+activate
+```
+Now you can install the development packages in this fresh environment. You will need to make sure you have the environment activated every time you develop. 
+```
+# cd to the repo root
+pip install -r requirements_dev.txt
+```
+
+__Install the pre-commit hooks for the repo__
+
+Pre-commit is a package that should now be installed, it adds some hooks that will execute when you make a new git commit, such as formatting the code with `black`.The `.pre-commmit-config.yaml` configures which hooks are used. You need to install these hooks locally using:
+
+`pre-commit install`
+
+__Make sure you have a reccomended C compiler__
+
+This package uses the CFFI package to compile a C extension module, so if you want to build the project you need have one of the reccomended C compilers installed.
+1. Windows: [MSVC - install Visual studio](https://visualstudio.microsoft.com/vs/features/cplusplus/)
+2. Linux - get gcc 
+    ```
+    sudo apt update
+    sudo apt install build-essential
+3. MacOS - get gcc
+   ```
+   brew update
+   brew upgrade
+   brew install gcc
+   ```
+
+If you have more trouble with the compilation you can visit [this CFFI doc](https://cffi.readthedocs.io/en/latest/installation.html#:~:text=Requirements%3A,to%20compile%20C%20extension%20modules.)
+
+__Build the project__
+In order to test the package you need to build the project and install it. 
+```
+# CD to the repo root
+
+# For windows
+py -m build
+
+# For Linux/ Macos
+python3 -m build
+```
+You can now install the package. Use this command:
+`pip install -e .`
+The `-e` argument means that the installation will automatically update every time you build it again, so you don't have to type this command again.
+
+You can test the installation worked by running the tests 
+
+__Run the tests__
+If you have installed the package, you can run the tests by simply going to package root and executing:
+`pytest --cov`
+(Note that `pytest` will not work if the package is not installed, even if the C files are compiled. This is because of the way the imports work)
+
+You can run the test suite that is executed in the github actions by running tox
+```
+cd to repo root
+tox
+```
+Some of these tests may fail because Tox is setup to test several different python version that you might not have installed. `tox.ini` is used to configure tox.

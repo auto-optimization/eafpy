@@ -27,7 +27,7 @@ def read_datasets(filename):
     # ROONEY: Instead of assert you should raise the appropriate exception: https://docs.python.org/3/library/exceptions.html In this case FileNotFoundError.
     # ROONEY: Did you add a test for this error?
     assert os.path.isfile(filename), f"file {filename} not found"
-    
+
     # Encode filename to a binary string
     _filename = filename.encode("utf-8")
     # Create return pointers for function
@@ -52,7 +52,7 @@ def read_datasets(filename):
     ## it directly in C and have a C function that returns the correct data,
     ## nobjs and nrows, which is the only info that you actually need. I added
     ## a C function read_datasets_.
-    
+
     # I could not get the ffi buffer to work for cumsize so I copy manually
     np_cumulative_size = np.empty(num_sets_p[0])
     for i in range(num_sets_p[0]):

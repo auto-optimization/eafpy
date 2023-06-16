@@ -28,4 +28,4 @@ def test_read_datasets_badname():
             incorrect_filename
         )  # Call the function that contains the assertion
 
-    assert str(excinfo.value) == f"file {incorrect_filename} was not found"
+    assert str(excinfo.value) == f"file {incorrect_filename} not found"
