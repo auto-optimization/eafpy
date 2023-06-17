@@ -11,8 +11,10 @@
   - [x] for Windows
   - [x] for macOS
 - [x] setup for C extensions (see below)
+- [ ] Rename the package to just `eaf`
+- [ ] Move all `*.c` and `*.h` files to `libeaf/` so that the C code is separated from the Python code.
 - [ ] Other nice things to have (but lower priority):
-  - [ ] Coverage: https://github.com/codecov/example-python
+  - [ ] Coverage: https://github.com/codecov/example-python (see also: https://mathspp.com/blog/how-to-create-a-python-package-in-2022#running-coverage-py-with-tox)
   - [ ] Documentation: (short intro: https://docs.python-guide.org/writing/documentation/) Longer: https://py-pkgs.org/06-documentation.html
   - [ ] Tutorial showing how to use the package: add it to the documentation or as a jupyter notebook.
   - [ ] Source of good ideas: https://github.com/anyoptimization/pymoo/tree/main
@@ -23,7 +25,7 @@ We want to do the following in Python:
 
 ```python
 import eaf
-x = eaf.read_datasets("input1.data")
+x = eaf.read_datasets("input1.dat")
 # x is now a Numpy matrix with 3 columns and 100 rows. The first three rows are:
 # 8.0755965 2.4070255   1
 # 8.6609445 3.6405014   1
@@ -40,8 +42,28 @@ print(x)
   - [x] Investigate options available (ctype, CFFI or something else): What are the positives and negatives of each option?
   - [x] Add a few tests to make sure it is working as expected.
   - [x] Setup github actions / package build for Windows, macOS and Linux.
+  - [ ] Next function is `fpli_hv` in `hv.h`
+  
+      ```python
+       import eaf
+       x = eaf.read_datasets("tests/test_data/input1.dat")
+       # x is now a Numpy matrix with 3 columns and 100 rows. The first three rows are:
+       # 8.0755965 2.4070255   1
+       # 8.6609445 3.6405014   1
+       # 0.2081643 4.6227547   1
+       ...
+       # The last three rows are:
+       # 1.2223439 5.6895031  10
+       # 7.9946696 2.8112254  10
+       # 2.1270029 2.4311417  10
+       print(x)
+       z = hv(X[X[:,2] == 1, :2], ref = np.array([10, 10]))
+       print(z)
+       # It should be a single number: 90.4627276475589
+      ```
+  
   - [ ] Once the above is working, we will add more C functions.
-
+  
 ## Developer instructions
 ### Quick start
 
