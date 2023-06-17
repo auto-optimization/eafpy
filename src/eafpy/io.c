@@ -89,7 +89,7 @@ static inline int skip_comment_line (FILE * instream)
 #undef read_objective_t_data
 
 int
-read_datasets_(const char * filename, double **data_p, int *nobjs_p, int *nrows_p, int * datasize_p)
+read_datasets_(const char * filename, double **data_p, int *ncols_p, int *datasize_p)
 {
     double * data = NULL;
     int *cumsizes = NULL;
@@ -99,17 +99,17 @@ read_datasets_(const char * filename, double **data_p, int *nobjs_p, int *nrows_
     if (error) {
         return error;
     }
+    int ncols = nobjs + 1; // For the column 'set' 
     int nrows = cumsizes[num_sets - 1];
-    int datasize = (nobjs+1)*nrows*sizeof(double);
-
+    int datasize = ncols * nrows * sizeof(double);
     double * newdata = malloc(datasize);
     int set = 1;
     int i = 0;
     while (i < nrows) {
         for (int j = 0; j < nobjs; j++) {
-            newdata[i * (nobjs+1) + j] = data[i * nobjs + j];
+            newdata[i * ncols + j] = data[i * nobjs + j];
         }
-        newdata[i * (nobjs+1) + nobjs] = (double) set;
+        newdata[i * ncols + nobjs] = (double) set;
         i++;
         if (i == cumsizes[set - 1])
             set++;
@@ -118,8 +118,7 @@ read_datasets_(const char * filename, double **data_p, int *nobjs_p, int *nrows_
     free(cumsizes);
 
     *data_p = newdata;
-    *nobjs_p = nobjs;
-    *nrows_p = nrows;
+    *ncols_p = ncols;
     *datasize_p = datasize;
     return 0;
 }

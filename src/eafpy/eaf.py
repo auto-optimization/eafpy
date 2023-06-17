@@ -53,16 +53,14 @@ def read_datasets(filename):
     _filename = filename.encode("utf-8")
     # Create return pointers for function
     data_p = ffi.new("double **", ffi.NULL)
-    num_obj_p = ffi.new("int *", 0)
-    nrows_p = ffi.new("int *", 0)
+    ncols_p = ffi.new("int *", 0)
     datasize_p = ffi.new("int *", 0)
-    err_code = lib.read_datasets_(_filename, data_p, num_obj_p, nrows_p, datasize_p)
+    err_code = lib.read_datasets_(_filename, data_p, ncols_p, datasize_p)
     if err_code != 0:
         raise ReadDatasetsError(err_code)
 
     # Create buffer with the correct array size in bytes
     data_buf = ffi.buffer(data_p[0], datasize_p[0])
-    flat_data = np.frombuffer(data_buf)
     # Convert 1d numpy array to 2d array with (n obj... , sets) columns
-    shaped_data = np.reshape(flat_data, (-1, (num_obj_p[0] + 1)))
-    return shaped_data
+    array = np.frombuffer(data_buf).reshape((-1, ncols_p[0]))
+    return array

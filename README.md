@@ -129,7 +129,9 @@ You can now test the installation worked by running the tests
 
 #### Run the tests
 If you have installed the package, you can run the tests by simply going to package root and executing:
+
 `pytest --cov`
+
 (Note that `pytest` will not work if the package is not installed, even if the C files are compiled. This is because of the way the imports work)
 
 You can run the test suite that is executed in the github actions by running tox

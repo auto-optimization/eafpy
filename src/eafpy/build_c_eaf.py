@@ -1,13 +1,11 @@
-from cffi import FFI
-
-ffibuilder = FFI()
 import os
+import cffi
 
+ffibuilder = cffi.FFI()
 
 ffibuilder.cdef(
     """
-    int read_datasets_(const char * filename, double **data_p,
-                int *nobjs_p, int *nrows_p, int * datasize_p);
+    int read_datasets_(const char * filename, double **data_p, int *ncols_p, int *datasize_p);
     """
 )
 
