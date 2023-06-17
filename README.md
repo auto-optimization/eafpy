@@ -15,6 +15,8 @@
 - [ ] Move all `*.c` and `*.h` files to `libeaf/` so that the C code is separated from the Python code.
 - [ ] Other nice things to have (but lower priority):
   - [ ] Coverage: https://github.com/codecov/example-python (see also: https://mathspp.com/blog/how-to-create-a-python-package-in-2022#running-coverage-py-with-tox)
+  - [ ] Setup pre-commit to run by github actions: https://pre-commit.ci/ . Look at this example:
+<https://github.com/poliastro/poliastro/commit/0bbcf95e50e3d740db659f651cbb56cc28219cf1>
   - [ ] Documentation: (short intro: https://docs.python-guide.org/writing/documentation/) Longer: https://py-pkgs.org/06-documentation.html
   - [ ] Tutorial showing how to use the package: add it to the documentation or as a jupyter notebook.
   - [ ] Source of good ideas: https://github.com/anyoptimization/pymoo/tree/main
