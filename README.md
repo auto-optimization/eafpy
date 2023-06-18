@@ -44,7 +44,7 @@ print(x)
   - [x] Investigate options available (ctype, CFFI or something else): What are the positives and negatives of each option?
   - [x] Add a few tests to make sure it is working as expected.
   - [x] Setup github actions / package build for Windows, macOS and Linux.
-  - [ ] Next function is `fpli_hv` in `hv.h`
+  - [ ] Next function is `fpli_hv()` in `hv.h`
   
       ```python
        import eaf
@@ -65,7 +65,35 @@ print(x)
       ```
   
   - [ ] Once the above is working, we will add more C functions.
-  
+
+## TODO Plotting
+
+Once we are able to read the data into Python, the package should offer utilities for plotting.  What is the best way of plotting the data needs to be studied (it could be a combination of methods: e.g., matplotlib for static plots + plotly for interactive ones):
+
+ - Basic matplotlib (https://matplotlib.org/):
+   - Advantages: very flexible, ...
+   - Disadvantage: complex to use, static plots, ...
+ - Seaborn (https://seaborn.pydata.org/):
+   - Advantages: things that are hard in matplotlib are easier in seaborn, ...
+   - Disadvantages: less flexible, static plots, ...
+ - plotnine (https://plotnine.readthedocs.io/en/stable/): 
+   - Advantages: things that are hard in matplotlib are easier in seaborn, grammar of graphics (easy to modify a plot already created), ...
+   - Disadvantages: less flexible, static plots, ... 
+ - Plotly (https://plotly.com/python/):
+   - Advantages: interactive plots, nice 3D plots, ...
+   - Disadvantages: almost as complex as matplotlib, slower, static plots that look nice when printed may be harder, ...
+ - anything else???
+
+### Which plots? ###
+
+ - [ ] We want to plot the datasets read as points (scatter-plot, different symbol and/or color per set) or as stair/step lines (https://matplotlib.org/stable/gallery/lines_bars_and_markers/stairs_demo.html#comparison-of-pyplot-step-and-pyplot-stairs)
+
+ - [ ] We want to plot attainment surfaces as stair/step lines or as a collection of filled rectangles (https://matplotlib.org/stable/gallery/statistics/errorbars_and_boxes.html#sphx-glr-gallery-statistics-errorbars-and-boxes-py) or as a filled polygon with axis-aligned sides (https://matplotlib.org/stable/gallery/lines_bars_and_markers/fill.html).
+ 
+     ![lines](https://mlopez-ibanez.github.io/eaf/reference/eafplot-7.png)
+
+     ![areas](https://mlopez-ibanez.github.io/eaf/reference/eafplot-8.png)
+
 ## Developer instructions
 ### Quick start
 
