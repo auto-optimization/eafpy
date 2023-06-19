@@ -13,14 +13,14 @@ def test_read_datasets_data():
     one that I pre-calculated earlier.
     """
     test_names = [
-        "read_datasets.dat",  # ROONEY: Is this input1.dat? If so, please keep the original name.
+        "input1.dat",  # ROONEY: Is this input1.dat? If so, please keep the original name.
         "spherical-250-10-3d.txt",
         "uniform-250-10-3d.txt",
         "wrots_l10w100_dat",
         "wrots_l100w10_dat",
     ]
     expected_names = [
-        "read_datasets.npy",
+        "input1.npy",
         "spherical-250-10-3d.npy",
         "uniform-250-10-3d.npy",
         "wrots_l10w100_dat.npy",

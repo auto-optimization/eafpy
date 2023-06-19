@@ -72,7 +72,6 @@ static inline int skip_comment_line (FILE * instream)
     return fscanf_newline(instream);
 }
 
-
 #define objective_t int
 #define objective_t_scanf_format "%d"
 #define read_objective_t_data read_int_data
@@ -89,8 +88,56 @@ static inline int skip_comment_line (FILE * instream)
 #undef objective_t_scanf_format
 #undef read_objective_t_data
 
+int
+read_datasets_(const char * filename, double **data_p, int *ncols_p, int *datasize_p)
+{
+    double * data = NULL;
+    int *cumsizes = NULL;
+    int num_sets=0;
+    int nobjs = 0;
+    int error = read_double_data(filename, &data, &nobjs, &cumsizes, &num_sets);
+    if (error) {
+        return error;
+    }
+    int ncols = nobjs + 1; // For the column 'set' 
+    int nrows = cumsizes[num_sets - 1];
+    int datasize = ncols * nrows * sizeof(double);
+    double * newdata = malloc(datasize);
+    int set = 1;
+    int i = 0;
+    while (i < nrows) {
+        for (int j = 0; j < nobjs; j++) {
+            newdata[i * ncols + j] = data[i * nobjs + j];
+        }
+        newdata[i * ncols + nobjs] = (double) set;
+        i++;
+        if (i == cumsizes[set - 1])
+            set++;
+    }
+    free(data);
+    free(cumsizes);
+
+    *data_p = newdata;
+    *ncols_p = ncols;
+    *datasize_p = datasize;
+    return 0;
+}
+int
+read_double_data (const char *filename, double **data_p, 
+                  int *nobjs_p, int **cumsizes_p, int *nsets_p);
+
+
 #ifndef R_PACKAGE
+
+/* program_invocation_short_name is not defined on windows systems so is causing
+   Compilation issues. I changed it out for a predefined message
+*/
+#ifdef __linux__
 extern char *program_invocation_short_name;
+#else 
+const char program_invocation_short_name[] = "EAF C library related exe";
+#endif
+
 #include <stdarg.h>
 void fatal_error(const char *format,...)
 {
@@ -185,4 +232,3 @@ write_sets_filtered (FILE *outfile, const double *data, int ncols,
     return 0;
 }
 #endif // R_PACKAGE
-
