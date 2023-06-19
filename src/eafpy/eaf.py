@@ -64,3 +64,29 @@ def read_datasets(filename):
     # Convert 1d numpy array to 2d array with (n obj... , sets) columns
     array = np.frombuffer(data_buf).reshape((-1, ncols_p[0]))
     return array
+
+
+def hv(data, ref):
+    """
+    Calculates hypervolume of reference + dataset
+    the reference must be a 1-d numpy array with the same
+    Number of objectives as the dataset.
+    """
+    if data.shape[1] != ref.shape[0]:
+        raise ValueError(
+            "data and reference need to have " "the same number of objectives"
+        )
+
+    # If a users inputs something like ref = np.array([10, 10])
+    # then numpy can interpret it an int array, so specify type
+    ref = ref.astype(np.double)
+
+    ref_buf = ffi.cast("double *", ffi.from_buffer(ref))
+    data_p = ffi.cast("double *", ffi.from_buffer(data))
+    ref_objs = ffi.cast("int", ref.shape[0])
+    data_shape = data.shape
+    data_objs = ffi.cast("int", data_shape[1])
+    data_points = ffi.cast("int", data_shape[0])
+
+    hv = lib.hv_(data_p, data_objs, data_points, ref_buf, ref_objs)
+    return hv

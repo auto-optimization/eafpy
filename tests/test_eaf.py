@@ -45,11 +45,10 @@ def test_read_datasets_badname():
     Check that the eaf.read_datasets() functions fails correctly after a
     bad file name is input
     """
-    incorrect_filename = "nonexistent_file.txt"
     with pytest.raises(Exception) as expt:
         eaf.read_datasets("nonexistent_file.txt")
 
-    assert str(expt.value) == f"file {incorrect_filename} not found"
+    assert str(expt.value) == f"file nonexistent_file.txt not found"
     assert expt.type == FileNotFoundError
 
 
@@ -69,3 +68,26 @@ def test_read_datasets_errorcode():
         eaf.read_datasets("tests/test_data/column_error.dat")
     assert expt.type == eaf.ReadDatasetsError
     assert expt.value.message == "ERROR_COLUMNS"
+
+
+def test_hv_output():
+    """
+    Checks the hypervolume calculation produces the correct value
+    """
+    X = eaf.read_datasets(f"tests/test_data/input1.dat")
+    hv = eaf.hv(X[X[:, 2] == 1, :2], ref=np.array([10, 10]))
+    hv_test = np.array([hv])
+    check_data = np.load(f"tests/test_data/expected_output/input1_hv.npy")
+    assert (hv_test == check_data).all, "input1.dat hypervolume produces wrong output"
+
+
+def test_hv_wrong_ref():
+    """
+    Check that the eaf.hv() functions fails correctly after a ref with the wrong
+    dimensions is input
+    """
+    X = eaf.read_datasets(f"tests/test_data/input1.dat")
+
+    with pytest.raises(Exception) as expt:
+        hv = eaf.hv(X[X[:, 2] == 1, :2], ref=np.array([10, 10, 10]))
+    assert expt.type == ValueError

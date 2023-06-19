@@ -3,7 +3,7 @@
    gcc -o main main.c io.c
 */
 #include "io.h"
-
+#include "hv.h"
 
 void test_read_double_data(){
     const char * filename ="uniform-250-10-3d.txt";
@@ -52,20 +52,10 @@ void print_read_datsets(const char * filename){
     // }
 }
 
+
 int main()
 {   
-    print_read_datsets("read_datasets.dat");
-    printf("Read t1 \n\n\n");
-    print_read_datsets("spherical-250-10-3d.txt");
-    printf("Read t2 \n\n\n");
-    print_read_datsets("uniform-250-10-3d.txt");
-    printf("Read t3 \n\n\n");
-    print_read_datsets("wrots_l10w100_dat");
-    printf("Read t4 \n\n\n");
-
-    print_read_datsets("wrots_l10w100_dat");
-    printf("Read t5 \n\n\n");
-
+   
 
     return 0;
 }

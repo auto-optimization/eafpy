@@ -895,3 +895,14 @@ double fpli_hv(const double *data, int d, int n, const double *ref)
 
     return hyperv;
 }
+
+double hv_(const double *data_p, int dataObjs, int dataPoints, const double *ref, int refObjs){
+    
+    if(dataObjs != refObjs){
+        fatal_error("Error in hv_ function: data and ref must have same number of objectives");
+        return 0;
+    }
+    double hv = 0; 
+    hv = fpli_hv(data_p, dataObjs, dataPoints, ref);
+    return hv;
+}

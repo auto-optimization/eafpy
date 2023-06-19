@@ -12,7 +12,7 @@
   - [x] for macOS
 - [x] setup for C extensions (see below)
 - [ ] Rename the package to just `eaf`
-- [ ] Move all `*.c` and `*.h` files to `libeaf/` so that the C code is separated from the Python code.
+- [x] Move all `*.c` and `*.h` files to `libeaf/` so that the C code is separated from the Python code.
 - [ ] Other nice things to have (but lower priority):
   - [ ] Coverage: https://github.com/codecov/example-python (see also: https://mathspp.com/blog/how-to-create-a-python-package-in-2022#running-coverage-py-with-tox)
   - [ ] Setup pre-commit to run by github actions: https://pre-commit.ci/ . Look at this example:
