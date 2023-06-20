@@ -52,6 +52,9 @@ jobs:
       - name: Run tox
         run: tox
 
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+
   eafpy-build-package:
     timeout-minutes: 10
     needs: eafpy-run-tests

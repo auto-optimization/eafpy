@@ -1,4 +1,5 @@
 [![Test Status](https://github.com/auto-optimization/eafpy/actions/workflows/tests.yaml/badge.svg)](https://github.com/auto-optimization/eafpy/actions/workflows/tests.yaml)
+[![codecov Badge](https://codecov.io/gh/auto-optimization/eafpy/branch/main/graph/badge.svg)](https://codecov.io/gh/auto-optimization/eafpy)
 
 # eaf
 
