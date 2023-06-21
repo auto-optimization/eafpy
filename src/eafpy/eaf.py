@@ -81,15 +81,12 @@ def hv(data, ref):
 
     if data.shape[1] != ref.shape[0]:
         raise ValueError(
-            f"data and reference need to have the same number of objectives ({data.shape[1]} != {ref.shape[0]}"
+            f"data and ref need to have the same number of objectives ({data.shape[1]} != {ref.shape[0]})"
         )
 
     ref_buf = ffi.cast("double *", ffi.from_buffer(ref))
     data_p = ffi.cast("double *", ffi.from_buffer(data))
-    ref_objs = ffi.cast("int", ref.shape[0])
-    data_shape = data.shape
-    data_objs = ffi.cast("int", data_shape[1])
-    data_points = ffi.cast("int", data_shape[0])
-
-    hv = lib.hv_(data_p, data_objs, data_points, ref_buf, ref_objs)
+    data_points = ffi.cast("int", data.shape[0])
+    data_objs = ffi.cast("int", data.shape[1])
+    hv = lib.fpli_hv(data_p, data_objs, data_points, ref_buf)
     return hv

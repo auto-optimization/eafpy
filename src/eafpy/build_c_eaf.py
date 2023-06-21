@@ -6,7 +6,7 @@ ffibuilder = cffi.FFI()
 ffibuilder.cdef(
     """
     int read_datasets_(const char * filename, double **data_p, int *ncols_p, int *datasize_p);
-    double hv_(const double *data_p, int dataObjs, int dataPoints, const double *ref, int refObjs);
+    double fpli_hv(const double *data, int d, int n, const double *ref);
     """
 )
 file_path = os.path.dirname(os.path.realpath(__file__))
