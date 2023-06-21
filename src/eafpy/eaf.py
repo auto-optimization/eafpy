@@ -1,6 +1,8 @@
 import numpy as np
 import os
 from eafpy.c_bindings import lib, ffi
+import plotly.express as px
+import pandas as pd
 
 
 class ReadDatasetsError(Exception):
@@ -89,3 +91,28 @@ def hv(data, ref):
     data_objs = ffi.cast("int", data.shape[1])
     hv = lib.fpli_hv(data_p, data_objs, data_points, ref_buf)
     return hv
+
+
+def plot_datasets(filename=None, datasets=None):
+    if datasets and filename:
+        raise ValueError(
+            "You can only enter either a filename or a"
+            "dataset for plot_dataset (you selected both)"
+        )
+    if datasets is None:
+        if filename:
+            set_selected = read_datasets(filename)
+        else:
+            raise ValueError(
+                "You can only enter either a filename or a"
+                "dataset to plot the datasets (you didn't enter either)"
+            )
+    else:
+        set_selected = datasets
+
+    sets_df = pd.DataFrame(
+        set_selected, columns=["objective1", "objective2", "set_number"]
+    )
+    sets_df["set_number"] = sets_df["set_number"].astype(str)  # convert to string
+
+    return px.scatter(sets_df, x="objective1", y="objective2", color="set_number")

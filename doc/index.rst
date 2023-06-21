@@ -3,12 +3,16 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to eafpy's documentation!
+EAF documentation
 =================================
+The EAF python package allows for easy calculation and visulisation of the empircal attainment function
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
+   notebooks/plot_datasets.ipynb
+
 
 
 

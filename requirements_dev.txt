@@ -9,3 +9,11 @@ sphinx
 tox >= 4.5
 virtualenv >= 20
 build
+sphinxawesome-theme
+jupyter
+ipykernel
+kaleido
+nbsphinx
+pandoc
+plotly
+pandas
