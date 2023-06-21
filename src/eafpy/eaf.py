@@ -1,6 +1,5 @@
 import numpy as np
 import os
-from enum import Enum
 from eafpy.c_bindings import lib, ffi
 
 
