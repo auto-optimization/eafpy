@@ -895,4 +895,3 @@ double fpli_hv(const double *data, int d, int n, const double *ref)
 
     return hyperv;
 }
-

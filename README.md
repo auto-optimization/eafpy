@@ -45,7 +45,7 @@ print(x)
   - [x] Investigate options available (ctype, CFFI or something else): What are the positives and negatives of each option?
   - [x] Add a few tests to make sure it is working as expected.
   - [x] Setup github actions / package build for Windows, macOS and Linux.
-  - [ ] Next function is `fpli_hv()` in `hv.h`
+  - [x] Next function is `fpli_hv()` in `hv.h`
   
       ```python
        import eaf
