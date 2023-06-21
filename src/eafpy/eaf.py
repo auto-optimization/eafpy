@@ -72,14 +72,17 @@ def hv(data, ref):
     the reference must be a 1-d numpy array with the same
     Number of objectives as the dataset.
     """
+    # Convert to numpy.array in case the user provides a list.  We use
+    # np.asfarray to convert it to floating-point, otherwise if a user inputs
+    # something like ref = np.array([10, 10]) then numpy would interpret it as
+    # an int array.
+    data = np.asfarray(data)
+    ref = np.asfarray(ref)
+
     if data.shape[1] != ref.shape[0]:
         raise ValueError(
-            "data and reference need to have " "the same number of objectives"
+            f"data and reference need to have the same number of objectives ({data.shape[1]} != {ref.shape[0]}"
         )
-
-    # If a users inputs something like ref = np.array([10, 10])
-    # then numpy can interpret it an int array, so specify type
-    ref = ref.astype(np.double)
 
     ref_buf = ffi.cast("double *", ffi.from_buffer(ref))
     data_p = ffi.cast("double *", ffi.from_buffer(data))

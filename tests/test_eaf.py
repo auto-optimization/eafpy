@@ -13,7 +13,7 @@ def test_read_datasets_data():
     one that I pre-calculated earlier.
     """
     test_names = [
-        "input1.dat",  # ROONEY: Is this input1.dat? If so, please keep the original name.
+        "input1.dat",
         "spherical-250-10-3d.txt",
         "uniform-250-10-3d.txt",
         "wrots_l10w100_dat",
@@ -76,6 +76,11 @@ def test_hv_output():
     """
     X = eaf.read_datasets(f"tests/test_data/input1.dat")
     hv = eaf.hv(X[X[:, 2] == 1, :2], ref=np.array([10, 10]))
+    hv_test = np.array([hv])
+    check_data = np.load(f"tests/test_data/expected_output/input1_hv.npy")
+    assert (hv_test == check_data).all, "input1.dat hypervolume produces wrong output"
+
+    hv = eaf.hv(X[X[:, 2] == 1, :2], ref=[10, 10])
     hv_test = np.array([hv])
     check_data = np.load(f"tests/test_data/expected_output/input1_hv.npy")
     assert (hv_test == check_data).all, "input1.dat hypervolume produces wrong output"
