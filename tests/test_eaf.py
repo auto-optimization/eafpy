@@ -2,6 +2,7 @@ import sys
 import os
 import numpy as np
 import pytest
+import math
 
 # ROONEY: We should rename the package to just eaf
 import eafpy as eaf
@@ -76,14 +77,10 @@ def test_hv_output():
     """
     X = eaf.read_datasets(f"tests/test_data/input1.dat")
     hv = eaf.hv(X[X[:, 2] == 1, :2], ref=np.array([10, 10]))
-    hv_test = np.array([hv])
-    check_data = np.load(f"tests/test_data/expected_output/input1_hv.npy")
-    assert (hv_test == check_data).all, "input1.dat hypervolume produces wrong output"
+    assert math.isclose(hv, 90.46272765), "input1.dat hypervolume produces wrong output"
 
     hv = eaf.hv(X[X[:, 2] == 1, :2], ref=[10, 10])
-    hv_test = np.array([hv])
-    check_data = np.load(f"tests/test_data/expected_output/input1_hv.npy")
-    assert (hv_test == check_data).all, "input1.dat hypervolume produces wrong output"
+    assert math.isclose(hv, 90.46272765), "input1.dat hypervolume produces wrong output"
 
 
 def test_hv_wrong_ref():
