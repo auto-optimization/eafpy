@@ -96,7 +96,6 @@ jobs:
   eafpy-build-doc:
     timeout-minutes: 10
     needs: eafpy-build-package
-
     if: "! contains(github.event.head_commit.message, '[skip ci]')"
     runs-on:  ubuntu-latest
     steps:
@@ -115,7 +114,7 @@ jobs:
 
       - name: Build the docs
         run: |
-          cd docs/
+          cd doc/
           make html
           cd ..
 
