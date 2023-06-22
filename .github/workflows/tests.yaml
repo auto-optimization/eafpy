@@ -97,8 +97,6 @@ jobs:
     timeout-minutes: 10
     needs: eafpy-build-package
     if: "! contains(github.event.head_commit.message, '[skip ci]')"
-    if: "! contains(github.event.head_commit.message, '[skip docs]')"
-
     runs-on:  ubuntu-latest
     steps:
       - name: Checkout sources
@@ -131,8 +129,6 @@ jobs:
   eafpy-deploy-doc:
     needs: eafpy-build-doc
     if: "! contains(github.event.head_commit.message, '[skip ci]')"
-    if: "! contains(github.event.head_commit.message, '[skip docs]')"
-
     permissions:
       pages: write      # to deploy to Pages
       id-token: write   # to verify the deployment originates from an appropriate source
