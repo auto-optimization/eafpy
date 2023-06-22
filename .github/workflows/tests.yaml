@@ -94,10 +94,9 @@ jobs:
           path: dist/
 
   eafpy-build-doc:
-    if: "contains(github.event.head_commit.message, '[build doc]')"
     timeout-minutes: 10
     needs: eafpy-build-package
-    if: "! contains(github.event.head_commit.message, '[skip ci]')"
+    if: "! contains(github.event.head_commit.message, '[skip ci]') && contains(github.event.head_commit.message, '[build doc]')"
     runs-on:  ubuntu-latest
     steps:
       - name: Checkout sources
