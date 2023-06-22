@@ -97,6 +97,8 @@ jobs:
     timeout-minutes: 10
     needs: eafpy-build-package
     if: "! contains(github.event.head_commit.message, '[skip ci]')"
+    if: "! contains(github.event.head_commit.message, '[skip docs]')"
+
     runs-on:  ubuntu-latest
     steps:
       - name: Checkout sources
@@ -112,6 +114,7 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install --upgrade build
           python3 -m build
+          pip install -e .
           pip install -r requirements_dev.txt
 
       - name: Build the docs
@@ -120,12 +123,36 @@ jobs:
           make html
           cd ..
 
-      - name: Publish docs
-        uses: actions/upload-artifact@v2
+      - name: Upload docs as github pages artifact
+        uses: actions/upload-pages-artifact@main
+        with:
+          path: doc/_build/
+
+  eafpy-deploy-doc:
+    needs: eafpy-build-doc
+    if: "! contains(github.event.head_commit.message, '[skip ci]')"
+    if: "! contains(github.event.head_commit.message, '[skip docs]')"
+
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the built docs
+        uses: actions/download-artifact@v3
         with:
           name: docs
-          path: doc/_build/
-      
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2 
+
+
       
       
 
