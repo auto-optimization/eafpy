@@ -13,7 +13,9 @@ sphinxawesome-theme
 jupyter
 ipykernel
 kaleido
-nbsphinx
-pandoc
+myst-nb
 plotly
 pandas
+
+jupyterlab
+ipywidgets
