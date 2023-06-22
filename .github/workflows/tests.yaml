@@ -132,7 +132,7 @@ jobs:
       - name: Upload docs as github pages artifact
         uses: actions/upload-pages-artifact@main
         with:
-          path: doc/_build/
+          path: doc/_build/html/
 
   eafpy-deploy-doc:
     needs: eafpy-build-doc
