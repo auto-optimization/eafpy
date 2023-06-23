@@ -2,6 +2,7 @@ import numpy as np
 import os
 from eafpy.c_bindings import lib, ffi
 import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
 
 
@@ -93,26 +94,77 @@ def hv(data, ref):
     return hv
 
 
-def plot_datasets(filename=None, datasets=None):
-    if datasets and filename:
-        raise ValueError(
-            "You can only enter either a filename or a"
-            "dataset for plot_dataset (you selected both)"
-        )
-    if datasets is None:
-        if filename:
-            set_selected = read_datasets(filename)
-        else:
-            raise ValueError(
-                "You can only enter either a filename or a"
-                "dataset to plot the datasets (you didn't enter either)"
-            )
-    else:
-        set_selected = datasets
-
-    sets_df = pd.DataFrame(
-        set_selected, columns=["objective1", "objective2", "set_number"]
+def _parse_line_type(type):
+    if not isinstance(type, str):
+        raise TypeError("Type argument must be a string")
+    type_arr = type.replace(" ", "").lower().split(",")
+    if len(type_arr) > 2:
+        raise ValueError("Error parsing Type command: Too many commas")
+    has_line = any(x in type_arr for x in ("lines", "line", "l", "ln", "lin"))
+    has_point = any(
+        x in type_arr for x in ("point", "points", "p", "pts", "pnts", "pints")
     )
-    sets_df["set_number"] = sets_df["set_number"].astype(str)  # convert to string
+    if has_line and has_point:
+        return "lines+markers"
+    elif has_point:
+        return "markers"
+    elif has_line:
+        return "lines"
+    else:
+        raise ValueError(f"Type argument for plot_datasets not recognised: {type}")
 
-    return px.scatter(sets_df, x="objective1", y="objective2", color="set_number")
+
+def plot_datasets(datasets, type="points"):
+    type_parsed = _parse_line_type(type)
+    if not isinstance(datasets, np.ndarray):
+        raise TypeError("Dataset must be of type numpy array")
+    is_2d = datasets.shape[1] == 3
+    is_3d = datasets.shape[1] == 4
+    if not (is_2d or is_3d):
+        raise ValueError(
+            "Dataset must contain 2 or 3 objectives "
+            "the last column must be the set number"
+        )
+
+    column_names = ["Objective 1", "Objective 2", "Set Number"]
+    if is_3d:
+        column_names.insert(2, "Objective 3")
+    sets_df = pd.DataFrame(datasets, columns=column_names)
+
+    # convert to string without decimal points
+    sets_df["Set Number"] = sets_df["Set Number"].astype(int).astype(str)
+
+    if is_2d:
+        df_sorted = sets_df.groupby("Set Number").apply(
+            lambda x: x.sort_values("Objective 1")
+        )
+        figure = px.line(
+            df_sorted,
+            x="Objective 1",
+            y="Objective 2",
+            color="Set Number",
+            title="Two objective dataset",
+        )
+
+        figure.update_traces(line_shape="hv", mode=type_parsed)
+
+    elif is_3d:
+        if "lines" in type_parsed:
+            # I think I will have to add some more complicated calculation here
+            # In order to get a kind of "box" plot
+            figure = go.Figure(data=[go.Surface(z=sets_df.values)])
+
+        else:
+            figure = px.scatter_3d(
+                sets_df,
+                x="Objective 1",
+                y="Objective 2",
+                z="Objective 3",
+                color="Set Number",
+                title="Three objective dataset",
+            )
+            figure.update_traces(marker_size=4)
+    else:
+        raise NotImplementedError
+
+    return figure

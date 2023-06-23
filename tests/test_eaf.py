@@ -93,3 +93,28 @@ def test_hv_wrong_ref():
     with pytest.raises(Exception) as expt:
         hv = eaf.hv(X[X[:, 2] == 1, :2], ref=np.array([10, 10, 10]))
     assert expt.type == ValueError
+
+
+def test_plt_dta_types():
+    """
+    Check that the eaf.plot_datasets() functions has the right input handling
+    """
+    X = eaf.read_datasets(f"tests/test_data/input1.dat")
+    with pytest.raises(Exception) as expt:
+        eaf.plot_datasets(datasets="Wrong input")
+        assert expt.type == TypeError
+    with pytest.raises(Exception) as expt:
+        eaf.plot_datasets(datasets=np.ndarray([50, 1]))
+        assert expt.type == ValueError
+    with pytest.raises(Exception) as expt:
+        eaf.plot_datasets(datasets=np.ndarray([50, 5]))
+        assert expt.type == ValueError
+    with pytest.raises(Exception) as expt:
+        eaf.plot_datasets(X, type="Bugel horn")
+        assert expt.type == ValueError
+    eaf.plot_datasets(X, type="points,lines")
+    eaf.plot_datasets(X, type="p,l")
+    eaf.plot_datasets(X, type="l  ,p")
+    eaf.plot_datasets(X, type="points,l")
+    eaf.plot_datasets(X, type="point ,lines")
+    eaf.plot_datasets(X, type="LiNe ,  PoInTs")

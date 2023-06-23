@@ -18,7 +18,7 @@
   - [x] Coverage: https://github.com/codecov/example-python (see also: https://mathspp.com/blog/how-to-create-a-python-package-in-2022#running-coverage-py-with-tox)
   - [ ] Setup pre-commit to run by github actions: https://pre-commit.ci/ . Look at this example:
 <https://github.com/poliastro/poliastro/commit/0bbcf95e50e3d740db659f651cbb56cc28219cf1>
-  - [ ] Documentation: (short intro: https://docs.python-guide.org/writing/documentation/) Longer: https://py-pkgs.org/06-documentation.html
+  - [x] Documentation: (short intro: https://docs.python-guide.org/writing/documentation/) Longer: https://py-pkgs.org/06-documentation.html
   - [ ] Tutorial showing how to use the package: add it to the documentation or as a jupyter notebook.
   - [ ] Source of good ideas: https://github.com/anyoptimization/pymoo/tree/main
 
@@ -206,3 +206,41 @@ cd src/eafpy/
 py build_c_eaf.py
 # Now you can open an interpretor and import the package c_bindings
 ```
+
+### Building the documentation
+#### Build doc in the CI
+You need to include the tag `[build doc]` in your commit to automatically build and deploy the documentation to github pages. You should test your changes locally first:
+
+#### Build doc locally
+
+The documentation uses sphinx, which can be build using the `make` command or with `sphinx-build`. `make` is preffered but requires a linux environment or something like [chocolatey](https://chocolatey.org/)
+
+##### Linux - Make
+```
+pip install -r requirements_dev.txt
+cd doc
+make html
+# Use this to remove the build
+make clean
+```
+##### Python - sphinx-build
+This should work on any operating system
+```
+pip install -r requirements_dev.txt
+cd doc
+sphinx-build -b html . _build
+```
+##### Windows - Make with WSL
+I would reccomend [Windows Subsytem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install) if you haven't tried it already
+```
+# If you haven't already, install wsl
+wsl --install
+# You might have to install a dist from the windows app store 
+wsl -d ubuntu
+# You should now be in a WSL terminal. You might have to install pip first
+pip install -r requirements_dev.txt
+cd doc
+make html
+```
+
+
