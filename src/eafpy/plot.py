@@ -24,7 +24,7 @@ def _parse_line_type(line_type):
 
 def plot_datasets(datasets, type="points"):
     type_parsed = _parse_line_type(type)
-    datasets = np.asrray(datasets)
+    datasets = np.asarray(datasets)
     if not isinstance(datasets, np.ndarray):
         raise TypeError("Dataset must be of type numpy array")
     dim = datasets.shape[1] - 1
