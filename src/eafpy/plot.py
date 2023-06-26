@@ -77,6 +77,75 @@ def _gen_3d_mesh_plot(dataset, type):
     return fig
 
 
+# Might be better to do this in C?
+""" Take a numpy array of points and create a numpy array holding the remaing 8 points
+
+:param np_dataset: Numpy dataset, it should be fetched using the read_dataset function
+:type np_dataset: numpy float ndarray
+...
+:return: Returns a numpy array with shape [8x dataset rows,  dataset columns + 1]. Every 4th row contains the point from the input dataset. 
+         the proceding 3 rows contain one dimension of the point. For example if the first data point in the input argument is [3,3,3, set]
+         then the array will look like this:
+         [3,3,3, set, cubenumber = 0]
+         [3,0,0, set, 0]
+         [0,3,0, set, 0]
+         [0,0,3, set, 0]
+:rtype: numpy float ndarray
+"""
+
+
+def _get_cube_points(dataset):
+    ds_cube = np.zeros((dataset.shape[0] * 8, 5), dtype=float)
+    cube_num = 0
+    for row in range(ds_cube.shape[0]):
+        if row % 8 == 0:
+            cube_num = cube_num + 1
+        i = (row % 8) >> 2
+        j = ((row % 8) >> 1) & 1
+        k = (row % 8) & 1
+        ds_cube[row, 0] = dataset[int(row / 8), 0] * float(i)
+        ds_cube[row, 1] = dataset[int(row / 8), 1] * float(j)
+        ds_cube[row, 2] = dataset[int(row / 8), 2] * float(k)
+        ds_cube[row, 3] = dataset[int(row / 8), 3]
+        ds_cube[row, 4] = cube_num
+
+    return ds_cube
+
+
+# The order of the points does matter
+# Need to select the triangles using i,j,k
+# Where each is an index of a point from the x,y,z list
+# We can make each cuboid out of 12 triangles
+
+
+def _get_cube_plot(dataset):
+    fig = go.Figure()
+    np_cubes = _get_cube_points(dataset)
+    col_names = [
+        "Objective 1",
+        "Objective 2",
+        "Objective 3",
+        "Set Number",
+        "Cube Number",
+    ]
+    cube_df = pd.DataFrame(np_cubes, columns=col_names)
+    cube_nums = cube_df["Cube Number"].unique()
+    for cube in cube_nums:
+        single_cube = cube_df[cube_df["Cube Number"] == cube]
+        fig.add_trace(
+            go.Mesh3d(
+                x=single_cube["Objective 1"],
+                y=single_cube["Objective 2"],
+                z=single_cube["Objective 3"],
+                i=[1, 1, 4, 4, 2, 2, 0, 3, 3, 6, 4, 4],
+                j=[3, 5, 5, 1, 4, 4, 2, 2, 2, 7, 6, 7],
+                k=[7, 7, 1, 0, 6, 0, 1, 1, 6, 3, 7, 5],
+                name="Cube " + str(cube),
+            ),
+        )
+    return fig
+
+
 def plot_datasets(datasets, type="points"):
     datasets = np.asarray(datasets)
     if not isinstance(datasets, np.ndarray):
@@ -94,7 +163,8 @@ def plot_datasets(datasets, type="points"):
         column_names.insert(2, "Objective 3")
     sets_df = pd.DataFrame(datasets, columns=column_names)
 
-    # convert to string without decimal points
+    # convert to string without decimal points, plotly interprets ints as discrete colour sequences
+
     sets_df["Set Number"] = sets_df["Set Number"].astype(int).astype(str)
 
     if dim == 2:
@@ -127,6 +197,10 @@ def plot_datasets(datasets, type="points"):
                 margin=_3d_margin,
                 title=_get_3d_title("Point plot of three objective dataset"),
             )
+        elif "cube" in type_parsed:
+            figure = _get_cube_plot(datasets)
+        else:
+            raise NotImplementedError
     else:
         raise NotImplementedError
 
