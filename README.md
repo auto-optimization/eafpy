@@ -19,7 +19,7 @@
   - [ ] Setup pre-commit to run by github actions: https://pre-commit.ci/ . Look at this example:
 <https://github.com/poliastro/poliastro/commit/0bbcf95e50e3d740db659f651cbb56cc28219cf1>
   - [x] Documentation: (short intro: https://docs.python-guide.org/writing/documentation/) Longer: https://py-pkgs.org/06-documentation.html
-    - [ ] API documentation: https://www.sphinx-doc.org/en/master/tutorial/automatic-doc-generation.html
+    - [ ] API documentation: https://www.sphinx-doc.org/en/master/tutorial/automatic-doc-generation.html (I would suggest to use NumPy style annotations: https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html)
     - [ ] Jupyter notebooks generated from python files: https://sphinx-gallery.github.io/stable/getting_started.html#create-simple-gallery (editing jupyter notebooks in github is not easy and they take a lot of space, it is better if they are generated from .py files that have markdown in comments)
   - [ ] Tutorial showing how to use the package: add it to the documentation or as a jupyter notebook.
   - [ ] Source of good ideas: https://github.com/anyoptimization/pymoo/tree/main
