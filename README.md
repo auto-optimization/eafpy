@@ -67,7 +67,7 @@ print(x)
        # It should be a single number: 90.4627276475589
       ```
   
-  - [ ] Once the above is working, we will add more C functions.
+  - [ ] More C functions: https://github.com/auto-optimization/eafpy/issues/4
 
 ## TODO Plotting
 
