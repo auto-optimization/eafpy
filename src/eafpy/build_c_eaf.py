@@ -8,6 +8,7 @@ ffibuilder.cdef(
     int read_datasets_(const char * filename, double **data_p, int *ncols_p, int *datasize_p);
     double fpli_hv(const double *data, int d, int n, const double *ref);
     double igd_C (const double *data, int nobj, int npoints, const double *ref, int ref_size, const int *maximise);
+    double igd_plus_C (const double *data, int nobj, int npoints, const double *ref, int ref_size, const int *maximise);
     """
 )
 

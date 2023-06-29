@@ -83,8 +83,7 @@ def read_datasets(filename):
     return array
 
 
-def igd(data, ref, maximise=False):
-    """TODO: Take documentation from: https://mlopez-ibanez.github.io/eaf/reference/igd.html"""
+def _unary_refset_common(data, ref, maximise):
     # Convert to numpy.array in case the user provides a list.  We use
     # np.asfarray to convert it to floating-point, otherwise if a user inputs
     # something like ref = np.array([10, 10]) then numpy would interpret it as
@@ -100,14 +99,32 @@ def igd(data, ref, maximise=False):
     if len(maximise) == 1:
         maximise = np.full((nobj), maximise[0])
 
+    return data, ref, maximise
+
+
+def igd(data, ref, maximise=False):
+    """TODO: Take documentation from: https://mlopez-ibanez.github.io/eaf/reference/igd.html"""
+
+    data, ref, maximise = _unary_refset_common(data, ref, maximise)
     data_p = ffi.cast("double *", ffi.from_buffer(data))
     nobj = ffi.cast("int", data.shape[1])
     npoints = ffi.cast("int", data.shape[0])
     ref_p = ffi.cast("double *", ffi.from_buffer(ref))
     ref_size = ffi.cast("int", ref.shape[0])
     maximise_p = ffi.cast("int *", ffi.from_buffer(maximise))
-    value = lib.igd_C(data_p, nobj, npoints, ref_p, ref_size, maximise_p)
-    return value
+    return lib.igd_C(data_p, nobj, npoints, ref_p, ref_size, maximise_p)
+
+
+def igd_plus(data, ref, maximise=False):
+    """TODO: Take documentation from: https://mlopez-ibanez.github.io/eaf/reference/igd.html"""
+    data, ref, maximise = _unary_refset_common(data, ref, maximise)
+    data_p = ffi.cast("double *", ffi.from_buffer(data))
+    nobj = ffi.cast("int", data.shape[1])
+    npoints = ffi.cast("int", data.shape[0])
+    ref_p = ffi.cast("double *", ffi.from_buffer(ref))
+    ref_size = ffi.cast("int", ref.shape[0])
+    maximise_p = ffi.cast("int *", ffi.from_buffer(maximise))
+    return lib.igd_plus_C(data_p, nobj, npoints, ref_p, ref_size, maximise_p)
 
 
 def hv(data, ref):

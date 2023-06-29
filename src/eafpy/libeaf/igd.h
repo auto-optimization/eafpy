@@ -172,6 +172,16 @@ IGD_plus (int dim, const signed char *minmax,
 
 }
 
+static double
+igd_plus_C (const double *data, int nobj, int npoints, const double *ref, int ref_size,
+            const int *maximise)
+{
+    signed char *minmax = create_minmax(nobj, maximise);
+    double value = IGD_plus (nobj, minmax, data, npoints, ref, ref_size);
+    free (minmax);
+    return(value);
+}
+
 static inline double
 avg_Hausdorff_dist (int dim, const signed char *minmax,
                     const double *points_a, int size_a,
