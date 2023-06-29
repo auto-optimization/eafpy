@@ -127,6 +127,24 @@ def igd_plus(data, ref, maximise=False):
     return lib.igd_plus_C(data_p, nobj, npoints, ref_p, ref_size, maximise_p)
 
 
+def avg_hausdorff_dist(data, ref, maximise=False, p=1):
+    """TODO: Take documentation from: https://mlopez-ibanez.github.io/eaf/reference/igd.html"""
+    if p <= 0:
+        raise ValueError(f"'p' must be larger than zero")
+
+    data, ref, maximise = _unary_refset_common(data, ref, maximise)
+    data_p = ffi.cast("double *", ffi.from_buffer(data))
+    nobj = ffi.cast("int", data.shape[1])
+    npoints = ffi.cast("int", data.shape[0])
+    ref_p = ffi.cast("double *", ffi.from_buffer(ref))
+    ref_size = ffi.cast("int", ref.shape[0])
+    maximise_p = ffi.cast("int *", ffi.from_buffer(maximise))
+    p = ffi.cast("unsigned int", p)
+    return lib.avg_Hausdorff_dist_C(
+        data_p, nobj, npoints, ref_p, ref_size, maximise_p, p
+    )
+
+
 def hv(data, ref):
     """
     Calculates hypervolume of reference + dataset

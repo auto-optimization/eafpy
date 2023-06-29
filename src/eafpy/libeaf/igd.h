@@ -182,6 +182,7 @@ igd_plus_C (const double *data, int nobj, int npoints, const double *ref, int re
     return(value);
 }
 
+/* TODO: Implement p=INFINITY See [4] */
 static inline double
 avg_Hausdorff_dist (int dim, const signed char *minmax,
                     const double *points_a, int size_a,
@@ -200,6 +201,15 @@ avg_Hausdorff_dist (int dim, const signed char *minmax,
                               p);
     return MAX (gd_p, igd_p);
 }
-/* TODO: Implement p=INFINITY See [4] */
+
+static double
+avg_Hausdorff_dist_C (const double *data, int nobj, int npoints, const double *ref, int ref_size,
+                      const int *maximise, unsigned int p)
+{
+    signed char *minmax = create_minmax(nobj, maximise);
+    double value = avg_Hausdorff_dist(nobj, minmax, data, npoints, ref, ref_size, p);
+    free (minmax);
+    return(value);
+}
 
 #endif /* IGD_H */

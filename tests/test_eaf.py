@@ -138,3 +138,11 @@ def test_igd_plus():
     B = np.array([8, 2, 4, 4, 2, 8]).reshape((-1, 2))
     assert math.isclose(eaf.igd_plus(A, ref), 1.482842712474619)
     assert math.isclose(eaf.igd_plus(B, ref), 2.260112615949154)
+
+
+def test_avg_hausdorff_dist():
+    ref = np.array([10, 0, 6, 1, 2, 2, 1, 6, 0, 10]).reshape((-1, 2))
+    A = np.array([4, 2, 3, 3, 2, 4]).reshape((-1, 2))
+    B = np.array([8, 2, 4, 4, 2, 8]).reshape((-1, 2))
+    assert math.isclose(eaf.avg_hausdorff_dist(A, ref), 3.707092031609239)
+    assert math.isclose(eaf.avg_hausdorff_dist(B, ref), 2.59148346584763)
