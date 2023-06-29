@@ -1,7 +1,6 @@
 import numpy as np
 import os
 from eafpy.c_bindings import lib, ffi
-import pandas as pd
 
 
 class ReadDatasetsError(Exception):
@@ -32,12 +31,18 @@ Libeaf contains wrapper functions for the EAF C library.
 The CFFI library is used to create C binding
 """
 
+import lzma
+import shutil
+import tempfile
+
 
 def read_datasets(filename):
     """
-    read_input_data reads an input dataset and returns a 2d numpy array.
+    Reads an input dataset and returns a 2d numpy array.
     The first n-1 columns contain the numerical data for each of the objectives
     The last column contains an identifier for which set the data is relevant to.
+
+    If the filename has extension '.xz', it is decompressed to a temporary file before reading it.
 
     For example:
     Objective 1  |  Objective 2 | Set number
@@ -46,8 +51,18 @@ def read_datasets(filename):
     [ 8.58848772 |  3.69781313  | 2.        ]
     [ 1.5964888  |  5.98825094  | 2.        ]
     """
+
+    filename = os.path.expanduser(filename)
     if not os.path.isfile(filename):
         raise FileNotFoundError(f"file {filename} not found")
+
+    if filename.endswith(".xz"):
+        with lzma.open(filename, "rb") as fsrc:
+            with tempfile.NamedTemporaryFile(delete=False) as fdst:
+                shutil.copyfileobj(fsrc, fdst)
+        filename = fdst.name
+    else:
+        fdst = None
 
     # Encode filename to a binary string
     _filename = filename.encode("utf-8")
@@ -56,6 +71,8 @@ def read_datasets(filename):
     ncols_p = ffi.new("int *", 0)
     datasize_p = ffi.new("int *", 0)
     err_code = lib.read_datasets_(_filename, data_p, ncols_p, datasize_p)
+    if fdst:
+        os.remove(fdst.name)
     if err_code != 0:
         raise ReadDatasetsError(err_code)
 

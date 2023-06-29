@@ -19,6 +19,7 @@ def test_read_datasets_data():
         "uniform-250-10-3d.txt",
         "wrots_l10w100_dat",
         "wrots_l100w10_dat",
+        "ALG_1_dat.xz",
     ]
     expected_names = [
         "input1.npy",
@@ -26,19 +27,22 @@ def test_read_datasets_data():
         "uniform-250-10-3d.npy",
         "wrots_l10w100_dat.npy",
         "wrots_l100w10_dat.npy",
+        "",  # TODO
     ]
-    expected_shapes = [(100, 3), (2500, 4), (2500, 4), (3262, 3), (888, 3)]
+    expected_shapes = [(100, 3), (2500, 4), (2500, 4), (3262, 3), (888, 3), (23260, 3)]
 
-    for i, test in enumerate(test_names):
+    for test, expected_name, expected_shape in zip(
+        test_names, expected_names, expected_shapes
+    ):
         testdata = eaf.read_datasets(f"tests/test_data/{test}")
-        check_data = np.load(f"tests/test_data/expected_output/{expected_names[i]}")
-        expected_shape = expected_shapes[i]
         assert (
             testdata.shape == expected_shape
         ), f"Read data array has incorrect shape, should be {expected_shape} but is {testdata.shape}"
-        assert (
-            testdata == check_data
-        ).all(), f"read_datasets does not produce expected array for file {test}"
+        if expected_name != "":
+            check_data = np.load(f"tests/test_data/expected_output/{expected_name}")
+            assert (
+                testdata == check_data
+            ).all(), f"read_datasets does not produce expected array for file {test}"
 
 
 def test_read_datasets_badname():
