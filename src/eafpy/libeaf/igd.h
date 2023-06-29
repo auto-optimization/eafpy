@@ -56,6 +56,7 @@
 #endif
 #include "common.h"
 #include "io.h"
+#include "nondominated.h"
 
 static inline double 
 gd_common (int dim, const signed char *minmax,
@@ -122,6 +123,16 @@ IGD (int dim, const signed char *minmax,
                       points_a, size_a,
                       /*plus=*/false, /*psize=*/false,
                       /*p=*/1);
+}
+
+static double
+igd_C (const double *data, int nobj, int npoints, const double *ref, int ref_size,
+       const int *maximise)
+{
+    signed char *minmax = create_minmax(nobj, maximise);
+    double value = IGD (nobj, minmax, data, npoints, ref, ref_size);
+    free (minmax);
+    return(value);
 }
 
 static inline double

@@ -122,3 +122,11 @@ def test_plt_dta_types():
     eaf.plot_datasets(X, type="points,l")
     eaf.plot_datasets(X, type="point ,lines")
     eaf.plot_datasets(X, type="LiNe ,  PoInTs")
+
+
+def test_igd():
+    ref = np.array([10, 0, 6, 1, 2, 2, 1, 6, 0, 10]).reshape((-1, 2))
+    A = np.array([4, 2, 3, 3, 2, 4]).reshape((-1, 2))
+    B = np.array([8, 2, 4, 4, 2, 8]).reshape((-1, 2))
+    assert math.isclose(eaf.igd(A, ref), 3.707092031609239)
+    assert math.isclose(eaf.igd(B, ref), 2.59148346584763)

@@ -83,6 +83,33 @@ def read_datasets(filename):
     return array
 
 
+def igd(data, ref, maximise=False):
+    """TODO: Take documentation from: https://mlopez-ibanez.github.io/eaf/reference/igd.html"""
+    # Convert to numpy.array in case the user provides a list.  We use
+    # np.asfarray to convert it to floating-point, otherwise if a user inputs
+    # something like ref = np.array([10, 10]) then numpy would interpret it as
+    # an int array.
+    data = np.asfarray(data)
+    ref = np.atleast_2d(np.asfarray(ref))
+    nobj = data.shape[1]
+    if nobj != ref.shape[1]:
+        raise ValueError(
+            f"data and ref need to have the same number of columns ({nobj} != {ref.shape[1]})"
+        )
+    maximise = np.atleast_1d(maximise).astype(int)
+    if len(maximise) == 1:
+        maximise = np.full((nobj), maximise[0])
+
+    data_p = ffi.cast("double *", ffi.from_buffer(data))
+    nobj = ffi.cast("int", data.shape[1])
+    npoints = ffi.cast("int", data.shape[0])
+    ref_p = ffi.cast("double *", ffi.from_buffer(ref))
+    ref_size = ffi.cast("int", ref.shape[0])
+    maximise_p = ffi.cast("int *", ffi.from_buffer(maximise))
+    value = lib.igd_C(data_p, nobj, npoints, ref_p, ref_size, maximise_p)
+    return value
+
+
 def hv(data, ref):
     """
     Calculates hypervolume of reference + dataset
