@@ -5,7 +5,7 @@ from eafpy.c_bindings import lib, ffi
 
 class ReadDatasetsError(Exception):
     """
-    Custom exception class for an error returned by
+    Custom exception class for an error returned by the read_datasets function
 
     Attributes:
     Error - Error code returned by C library

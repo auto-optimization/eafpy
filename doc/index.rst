@@ -11,7 +11,7 @@ The EAF python package allows for easy calculation and visulisation of the empir
    :maxdepth: 2
    :caption: Contents:
 
-   notebooks/plot_datasets.ipynb
+   examples/plot_datasets_examples.md
 
 Indices and tables
 ==================

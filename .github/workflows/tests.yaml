@@ -125,6 +125,7 @@ jobs:
       - name: Build the docs
         run: |
           cd doc/
+          sphinx-apidoc -f -o . ../src/
           make html
           cd ..
 

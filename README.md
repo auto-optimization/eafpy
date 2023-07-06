@@ -20,7 +20,7 @@
 <https://github.com/poliastro/poliastro/commit/0bbcf95e50e3d740db659f651cbb56cc28219cf1>
   - [x] Documentation: (short intro: https://docs.python-guide.org/writing/documentation/) Longer: https://py-pkgs.org/06-documentation.html
     - [ ] API documentation: https://www.sphinx-doc.org/en/master/tutorial/automatic-doc-generation.html (I would suggest to use NumPy style annotations: https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html)
-    - [ ] Jupyter notebooks generated from python files: https://sphinx-gallery.github.io/stable/getting_started.html#create-simple-gallery (editing jupyter notebooks in github is not easy and they take a lot of space, it is better if they are generated from .py files that have markdown in comments)
+    - [x] Jupyter notebooks generated from python files: https://sphinx-gallery.github.io/stable/getting_started.html#create-simple-gallery (editing jupyter notebooks in github is not easy and they take a lot of space, it is better if they are generated from .py files that have markdown in comments)
   - [ ] Tutorial showing how to use the package: add it to the documentation or as a jupyter notebook.
   - [ ] Source of good ideas: https://github.com/anyoptimization/pymoo/tree/main
 
@@ -96,6 +96,12 @@ Once we are able to read the data into Python, the package should offer utilitie
      ![lines](https://mlopez-ibanez.github.io/eaf/reference/eafplot-7.png)
 
      ![areas](https://mlopez-ibanez.github.io/eaf/reference/eafplot-8.png)
+
+### TODO plots
+- [ ] 2d line plots -> The points should extend out to infinity for the first and last point
+- [ ] 3d cube plots -> The cube should extend down from infinity to the point for minimisation, insteaf of from zero
+- [ ] EAF plots -> Need to be able to shade areas of the plots with different colors
+  
 
 ## Developer instructions
 ### Quick start
@@ -244,5 +250,18 @@ pip install -r requirements_dev.txt
 cd doc
 make html
 ```
+#### Building the automatic docstring for sphinx
+To build the pages that are produced from docstrings, execute this
+```
+cd doc
+sphinx-apidoc -f -o . ../src/
+# Re-make the docs to see the changes
+make html 
+```
+This uses the sphinx `sphinxcontrib-napoleon` extension to build numpy docstrings
+#### Editing the interactive examples
+The examples uses the sphinx `myst-nb` extension to produce interactive plotly graphs inside executable jupyter, from markdown files. Look at this file as a template:
 
+`doc/examples/plot_datasets_examples.md`
 
+See [this](https://myst-nb.readthedocs.io/en/latest/authoring/text-notebooks.html) myst-nb for more information

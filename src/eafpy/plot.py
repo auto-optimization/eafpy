@@ -40,6 +40,7 @@ def _parse_plot_type(line_type, dimension):
         raise ValueError(f"Type argument for plot_datasets not recognised: {type}")
 
 
+# Generates smooth 3d mesh plot from dataset
 def _gen_3d_mesh_plot(dataset, type):
     num_sets = dataset["Set Number"].unique()
     fig = go.Figure()
@@ -77,8 +78,7 @@ def _gen_3d_mesh_plot(dataset, type):
     return fig
 
 
-# Might be better to do this in C?
-""" Take a numpy array of points and create a numpy array holding the remaing 8 points
+""" Take a numpy array of points and add the addtional points that make a cube from the origin
 
 :param np_dataset: Numpy dataset, it should be fetched using the read_dataset function
 :type np_dataset: numpy float ndarray
@@ -100,6 +100,10 @@ def _get_cube_points(dataset):
     for row in range(ds_cube.shape[0]):
         if row % 8 == 0:
             cube_num = cube_num + 1
+
+        # i,j,k represent binary digits that are counted up from 0 to 7 for each cube
+        # these are multiplied by the co-ordinates of the orignal point to create 8 total points
+        # Each point is a corner of a cube
         i = (row % 8) >> 2
         j = ((row % 8) >> 1) & 1
         k = (row % 8) & 1
@@ -112,12 +116,25 @@ def _get_cube_points(dataset):
     return ds_cube
 
 
-# The order of the points does matter
-# Need to select the triangles using i,j,k
-# Where each is an index of a point from the x,y,z list
-# We can make each cuboid out of 12 triangles
+def _get_tri_indexs(num_cubes):
+    # Each number in i,j,k represents an index of a point
+    # Each column of i,j,k forms a triangle from three points
+    # This pre-configuration forms a cube from 12 triangles
+    i = [1, 1, 4, 4, 2, 2, 0, 3, 3, 6, 4, 4]
+    j = [3, 5, 5, 1, 4, 4, 2, 2, 2, 7, 6, 7]
+    k = [7, 7, 1, 0, 6, 0, 1, 1, 6, 3, 7, 5]
+    # tri_index is a numpy array that contains indexs for n number of cubes
+    tri_index = np.zeros((3, num_cubes * 12), dtype=int)
+    tri_index[:3, :12] = np.array([i, j, k]).reshape(3, 12)
+    for n in range(num_cubes):
+        # Copy the triangle index preconfiguration to every cube
+        tri_index[0:3, n * 12 : (n + 1) * 12] = (
+            np.array([i, j, k]).reshape(3, 12) + 8 * n
+        )
+    return tri_index
 
 
+# Returns a cube point. This is
 def _get_cube_plot(dataset):
     fig = go.Figure()
     np_cubes = _get_cube_points(dataset)
@@ -128,25 +145,72 @@ def _get_cube_plot(dataset):
         "Set Number",
         "Cube Number",
     ]
+
     cube_df = pd.DataFrame(np_cubes, columns=col_names)
-    cube_nums = cube_df["Cube Number"].unique()
-    for cube in cube_nums:
-        single_cube = cube_df[cube_df["Cube Number"] == cube]
+    for set in cube_df["Set Number"].unique():
+        set_n_df = cube_df[cube_df["Set Number"] == set]
+        num_cubes = set_n_df["Cube Number"].nunique()
+        # Define the corners of all triangles in all cubes
+        cube_indexs = _get_tri_indexs(num_cubes)
         fig.add_trace(
             go.Mesh3d(
-                x=single_cube["Objective 1"],
-                y=single_cube["Objective 2"],
-                z=single_cube["Objective 3"],
-                i=[1, 1, 4, 4, 2, 2, 0, 3, 3, 6, 4, 4],
-                j=[3, 5, 5, 1, 4, 4, 2, 2, 2, 7, 6, 7],
-                k=[7, 7, 1, 0, 6, 0, 1, 1, 6, 3, 7, 5],
-                name="Cube " + str(cube),
-            ),
+                x=set_n_df["Objective 1"],
+                y=set_n_df["Objective 2"],
+                z=set_n_df["Objective 3"],
+                i=cube_indexs[0, :],
+                j=cube_indexs[1, :],
+                k=cube_indexs[2, :],
+                showlegend=True,
+                name="Set " + str(int(set)),
+            )
         )
+    fig.update_layout(
+        margin=_3d_margin,
+        legend_title_text="Set Number",
+        scene=dict(
+            xaxis_title="Objective 1",
+            yaxis_title="Objective 2",
+            zaxis_title="Objective 3",
+        ),
+        title=_get_3d_title("Cube plot of three objective dataset"),
+    )
     return fig
 
 
 def plot_datasets(datasets, type="points"):
+    """The `plot_datasets(dataset, type="points")` function plots Pareto front datasets
+    It can produce an interactive point graph, stair step graph or 3d surface graph. It accept 2 or 3 objectives
+
+    Parameters
+    ----------
+
+    dataset : numpy array
+        The `dataset` argument must be Numpy array produced by the `read_datasets()` function - an array with 3-4 columns including the objective data and set numbers.
+    type : str *default* : `"points"`
+
+        The `type` argument can be `"points"`, `"lines"`, `"points,lines"` for two objective datasets,
+        Or `"points"`, `"surface"` or `"cube"` for three objective datasets
+
+        `"points"` produces a scatter-like point graph *(2 or 3 objective)*
+
+        `"lines"` produces a stepped line graph *(2 objective only)*
+
+        `"points,lines"` produces a stepped line graph with points *(2 objective only)*
+
+        `"surface"` produces a smoothed 3d surface *(3 objective only*)
+
+        `"surface, points"` produces a smoothed 3d surface with datapoints plotted *(3 objective only*)
+
+        `"cube"` produces a discrete cube surface *(3 objective only*) (Not yet implemented)
+
+        The function parses the type argument, so accepts abbrieviations such as `p` or `"p,l"`
+
+    Returns
+    -------
+    Plotly GO figure
+        The function returns a `Plotly GO figure` object ([plotly reference](https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure.html)). This means that the user can customise any part of the graph after it is created
+
+    """
     datasets = np.asarray(datasets)
     if not isinstance(datasets, np.ndarray):
         raise TypeError("Dataset must be of type numpy array")
