@@ -118,6 +118,7 @@ jobs:
       - name: install the package
         run:
           pip install .
+          
       - name: install the doc build requirements
         run:
           pip install -r requirements_dev.txt

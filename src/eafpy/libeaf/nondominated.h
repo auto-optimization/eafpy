@@ -220,18 +220,14 @@ normalise (double *points, int dim, int size,
 
 int * pareto_rank (const double *points, int dim, int size);
 
-int is_nondominated_(const double * data, int nobj, int npoint, const int * maximise, bool keep_weak, bool ** nondom){
-    bool * is_nondom = nondom_init(npoint);
+bool * is_nondominated_(const double * data, int nobj, int npoint, const int * maximise, bool keep_weakly)
+{
+    bool * nondom = nondom_init(npoint);
     signed char * minmax = create_minmax(nobj, maximise);
-
-    if(keep_weak){
-        find_weak_nondominated_set(data, nobj, npoint, minmax, is_nondom);
-    } else{
-        find_nondominated_set(data, nobj, npoint, minmax, is_nondom);
-    }
-    
-    *nondom  = is_nondom;
-    free(is_nondom);
+    find_nondominated_set_ (data, nobj, npoint, minmax, AGREE_NONE, nondom,
+                            /* find_dominated_p = */false,
+                            /* keep_weakly = */keep_weakly);
     free(minmax);
+    return nondom;
 }
 #endif /* NONDOMINATED_H */

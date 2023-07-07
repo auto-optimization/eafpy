@@ -103,7 +103,7 @@ def test_plt_dta_types():
     """
     Check that the eaf.plot_datasets() functions has the right input handling
     """
-    X = eaf.read_datasets(f"tests/test_data/input1.dat")
+    X = eaf.read_datasets("tests/test_data/input1.dat")
     with pytest.raises(Exception) as expt:
         eaf.plot_datasets(datasets="Wrong input")
         assert expt.type == TypeError
@@ -146,3 +146,10 @@ def test_avg_hausdorff_dist():
     B = np.array([8, 2, 4, 4, 2, 8]).reshape((-1, 2))
     assert math.isclose(eaf.avg_hausdorff_dist(A, ref), 3.707092031609239)
     assert math.isclose(eaf.avg_hausdorff_dist(B, ref), 2.59148346584763)
+
+
+def test_is_nondominated():
+    X = eaf.read_datasets("tests/test_data/input1.dat")
+    subset = X[X[:, 2] == 3, :2]
+    dominated = eaf.is_nondominated(subset)
+    print(dominated)

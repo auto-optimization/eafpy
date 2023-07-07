@@ -186,21 +186,17 @@ def hv(data, ref):
     return hv
 
 
-def is_nondominated(data, allow_weak=False, maximise=False):
+def is_nondominated(data, maximise=False, keep_weakly=False):
+    """TODO: https://mlopez-ibanez.github.io/eaf/reference/nondominated.html"""
     data = np.asfarray(data)
     nobj = data.shape[1]
-    if isinstance(allow_weak, bool):
-        allow_weak = int(allow_weak)
-    elif allow_weak not in (0, 1):
-        raise ValueError("Invalid value for allow_weak. Expected bool or 0/1.")
     maximise = _parse_maximise(maximise, nobj)
+
     data_p = ffi.cast("double *", ffi.from_buffer(data))
     nobj = ffi.cast("int", nobj)
     npoints = ffi.cast("int", data.shape[0])
     maximise_p = ffi.cast("int *", ffi.from_buffer(maximise))
-    keepweak = ffi.cast("int", allow_weak)
-
-    nondom_p = ffi.new("bool **", ffi.NULL)
-    nd = lib.is_nondominated_(data_p, nobj, npoints, maximise_p, keepweak, nondom_p)
-    nondom_buf = ffi.buffer(nondom_p[0], data.shape[0] * ffi.sizeof("bool"))
-    return nondom_buf
+    keep_weakly = ffi.cast("bool", bool(keep_weakly))
+    nondom = lib.is_nondominated_(data_p, nobj, npoints, maximise_p, keep_weakly)
+    nondom = ffi.buffer(nondom, data.shape[0])
+    return np.frombuffer(nondom, dtype=bool)

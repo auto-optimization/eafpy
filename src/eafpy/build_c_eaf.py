@@ -10,7 +10,7 @@ ffibuilder.cdef(
     double igd_C (const double *data, int nobj, int npoints, const double *ref, int ref_size, const int *maximise);
     double igd_plus_C (const double *data, int nobj, int npoints, const double *ref, int ref_size, const int *maximise);
     double avg_Hausdorff_dist_C (const double *data, int nobj, int npoints, const double *ref, int ref_size, const int *maximise, unsigned int p);
-    int is_nondominated_(double * data, int * nobj, int * npoint, bool * maximise, bool keep_weak, bool * nondom);
+    bool * is_nondominated_(const double * data, int nobj, int npoint, const int * maximise, bool keep_weakly);
     """
 )
 
