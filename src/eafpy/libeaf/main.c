@@ -47,9 +47,7 @@ void print_read_datsets(const char * filename){
     if(x != 0){
         printf("error detected %d", x);
     }
-    // for (int i = 0; i< (num_obj+1)*num_rows; i++ ){
-    //     printf("%-15g ",return_data[i]);
-    // }
+
 }
 
 

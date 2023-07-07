@@ -22,7 +22,7 @@ create_minmax(int nobj, const int * maximise)
 static inline bool *
 nondom_init (size_t size)
 {
-    bool * nondom = malloc (sizeof(bool) * size);
+    bool * nondom = malloc(sizeof(bool) * size);
     for (size_t n = 0; n <  size; n++)
         nondom[n] = true;
     return nondom;
@@ -220,5 +220,18 @@ normalise (double *points, int dim, int size,
 
 int * pareto_rank (const double *points, int dim, int size);
 
+int is_nondominated_(const double * data, int nobj, int npoint, const int * maximise, bool keep_weak, bool ** nondom){
+    bool * is_nondom = nondom_init(npoint);
+    signed char * minmax = create_minmax(nobj, maximise);
 
+    if(keep_weak){
+        find_weak_nondominated_set(data, nobj, npoint, minmax, is_nondom);
+    } else{
+        find_nondominated_set(data, nobj, npoint, minmax, is_nondom);
+    }
+    
+    *nondom  = is_nondom;
+    free(is_nondom);
+    free(minmax);
+}
 #endif /* NONDOMINATED_H */

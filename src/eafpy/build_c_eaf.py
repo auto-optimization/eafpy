@@ -10,6 +10,7 @@ ffibuilder.cdef(
     double igd_C (const double *data, int nobj, int npoints, const double *ref, int ref_size, const int *maximise);
     double igd_plus_C (const double *data, int nobj, int npoints, const double *ref, int ref_size, const int *maximise);
     double avg_Hausdorff_dist_C (const double *data, int nobj, int npoints, const double *ref, int ref_size, const int *maximise, unsigned int p);
+    int is_nondominated_(double * data, int * nobj, int * npoint, bool * maximise, bool keep_weak, bool * nondom);
     """
 )
 
@@ -19,14 +20,14 @@ ffibuilder.set_source(
     "eafpy.c_bindings",
     """
     #include "io.h"   // the C header of the library
-    #include "hv.h"   //
-    #include "igd.h" //
+    #include "hv.h"   
+    #include "igd.h" 
+    #include "nondominated.h"
 """,
     sources=[
         "src/eafpy/libeaf/io.c",
         "src/eafpy/libeaf/hv.c",
     ],
-    # sources=["io.c"], #comment above and uncomment this if testing without build
     include_dirs=[libeaf_path],
 )
 

@@ -83,6 +83,22 @@ def read_datasets(filename):
     return array
 
 
+def _parse_maximise(maximise, nobj):
+    # Converts maximise array or single bool to ndarray format
+    # I.E if 3 objectives, maximise = True -> maximise = (1,1,1)
+    # eg. 3 objectives, maximise = [True, False, True] -> maximise = (1,0,1)
+    maximise = np.atleast_1d(maximise).astype(int)
+    if len(maximise) == 1:
+        maximise = np.full((nobj), maximise[0])
+    else:
+        if maximise.shape[0] != nobj:
+            raise ValueError(
+                "Maximise array must have same # of cols as data"
+                f"{maximise.shape[0]} != {nobj}"
+            )
+    return maximise
+
+
 def _unary_refset_common(data, ref, maximise):
     # Convert to numpy.array in case the user provides a list.  We use
     # np.asfarray to convert it to floating-point, otherwise if a user inputs
@@ -95,9 +111,7 @@ def _unary_refset_common(data, ref, maximise):
         raise ValueError(
             f"data and ref need to have the same number of columns ({nobj} != {ref.shape[1]})"
         )
-    maximise = np.atleast_1d(maximise).astype(int)
-    if len(maximise) == 1:
-        maximise = np.full((nobj), maximise[0])
+    maximise = _parse_maximise(maximise, nobj)
 
     return data, ref, maximise
 
@@ -112,6 +126,7 @@ def igd(data, ref, maximise=False):
     ref_p = ffi.cast("double *", ffi.from_buffer(ref))
     ref_size = ffi.cast("int", ref.shape[0])
     maximise_p = ffi.cast("int *", ffi.from_buffer(maximise))
+    print(maximise)
     return lib.igd_C(data_p, nobj, npoints, ref_p, ref_size, maximise_p)
 
 
@@ -169,3 +184,23 @@ def hv(data, ref):
     data_objs = ffi.cast("int", data.shape[1])
     hv = lib.fpli_hv(data_p, data_objs, data_points, ref_buf)
     return hv
+
+
+def is_nondominated(data, allow_weak=False, maximise=False):
+    data = np.asfarray(data)
+    nobj = data.shape[1]
+    if isinstance(allow_weak, bool):
+        allow_weak = int(allow_weak)
+    elif allow_weak not in (0, 1):
+        raise ValueError("Invalid value for allow_weak. Expected bool or 0/1.")
+    maximise = _parse_maximise(maximise, nobj)
+    data_p = ffi.cast("double *", ffi.from_buffer(data))
+    nobj = ffi.cast("int", nobj)
+    npoints = ffi.cast("int", data.shape[0])
+    maximise_p = ffi.cast("int *", ffi.from_buffer(maximise))
+    keepweak = ffi.cast("int", allow_weak)
+
+    nondom_p = ffi.new("bool **", ffi.NULL)
+    nd = lib.is_nondominated_(data_p, nobj, npoints, maximise_p, keepweak, nondom_p)
+    nondom_buf = ffi.buffer(nondom_p[0], data.shape[0] * ffi.sizeof("bool"))
+    return nondom_buf
