@@ -23,7 +23,9 @@ extensions = [
     "sphinx.ext.napoleon",
     "myst_nb",
 ]
-# suppress_warnings = ["mystnb.unknown_mime_type"]
+html_theme = "pydata_sphinx_theme"
+
+suppress_warnings = ["mystnb.unknown_mime_type"]
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
@@ -36,5 +38,5 @@ language = "English"
 
 # Sphinx awesome theme currently breaks the jupyter plotly example
 # html_permalinks_icon = "<span>#</span>"
-# html_theme = "sphinxawesome_theme"
+
 html_static_path = ["_static"]

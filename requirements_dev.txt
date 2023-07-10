@@ -9,7 +9,7 @@ sphinx
 tox >= 4.5
 virtualenv >= 20
 build
-sphinxawesome-theme
+pydata_sphinx_theme
 jupyter
 ipykernel
 kaleido

@@ -37,21 +37,35 @@ import tempfile
 
 
 def read_datasets(filename):
+    """Identify, and remove dominated points according to Pareto optimality.
+    Reads an input dataset file, parsing the file and returning a numpy array
+
+    Parameters
+    ----------
+    filename : string
+        Filename of the dataset file. Each row of the table appears as one line of the file.
+        If it does not contain an absolute path, the file name is relative to the current working directory.
+        If the filename has extension '.xz', it is decompressed to a temporary file before reading it.
+
+    Returns
+    -------
+    numpy array
+        An array containing a representation of the data in the file.
+        The first n-1 columns contain the numerical data for each of the objectives
+        The last column contains an identifier for which set the data is relevant to.
+
+    Examples
+    --------
+    >>> eaf.read_dataset("input1.dat")
+    np.array([
+    [ 8.7475454  ,  1.71575862  , 1.        ]
+    [ 0.58799475 ,  0.73891181  , 1.        ]
+    [ 8.58848772 ,  3.69781313  , 2.        ]
+    [ 1.5964888  ,  5.98825094  , 2.        ] ...
+    ])
+    Columns represented are [Objective 1, Objective 2, Set Number]
+    # [0] = Objective 1, [1] Objective 2, [2] = Set number
     """
-    Reads an input dataset and returns a 2d numpy array.
-    The first n-1 columns contain the numerical data for each of the objectives
-    The last column contains an identifier for which set the data is relevant to.
-
-    If the filename has extension '.xz', it is decompressed to a temporary file before reading it.
-
-    For example:
-    Objective 1  |  Objective 2 | Set number
-    [ 8.7475454  |  1.71575862  | 1.        ]
-    [ 0.58799475 |  0.73891181  | 1.        ]
-    [ 8.58848772 |  3.69781313  | 2.        ]
-    [ 1.5964888  |  5.98825094  | 2.        ]
-    """
-
     filename = os.path.expanduser(filename)
     if not os.path.isfile(filename):
         raise FileNotFoundError(f"file {filename} not found")
@@ -117,8 +131,47 @@ def _unary_refset_common(data, ref, maximise):
 
 
 def igd(data, ref, maximise=False):
-    """TODO: Take documentation from: https://mlopez-ibanez.github.io/eaf/reference/igd.html"""
+    """Inverted Generational Distance (IGD and IGD+) and Averaged Hausdorff Distance
+    Functions to compute the inverted generational distance (IGD and IGD+) and the \
+    averaged Hausdorff distance between nondominated sets of points.
 
+    ```
+    igd(data, reference, maximise = FALSE)
+
+    igd_plus(data, reference, maximise = FALSE)
+
+    avg_hausdorff_dist(data, reference, maximise = FALSE, p = 1L)
+    ```
+
+    Parameters
+    ----------
+    data : numpy array
+        Numpy array of numerical values, where each row gives the coordinates of a point.
+        If using `read_dataset()` function, remove the last column
+    reference : numpy array or list
+        Reference point set as a numpy array or list. Must be same length as a single point in the \
+        dataset
+    maximise : single bool, or list of booleans
+        Whether the objectives must be maximised instead of minimised. \
+        Either a single boolean value that applies to all objectives or a list of booleans, with one value per objective. \
+        Also accepts a 1d numpy array with value 0/1 for each objective
+    P : Hausdorff distance parameter (default: 1L).
+
+    Returns
+    -------
+    float
+        A single numerical value  
+
+    Examples
+    --------
+    >>> dat =  np.array([[3.5,5.5], [3.6,4.1], [4.1,3.2], [5.5,1.5]])
+    >>> ref = np.array([1, 6], [2,5], [3,4], [4,3], [5,2], [6,1]]
+    >>> eaf.igd(dat, ref = ref)
+    1.0627908666722465
+
+    >>> eaf.igd_plus(dat, ref = ref)
+    0.9855036468106652
+    """
     data, ref, maximise = _unary_refset_common(data, ref, maximise)
     data_p = ffi.cast("double *", ffi.from_buffer(data))
     nobj = ffi.cast("int", data.shape[1])
@@ -126,7 +179,6 @@ def igd(data, ref, maximise=False):
     ref_p = ffi.cast("double *", ffi.from_buffer(ref))
     ref_size = ffi.cast("int", ref.shape[0])
     maximise_p = ffi.cast("int *", ffi.from_buffer(maximise))
-    print(maximise)
     return lib.igd_C(data_p, nobj, npoints, ref_p, ref_size, maximise_p)
 
 
@@ -187,7 +239,44 @@ def hv(data, ref):
 
 
 def is_nondominated(data, maximise=False, keep_weakly=False):
-    """TODO: https://mlopez-ibanez.github.io/eaf/reference/nondominated.html"""
+    """Identify, and remove dominated points according to Pareto optimality.
+
+    Parameters
+    ----------
+    data : numpy array
+        Numpy array of numerical values, where each row gives the coordinates of a point.
+    maximise : single bool, or list of boleans
+        Whether the objectives must be maximised instead of minimised. \
+        Either a single boolean value that applies to all objectives or a list of boolean values, with one value per objective. \
+        Also accepts a 1d numpy array with value 0/1 for each objective
+    keep_weakly: bool
+        If FALSE, return FALSE for any duplicates of nondominated points
+
+    Returns
+    -------
+    bool array
+        `is_nondominated` returns a boolean list of the same length as the number of rows of data,\
+        where TRUE means that the point is not dominated by any other point.
+
+        `filter_dominated` returns a numpy array with only mutually nondominated points.
+
+        
+    Examples
+    --------
+    **nondominated** examples
+        >>> S = np.array([[1,1], [0,1], [1,0], [1,0]])
+        >>> eaf.is_nondominated(S)
+        [False, True, false, True]
+
+        >>> eaf.is_nondominated(S, maximise = True)
+        [True, False, False, False]
+
+        >>> eaf.filter_dominated(S)
+        np.array([0,1], [1,0])
+
+        >>> eaf.filter_dominated(S, keep_weakly = True)
+        np.array([0,1], [1,0], [1,0])
+    """
     data = np.asfarray(data)
     nobj = data.shape[1]
     maximise = _parse_maximise(maximise, nobj)
@@ -200,3 +289,10 @@ def is_nondominated(data, maximise=False, keep_weakly=False):
     nondom = lib.is_nondominated_(data_p, nobj, npoints, maximise_p, keep_weakly)
     nondom = ffi.buffer(nondom, data.shape[0])
     return np.frombuffer(nondom, dtype=bool)
+
+
+def filter_dominated(data, maximise=False, keep_weakly=False):
+    """remove dominated points according to Pareto optimality.
+    See: `is_nondominated`
+    """
+    return data[is_nondominated(data, maximise, keep_weakly)]

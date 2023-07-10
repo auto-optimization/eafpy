@@ -152,4 +152,25 @@ def test_is_nondominated():
     X = eaf.read_datasets("tests/test_data/input1.dat")
     subset = X[X[:, 2] == 3, :2]
     dominated = eaf.is_nondominated(subset)
-    print(dominated)
+    assert (
+        dominated == [False, False, False, False, True, False, True, True, False, True]
+    ).all
+    T = np.array([[1, 0, 1], [1, 1, 1], [0, 1, 1], [1, 0, 1], [1, 1, 0], [1, 1, 1]])
+    non_dominated = T[eaf.is_nondominated(T)]
+    assert (non_dominated == [[0, 1, 1], [1, 0, 1], [1, 1, 0]]).all()
+    non_dominated_weak = T[eaf.is_nondominated(T, keep_weakly=True)]
+    assert (non_dominated_weak == [[1, 0, 1], [0, 1, 1], [1, 0, 1], [1, 1, 0]]).all()
+    max = np.array(
+        [
+            [0, 0, 0, 0],
+            [0, 0, 0, 1],
+            [0, 0, 1, 1],
+            [0, 0, 1, 2],
+            [1, 0, 0, 0],
+            [10, 20, 0, 0],
+            [20, 10, 0, 0],
+            [2, 2, 0, 0],
+        ]
+    )
+    max_nondom = max[eaf.is_nondominated(max, maximise=True)]
+    assert (max_nondom == [[0, 0, 1, 2], [10, 20, 0, 0], [20, 10, 0, 0]]).all()
