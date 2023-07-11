@@ -120,7 +120,7 @@ def _parse_maximise(maximise, nobj):
                 "Maximise array must have same # of cols as data"
                 f"{maximise.shape[0]} != {nobj}"
             )
-    return maximise
+    return np.ascontiguousarray(maximise)
 
 
 def _unary_refset_common(data, ref, maximise):
@@ -188,12 +188,12 @@ def igd(data, ref, maximise=False):
 
     """
     data, ref, maximise = _unary_refset_common(data, ref, maximise)
-    data_p = ffi.cast("double *", ffi.from_buffer(data))
+    data_p = ffi.from_buffer("double []", data)
     nobj = ffi.cast("int", data.shape[1])
     npoints = ffi.cast("int", data.shape[0])
-    ref_p = ffi.cast("double *", ffi.from_buffer(ref))
+    ref_p = ffi.from_buffer("double []", ref)
     ref_size = ffi.cast("int", ref.shape[0])
-    maximise_p = ffi.cast("int *", ffi.from_buffer(maximise))
+    maximise_p = ffi.from_buffer("int []", maximise)
     return lib.igd_C(data_p, nobj, npoints, ref_p, ref_size, maximise_p)
 
 
@@ -203,12 +203,12 @@ def igd_plus(data, ref, maximise=False):
     See :func:`igd`
     """
     data, ref, maximise = _unary_refset_common(data, ref, maximise)
-    data_p = ffi.cast("double *", ffi.from_buffer(data))
+    data_p = ffi.from_buffer("double []", data)
     nobj = ffi.cast("int", data.shape[1])
     npoints = ffi.cast("int", data.shape[0])
-    ref_p = ffi.cast("double *", ffi.from_buffer(ref))
+    ref_p = ffi.from_buffer("double []", ref)
     ref_size = ffi.cast("int", ref.shape[0])
-    maximise_p = ffi.cast("int *", ffi.from_buffer(maximise))
+    maximise_p = ffi.from_buffer("int []", maximise)
     return lib.igd_plus_C(data_p, nobj, npoints, ref_p, ref_size, maximise_p)
 
 
@@ -221,12 +221,12 @@ def avg_hausdorff_dist(data, ref, maximise=False, p=1):
         raise ValueError(f"'p' must be larger than zero")
 
     data, ref, maximise = _unary_refset_common(data, ref, maximise)
-    data_p = ffi.cast("double *", ffi.from_buffer(data))
+    data_p = ffi.from_buffer("double []", data)
     nobj = ffi.cast("int", data.shape[1])
     npoints = ffi.cast("int", data.shape[0])
-    ref_p = ffi.cast("double *", ffi.from_buffer(ref))
+    ref_p = ffi.from_buffer("double []", ref)
     ref_size = ffi.cast("int", ref.shape[0])
-    maximise_p = ffi.cast("int *", ffi.from_buffer(maximise))
+    maximise_p = ffi.from_buffer("int []", maximise)
     p = ffi.cast("unsigned int", p)
     return lib.avg_Hausdorff_dist_C(
         data_p, nobj, npoints, ref_p, ref_size, maximise_p, p
@@ -278,8 +278,8 @@ def hypervolume(data, ref):
             f"data and ref need to have the same number of objectives ({data.shape[1]} != {ref.shape[0]})"
         )
 
-    ref_buf = ffi.cast("double *", ffi.from_buffer(ref))
-    data_p = ffi.cast("double *", ffi.from_buffer(data))
+    ref_buf = ffi.from_buffer("double []", ref)
+    data_p = ffi.from_buffer("double []", data)
     data_points = ffi.cast("int", data.shape[0])
     data_objs = ffi.cast("int", data.shape[1])
     hv = lib.fpli_hv(data_p, data_objs, data_points, ref_buf)
@@ -294,7 +294,7 @@ def is_nondominated(data, maximise=False, keep_weakly=False):
     data : numpy array
         Numpy array of numerical values, where each row gives the coordinates of a point in objective space.
         If the array is created from the `read_dataset()` function, remove the last column.
-    maximise : single bool, or list of boleans
+    maximise : single bool, or list of booleans
         Whether the objectives must be maximised instead of minimised. \
         Either a single boolean value that applies to all objectives or a list of boolean values, with one value per objective. \
         Also accepts a 1d numpy array with value 0/1 for each objective
@@ -329,11 +329,14 @@ def is_nondominated(data, maximise=False, keep_weakly=False):
     data = np.asfarray(data)
     nobj = data.shape[1]
     maximise = _parse_maximise(maximise, nobj)
+    # FIXME: change _parse_maximise to return a boolean array
+    # FIXME2: change the C functions to take a bool * maximise.
+    maximise = maximise.astype(bool)
 
-    data_p = ffi.cast("double *", ffi.from_buffer(data))
+    data_p = ffi.from_buffer("double []", data)
     nobj = ffi.cast("int", nobj)
     npoints = ffi.cast("int", data.shape[0])
-    maximise_p = ffi.cast("int *", ffi.from_buffer(maximise))
+    maximise_p = ffi.from_buffer("bool []", maximise)
     keep_weakly = ffi.cast("bool", bool(keep_weakly))
     nondom = lib.is_nondominated_(data_p, nobj, npoints, maximise_p, keep_weakly)
     nondom = ffi.buffer(nondom, data.shape[0])
@@ -341,7 +344,7 @@ def is_nondominated(data, maximise=False, keep_weakly=False):
 
 
 def filter_dominated(data, maximise=False, keep_weakly=False):
-    """remove dominated points according to Pareto optimality.
+    """Remove dominated points according to Pareto optimality.
     See: :func:`is_nondominated` for details
     """
     return data[is_nondominated(data, maximise, keep_weakly)]

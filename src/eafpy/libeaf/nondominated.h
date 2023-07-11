@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include <string.h> // memcpy
+#include <inttypes.h>
 
 enum objs_agree_t { AGREE_MINIMISE = -1, AGREE_NONE = 0, AGREE_MAXIMISE = 1 };
 
@@ -12,9 +13,20 @@ create_minmax(int nobj, const int * maximise)
 {
     signed char * minmax = malloc(sizeof(signed char) * nobj);
     for (int k = 0; k < nobj; k++) {
-        minmax[k] = (maximise[k] == TRUE)
+        minmax[k] = (maximise[k] == 1)
             ? AGREE_MAXIMISE
-            : (maximise[k] == FALSE) ? AGREE_MINIMISE : AGREE_NONE;
+            : (maximise[k] == 0) ? AGREE_MINIMISE : AGREE_NONE;
+    }
+    return minmax;
+}
+
+/* Convert from int vector to minmax vector.  */
+static inline signed char *
+create_minmax_2(int nobj, const bool * maximise)
+{
+    signed char * minmax = malloc(sizeof(signed char) * nobj);
+    for (int k = 0; k < nobj; k++) {
+        minmax[k] = (maximise[k]) ? AGREE_MAXIMISE : AGREE_MINIMISE;
     }
     return minmax;
 }
@@ -220,10 +232,10 @@ normalise (double *points, int dim, int size,
 
 int * pareto_rank (const double *points, int dim, int size);
 
-bool * is_nondominated_(const double * data, int nobj, int npoint, const int * maximise, bool keep_weakly)
+bool * is_nondominated_(const double * data, int nobj, int npoint, const bool * maximise, bool keep_weakly)
 {
     bool * nondom = nondom_init(npoint);
-    signed char * minmax = create_minmax(nobj, maximise);
+    signed char * minmax = create_minmax_2(nobj, maximise);
     find_nondominated_set_ (data, nobj, npoint, minmax, AGREE_NONE, nondom,
                             /* find_dominated_p = */false,
                             /* keep_weakly = */keep_weakly);
