@@ -160,8 +160,9 @@ def test_is_nondominated():
     assert (non_dominated == np.array([[0, 1, 1], [1, 0, 1], [1, 1, 0]])).all()
     non_dominated_weak = T[eaf.is_nondominated(T, keep_weakly=True)]
     expct_nondom_weak = np.array([[1, 0, 1], [0, 1, 1], [1, 0, 1], [1, 1, 0]])
-    assert (non_dominated_weak == expct_nondom_weak).all()
-    assert (eaf.filter_dominated(T, keep_weakly=True) == expct_nondom_weak).all()
+
+    assert np.array_equal(non_dominated_weak, expct_nondom_weak)
+    assert np.array_equal(eaf.filter_dominated(T, keep_weakly=True), expct_nondom_weak)
 
     max = np.array(
         [
@@ -177,5 +178,5 @@ def test_is_nondominated():
     )
     max_nondom = max[eaf.is_nondominated(max, maximise=True)]
     expected_max_nondom = np.array([[0, 0, 1, 2], [10, 20, 0, 0], [20, 10, 0, 0]])
-    assert (max_nondom == expected_max_nondom).all()
-    assert (eaf.filter_dominated(max, maximise=True) == expected_max_nondom).all()
+    assert np.array_equal(max_nondom, expected_max_nondom)
+    assert np.array_equal(eaf.filter_dominated(max, maximise=True), expected_max_nondom)
