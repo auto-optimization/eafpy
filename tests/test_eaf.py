@@ -80,10 +80,10 @@ def test_hv_output():
     Checks the hypervolume calculation produces the correct value
     """
     X = eaf.read_datasets(f"tests/test_data/input1.dat")
-    hv = eaf.hv(X[X[:, 2] == 1, :2], ref=np.array([10, 10]))
+    hv = eaf.hypervolume(X[X[:, 2] == 1, :2], ref=np.array([10, 10]))
     assert math.isclose(hv, 90.46272765), "input1.dat hypervolume produces wrong output"
 
-    hv = eaf.hv(X[X[:, 2] == 1, :2], ref=[10, 10])
+    hv = eaf.hypervolume(X[X[:, 2] == 1, :2], ref=[10, 10])
     assert math.isclose(hv, 90.46272765), "input1.dat hypervolume produces wrong output"
 
 
@@ -95,7 +95,7 @@ def test_hv_wrong_ref():
     X = eaf.read_datasets(f"tests/test_data/input1.dat")
 
     with pytest.raises(Exception) as expt:
-        hv = eaf.hv(X[X[:, 2] == 1, :2], ref=np.array([10, 10, 10]))
+        hv = eaf.hypervolume(X[X[:, 2] == 1, :2], ref=np.array([10, 10, 10]))
     assert expt.type == ValueError
 
 
@@ -157,9 +157,12 @@ def test_is_nondominated():
     ).all
     T = np.array([[1, 0, 1], [1, 1, 1], [0, 1, 1], [1, 0, 1], [1, 1, 0], [1, 1, 1]])
     non_dominated = T[eaf.is_nondominated(T)]
-    assert (non_dominated == [[0, 1, 1], [1, 0, 1], [1, 1, 0]]).all()
+    assert (non_dominated == np.array([[0, 1, 1], [1, 0, 1], [1, 1, 0]])).all()
     non_dominated_weak = T[eaf.is_nondominated(T, keep_weakly=True)]
-    assert (non_dominated_weak == [[1, 0, 1], [0, 1, 1], [1, 0, 1], [1, 1, 0]]).all()
+    expct_nondom_weak = np.array([[1, 0, 1], [0, 1, 1], [1, 0, 1], [1, 1, 0]])
+    assert (non_dominated_weak == expct_nondom_weak).all()
+    assert (eaf.filter_dominated(T, keep_weakly=True) == expct_nondom_weak).all()
+
     max = np.array(
         [
             [0, 0, 0, 0],
@@ -173,4 +176,6 @@ def test_is_nondominated():
         ]
     )
     max_nondom = max[eaf.is_nondominated(max, maximise=True)]
-    assert (max_nondom == [[0, 0, 1, 2], [10, 20, 0, 0], [20, 10, 0, 0]]).all()
+    expected_max_nondom = np.array([[0, 0, 1, 2], [10, 20, 0, 0], [20, 10, 0, 0]])
+    assert (max_nondom == expected_max_nondom).all()
+    assert (eaf.filter_dominated(max, maximise=True) == expected_max_nondom).all()

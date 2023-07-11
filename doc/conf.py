@@ -20,8 +20,10 @@ html_js_files = [
 
 
 extensions = [
+    "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "myst_nb",
+    "sphinx.ext.autosectionlabel",
 ]
 html_theme = "pydata_sphinx_theme"
 

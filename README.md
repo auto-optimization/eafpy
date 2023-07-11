@@ -186,7 +186,7 @@ python3 -m build
 
 You can now install the package. Use this command:
 `pip install -e .`
-It is reccomended to reinstall  the package every time you want to test an update
+It is reccomended to reinstall the package every time you have re-compiled the C files. If you have only changed the python files, you don't need to re-build and re-install it every time due to the `-e` argument.
 You can now test the installation worked by running the tests 
 
 #### Run the tests

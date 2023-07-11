@@ -1,6 +1,6 @@
 from .eaf import read_datasets, ReadDatasetsError
 from .eaf import (
-    hv,
+    hypervolume,
     igd,
     igd_plus,
     avg_hausdorff_dist,

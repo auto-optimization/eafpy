@@ -208,7 +208,9 @@ def plot_datasets(datasets, type="points"):
     Returns
     -------
     Plotly GO figure
-        The function returns a `Plotly GO figure` object ([plotly reference](https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure.html)). This means that the user can customise any part of the graph after it is created
+        The function returns a `Plotly GO figure` object `Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure.html/>`_
+
+        This means that the user can customise any part of the graph after it is created
 
     """
     datasets = np.asarray(datasets)

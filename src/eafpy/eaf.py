@@ -58,13 +58,23 @@ def read_datasets(filename):
     --------
     >>> eaf.read_dataset("input1.dat")
     np.array([
-    [ 8.7475454  ,  1.71575862  , 1.        ]
-    [ 0.58799475 ,  0.73891181  , 1.        ]
-    [ 8.58848772 ,  3.69781313  , 2.        ]
-    [ 1.5964888  ,  5.98825094  , 2.        ] ...
+       [ 8.07559653,  2.40702554,  1.   ],
+       [ 8.66094446,  3.64050144,  1.   ],
+       [ 0.20816431,  4.62275469,  1.   ],
+       [ 4.8814328 ,  9.09473137,  1.   ], ...
     ])
-    Columns represented are [Objective 1, Objective 2, Set Number]
-    # [0] = Objective 1, [1] Objective 2, [2] = Set number
+
+    The numpy array represents this data:
+
+    +-------------+-------------+------------+
+    | Objective 1 | Objective 2 | Set Number |
+    +-------------+-------------+------------+
+    | 8.07559653  | 2.40702554  | 1.0        |
+    +-------------+-------------+------------+
+    | 8.66094446  | 3.64050144  | 1.0        |
+    +-------------+-------------+------------+
+    | etc.        | etc.        | etc.       |
+    +-------------+-------------+------------+
     """
     filename = os.path.expanduser(filename)
     if not os.path.isfile(filename):
@@ -135,20 +145,21 @@ def igd(data, ref, maximise=False):
     Functions to compute the inverted generational distance (IGD and IGD+) and the \
     averaged Hausdorff distance between nondominated sets of points.
 
-    ```
-    igd(data, reference, maximise = FALSE)
+    ::
+    
+        igd(data, reference, maximise = FALSE)
 
-    igd_plus(data, reference, maximise = FALSE)
+        igd_plus(data, reference, maximise = FALSE)
 
-    avg_hausdorff_dist(data, reference, maximise = FALSE, p = 1L)
-    ```
+        avg_hausdorff_dist(data, ref, maximise = FALSE, p = 1L)
+    
 
     Parameters
     ----------
     data : numpy array
-        Numpy array of numerical values, where each row gives the coordinates of a point.
-        If using `read_dataset()` function, remove the last column
-    reference : numpy array or list
+        Numpy array of numerical values, where each row gives the coordinates of a point in objective space.
+        If the array is created from the :func:`read_datasets` function, remove the last (set) column
+    ref : numpy array or list
         Reference point set as a numpy array or list. Must be same length as a single point in the \
         dataset
     maximise : single bool, or list of booleans
@@ -165,12 +176,16 @@ def igd(data, ref, maximise=False):
     Examples
     --------
     >>> dat =  np.array([[3.5,5.5], [3.6,4.1], [4.1,3.2], [5.5,1.5]])
-    >>> ref = np.array([1, 6], [2,5], [3,4], [4,3], [5,2], [6,1]]
+    >>> ref = np.array([[1, 6], [2,5], [3,4], [4,3], [5,2], [6,1]])
     >>> eaf.igd(dat, ref = ref)
     1.0627908666722465
 
     >>> eaf.igd_plus(dat, ref = ref)
     0.9855036468106652
+
+    >>> eaf.avg_hausdorff_dist(dat, ref)
+    1.0627908666722465
+
     """
     data, ref, maximise = _unary_refset_common(data, ref, maximise)
     data_p = ffi.cast("double *", ffi.from_buffer(data))
@@ -183,7 +198,10 @@ def igd(data, ref, maximise=False):
 
 
 def igd_plus(data, ref, maximise=False):
-    """TODO: Take documentation from: https://mlopez-ibanez.github.io/eaf/reference/igd.html"""
+    """Calculate igd+ indicator
+
+    See :func:`igd`
+    """
     data, ref, maximise = _unary_refset_common(data, ref, maximise)
     data_p = ffi.cast("double *", ffi.from_buffer(data))
     nobj = ffi.cast("int", data.shape[1])
@@ -195,7 +213,10 @@ def igd_plus(data, ref, maximise=False):
 
 
 def avg_hausdorff_dist(data, ref, maximise=False, p=1):
-    """TODO: Take documentation from: https://mlopez-ibanez.github.io/eaf/reference/igd.html"""
+    """Calculate average Hausdorff distance
+
+    See :func:`igd`
+    """
     if p <= 0:
         raise ValueError(f"'p' must be larger than zero")
 
@@ -212,11 +233,38 @@ def avg_hausdorff_dist(data, ref, maximise=False, p=1):
     )
 
 
-def hv(data, ref):
-    """
-    Calculates hypervolume of reference + dataset
-    the reference must be a 1-d numpy array with the same
-    Number of objectives as the dataset.
+def hypervolume(data, ref):
+    """Hypervolume indicator
+    Computes the hypervolume metric with respect to a given reference point assuming minimization of all objectives.
+
+    Parameters
+    ----------
+    data : numpy array
+        Numpy array of numerical values, where each row gives the coordinates of a point in objective space.
+        If the array is created from the `read_dataset()` function, remove the last column
+    ref : numpy array or list
+        Reference point set as a numpy array or list. Must be same length as a single point in the \
+        dataset
+
+    Returns
+    -------
+    float
+        A single numerical value, the hypervolume indicator
+
+    Examples
+    --------
+    >>> dat = np.array([[5,5],[4,6],[2,7], [7,4]])
+    >>> eaf.hypervolume(dat, ref = [10, 10])
+    38.0
+
+    >>> dat = read_datasets("input1.dat")
+     # Select Set 1 of dataset, and remove set number column
+    >>> set1 = dat[dat[:,2]==1, :2]
+     # This set contains dominated points so remove them
+    >>> set1 = eaf.filter_dominiated(set1)
+    >>> hv = eaf.hypervolume(set1, ref= [10, 10])
+    90.46272764755885
+
     """
     # Convert to numpy.array in case the user provides a list.  We use
     # np.asfarray to convert it to floating-point, otherwise if a user inputs
@@ -244,7 +292,8 @@ def is_nondominated(data, maximise=False, keep_weakly=False):
     Parameters
     ----------
     data : numpy array
-        Numpy array of numerical values, where each row gives the coordinates of a point.
+        Numpy array of numerical values, where each row gives the coordinates of a point in objective space.
+        If the array is created from the `read_dataset()` function, remove the last column.
     maximise : single bool, or list of boleans
         Whether the objectives must be maximised instead of minimised. \
         Either a single boolean value that applies to all objectives or a list of boolean values, with one value per objective. \
@@ -293,6 +342,6 @@ def is_nondominated(data, maximise=False, keep_weakly=False):
 
 def filter_dominated(data, maximise=False, keep_weakly=False):
     """remove dominated points according to Pareto optimality.
-    See: `is_nondominated`
+    See: :func:`is_nondominated` for details
     """
     return data[is_nondominated(data, maximise, keep_weakly)]
