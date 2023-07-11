@@ -178,5 +178,6 @@ def test_is_nondominated():
     )
     max_nondom = max[eaf.is_nondominated(max, maximise=True)]
     expected_max_nondom = np.array([[0, 0, 1, 2], [10, 20, 0, 0], [20, 10, 0, 0]])
+    print(max_nondom)
     assert np.array_equal(max_nondom, expected_max_nondom)
     assert np.array_equal(eaf.filter_dominated(max, maximise=True), expected_max_nondom)
