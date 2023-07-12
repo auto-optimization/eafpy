@@ -7,10 +7,12 @@ ffibuilder.cdef(
     """
     int read_datasets_(const char * filename, double **data_p, int *ncols_p, int *datasize_p);
     double fpli_hv(const double *data, int d, int n, const double *ref);
-    double igd_C (const double *data, int nobj, int npoints, const double *ref, int ref_size, const int *maximise);
-    double igd_plus_C (const double *data, int nobj, int npoints, const double *ref, int ref_size, const int *maximise);
-    double avg_Hausdorff_dist_C (const double *data, int nobj, int npoints, const double *ref, int ref_size, const int *maximise, unsigned int p);
+    double igd_C (const double *data, int nobj, int npoints, const double *ref, int ref_size, const bool * maximise);
+    double igd_plus_C (const double *data, int nobj, int npoints, const double *ref, int ref_size, const bool * maximise);
+    double avg_Hausdorff_dist_C (const double *data, int nobj, int npoints, const double *ref, int ref_size, const bool * maximise, unsigned int p);
     bool * is_nondominated_(const double * data, int nobj, int npoint, const bool * maximise, bool keep_weakly);
+    double epsilon_ (const double *data, int nobj, int data_npoints, const double *ref, int ref_npoints, const bool * maximise, char is_add);
+
     """
 )
 
@@ -23,6 +25,7 @@ ffibuilder.set_source(
     #include "hv.h"   
     #include "igd.h" 
     #include "nondominated.h"
+    #include "epsilon.h"
 """,
     sources=[
         "src/eafpy/libeaf/io.c",

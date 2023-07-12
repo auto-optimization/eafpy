@@ -9,6 +9,7 @@
 #endif
 #include "common.h"
 #include "io.h"
+#include "nondominated.h"
 
 
 /* 
@@ -117,5 +118,24 @@ epsilon_additive_ind (int dim, const signed char *minmax,
     else
         return 0;
 }
+
+double epsilon_ (const double *data, int nobj, int data_npoints, 
+            const double *ref, int ref_npoints, const bool * maximise, char is_add)
+{
+    double epilison_return = 0.0;
+    signed char * minmax = create_minmax_bool(nobj, maximise);
+    if(is_add == 0)  {
+        epilison_return = epsilon_additive(nobj, minmax, data, data_npoints, ref, ref_npoints);
+    }else{
+        epilison_return = epsilon_mult(nobj, minmax, data, data_npoints, ref, ref_npoints);
+    }
+
+    free(minmax);
+    return epilison_return;         
+}
+
+
+
+
 
 #endif /* EPSILON_H */

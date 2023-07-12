@@ -20,9 +20,9 @@ create_minmax(int nobj, const int * maximise)
     return minmax;
 }
 
-/* Convert from int vector to minmax vector.  */
+/* Convert from bool vector to minmax vector.  */
 static inline signed char *
-create_minmax_2(int nobj, const bool * maximise)
+create_minmax_bool(int nobj, const bool * maximise)
 {
     signed char * minmax = malloc(sizeof(signed char) * nobj);
     for (int k = 0; k < nobj; k++) {
@@ -235,7 +235,7 @@ int * pareto_rank (const double *points, int dim, int size);
 bool * is_nondominated_(const double * data, int nobj, int npoint, const bool * maximise, bool keep_weakly)
 {
     bool * nondom = nondom_init(npoint);
-    signed char * minmax = create_minmax_2(nobj, maximise);
+    signed char * minmax = create_minmax_bool(nobj, maximise);
     find_nondominated_set_ (data, nobj, npoint, minmax, AGREE_NONE, nondom,
                             /* find_dominated_p = */false,
                             /* keep_weakly = */keep_weakly);

@@ -120,7 +120,7 @@ def _parse_maximise(maximise, nobj):
                 "Maximise array must have same # of cols as data"
                 f"{maximise.shape[0]} != {nobj}"
             )
-    return np.ascontiguousarray(maximise)
+    return np.ascontiguousarray(maximise).astype(bool)
 
 
 def _unary_refset_common(data, ref, maximise):
@@ -160,7 +160,7 @@ def igd(data, ref, maximise=False):
         Numpy array of numerical values, where each row gives the coordinates of a point in objective space.
         If the array is created from the :func:`read_datasets` function, remove the last (set) column
     ref : numpy array or list
-        Reference point set as a numpy array or list. Must be same length as a single point in the \
+        Reference point set as a numpy array or list. Must have same number of columns as a single point in the \
         dataset
     maximise : single bool, or list of booleans
         Whether the objectives must be maximised instead of minimised. \
@@ -193,7 +193,7 @@ def igd(data, ref, maximise=False):
     npoints = ffi.cast("int", data.shape[0])
     ref_p = ffi.from_buffer("double []", ref)
     ref_size = ffi.cast("int", ref.shape[0])
-    maximise_p = ffi.from_buffer("int []", maximise)
+    maximise_p = ffi.from_buffer("bool []", maximise)
     return lib.igd_C(data_p, nobj, npoints, ref_p, ref_size, maximise_p)
 
 
@@ -208,7 +208,7 @@ def igd_plus(data, ref, maximise=False):
     npoints = ffi.cast("int", data.shape[0])
     ref_p = ffi.from_buffer("double []", ref)
     ref_size = ffi.cast("int", ref.shape[0])
-    maximise_p = ffi.from_buffer("int []", maximise)
+    maximise_p = ffi.from_buffer("bool []", maximise)
     return lib.igd_plus_C(data_p, nobj, npoints, ref_p, ref_size, maximise_p)
 
 
@@ -226,7 +226,7 @@ def avg_hausdorff_dist(data, ref, maximise=False, p=1):
     npoints = ffi.cast("int", data.shape[0])
     ref_p = ffi.from_buffer("double []", ref)
     ref_size = ffi.cast("int", ref.shape[0])
-    maximise_p = ffi.from_buffer("int []", maximise)
+    maximise_p = ffi.from_buffer("bool []", maximise)
     p = ffi.cast("unsigned int", p)
     return lib.avg_Hausdorff_dist_C(
         data_p, nobj, npoints, ref_p, ref_size, maximise_p, p
@@ -329,9 +329,6 @@ def is_nondominated(data, maximise=False, keep_weakly=False):
     data = np.asfarray(data)
     nobj = data.shape[1]
     maximise = _parse_maximise(maximise, nobj)
-    # FIXME: change _parse_maximise to return a boolean array
-    # FIXME2: change the C functions to take a bool * maximise.
-    maximise = maximise.astype(bool)
 
     data_p = ffi.from_buffer("double []", data)
     nobj = ffi.cast("int", nobj)
@@ -348,3 +345,76 @@ def filter_dominated(data, maximise=False, keep_weakly=False):
     See: :func:`is_nondominated` for details
     """
     return data[is_nondominated(data, maximise, keep_weakly)]
+
+
+def _epilison_select(data, ref, maximise=False, add_or_mult="add"):
+    # epsilon_ selects either episilon additive or multiplicative based on char is_add
+    if add_or_mult == "add":
+        epilson_type = 0
+    elif add_or_mult == "mult":
+        epilson_type = 1
+    else:
+        raise ValueError("Enter add or mult")
+
+    data, ref, maximise = _unary_refset_common(data, ref, maximise)
+    data_p = ffi.from_buffer("double []", data)
+    nobj = ffi.cast("int", data.shape[1])
+    npoints = ffi.cast("int", data.shape[0])
+    ref_p = ffi.from_buffer("double []", ref)
+    ref_size = ffi.cast("int", ref.shape[0])
+    maximise_p = ffi.from_buffer("bool []", maximise)
+    is_add = ffi.cast("char", epilson_type)  # Select between add multiply
+    return lib.epsilon_(data_p, nobj, npoints, ref_p, ref_size, maximise_p, is_add)
+
+
+def epsilon_additive(data, ref, maximise=False):
+    """Epsilon metric
+    Computes the epsilon metric, either additive or multiplicative.
+
+
+    ::
+    
+        epsilon_additive(data, reference, maximise = FALSE)
+
+        epsilon_mult(data, reference, maximise = FALSE)
+        # Data and reference must all be > 0 for epsilon_mult
+
+
+    Parameters
+    ----------
+    data : numpy array
+        Numpy array of numerical values, where each row gives the coordinates of a point in objective space.
+        If the array is created from the :func:`read_datasets` function, remove the last (set) column
+    ref : numpy array or list
+        Reference point set as a numpy array or list. Must have same number of columns as a single point in the \
+        dataset
+    maximise : single bool, or list of booleans
+        Whether the objectives must be maximised instead of minimised. \
+        Either a single boolean value that applies to all objectives or a list of booleans, with one value per objective. \
+        Also accepts a 1d numpy array with value 0/1 for each objective
+
+    Returns
+    -------
+    float
+        A single numerical value  
+
+    Examples
+    --------
+    >>> dat = np.array([[3.5,5.5], [3.6,4.1], [4.1,3.2], [5.5,1.5]])
+    >>> ref = np.array([[1, 6], [2,5], [3,4], [4,3], [5,2], [6,1]])
+    >>> eaf.epsilon_additive(dat, ref = ref)
+    2.5
+
+    >>> eaf.epsilon_mult(dat, ref = ref)
+    3.5
+    """
+    return _epilison_select(data, ref, maximise=maximise, add_or_mult="add")
+
+
+def epsilon_mult(data, ref, maximise=False):
+    """multiplicative Epsilon metric
+
+    See :func:`epsilon_additive`
+
+    """
+    return _epilison_select(data, ref, maximise=maximise, add_or_mult="mult")

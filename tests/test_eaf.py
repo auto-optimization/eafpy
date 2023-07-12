@@ -178,6 +178,22 @@ def test_is_nondominated():
     )
     max_nondom = max[eaf.is_nondominated(max, maximise=True)]
     expected_max_nondom = np.array([[0, 0, 1, 2], [10, 20, 0, 0], [20, 10, 0, 0]])
-    print(max_nondom)
     assert np.array_equal(max_nondom, expected_max_nondom)
     assert np.array_equal(eaf.filter_dominated(max, maximise=True), expected_max_nondom)
+    minmax = np.array([1, 2, 2, 1, 5, 6, 7, 5]).reshape((-1, 2))
+    assert np.array_equal(
+        eaf.filter_dominated(minmax, maximise=[True, False]), np.array([[2, 1], [7, 5]])
+    )
+    assert np.array_equal(
+        eaf.filter_dominated(minmax, maximise=[False, True]), np.array([[1, 2], [5, 6]])
+    )
+
+
+def test_epsilon():
+    ref = np.array([10, 1, 6, 1, 2, 2, 1, 6, 1, 10]).reshape((-1, 2))
+    A = np.array([4, 2, 3, 3, 2, 4]).reshape((-1, 2))
+    B = np.array([8, 2, 4, 4, 2, 8]).reshape((-1, 2))
+    assert math.isclose(eaf.epsilon_additive(A, ref), 1.0)
+    assert math.isclose(eaf.epsilon_mult(A, ref), 2.0)
+    assert math.isclose(eaf.epsilon_mult(A, ref, maximise=True), 2.5)
+    assert math.isclose(eaf.epsilon_additive(A, ref, maximise=True), 6.0)
