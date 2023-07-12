@@ -242,4 +242,52 @@ bool * is_nondominated_(const double * data, int nobj, int npoint, const bool * 
     free(minmax);
     return nondom;
 }
+
+void find_bounds(double * data, int nobj, int npoints, double ** lbounds, double ** ubounds){
+    // bounds = [lower_obj1, upper_obj1, lower_obj2, upper_obj2 etc]
+
+    double *mlbounds = malloc(sizeof(double) * nobj);
+    double *mubounds = malloc(sizeof(double) * nobj);
+    
+    for (int obj = 0; obj < nobj; obj++ ){
+        mlbounds[obj] = data[obj];
+        mubounds[obj] = data[obj];
+        
+        for(int p = 0; p < npoints; p++){
+            if(data[p * nobj + obj] < mlbounds[obj]){
+                
+                mlbounds[obj] = data[p * nobj + obj];
+            }
+            if(data[p * nobj + obj] > mubounds[obj]){
+                mubounds[obj] = data[p * nobj + obj];
+            }
+        }
+    }
+    *lbounds = mlbounds;
+    *ubounds = mubounds;
+    // Remember to free this memory in function call
+}
+
+void normalise_ (double *data, int nobj, int npoints, const bool * maximise,const double lower_range, 
+        const double upper_range, double * lbounds, double * ubounds, bool calc_bounds)
+{
+    signed char * minmax = create_minmax_bool(nobj, maximise);
+    double *calc_lbound = malloc(sizeof(double) * nobj);
+    double *calc_ubound = malloc(sizeof(double) * nobj);
+
+    find_bounds(data, nobj, npoints, &calc_lbound, &calc_ubound);
+    if(calc_bounds == TRUE){
+        normalise(data, nobj, npoints, minmax, AGREE_NONE,lower_range, upper_range,
+            calc_lbound, calc_ubound);
+    }else{
+        normalise(data, nobj, npoints, minmax, AGREE_NONE,lower_range, upper_range,
+            lbounds, ubounds);
+    }
+    
+    
+    free(calc_lbound);
+    free(calc_ubound);
+    free(minmax);
+}
+
 #endif /* NONDOMINATED_H */

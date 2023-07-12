@@ -8,5 +8,6 @@ from .eaf import (
     filter_dominated,
     epsilon_additive,
     epsilon_mult,
+    normalise,
 )
 from .plot import plot_datasets

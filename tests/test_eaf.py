@@ -197,3 +197,33 @@ def test_epsilon():
     assert math.isclose(eaf.epsilon_mult(A, ref), 2.0)
     assert math.isclose(eaf.epsilon_mult(A, ref, maximise=True), 2.5)
     assert math.isclose(eaf.epsilon_additive(A, ref, maximise=True), 6.0)
+
+
+def test_normalise():
+    A = np.array(
+        [
+            [0, 0, 0],
+            [5, 3, 1],
+            [10, 6, 2],
+            [15, 9, 3],
+            [20, 12, 4],
+            [25, 15, 5],
+        ]
+    )
+    # With default range = [0,1] all columns should have their values normalised
+    expected_outcome = np.asfarray(np.tile(np.linspace(0, 1, num=6).reshape(6, -1), 3))
+
+    assert np.allclose(eaf.normalise(A), expected_outcome)
+    assert np.allclose(eaf.normalise(A, range=[0, 10]), 10 * expected_outcome)
+    expected_with_bounds = np.transpose(
+        np.array(
+            [
+                np.linspace(0, 1, num=6),
+                np.linspace(0, 0.6, num=6),
+                np.linspace(0, 0.2, num=6),
+            ]
+        )
+    )
+    assert np.allclose(
+        eaf.normalise(A, upper=[25, 25, 25], lower=[0, 0, 0]), expected_with_bounds
+    )

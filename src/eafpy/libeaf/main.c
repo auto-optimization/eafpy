@@ -4,6 +4,7 @@
 */
 #include "io.h"
 #include "hv.h"
+#include "nondominated.h"
 
 void test_read_double_data(){
     const char * filename ="uniform-250-10-3d.txt";
@@ -35,25 +36,41 @@ void test_read_double_data(){
     }
 }
 
-void print_read_datsets(const char * filename){
-    // const char * filename ="uniform-250-10-3d.txt";
-    // const char * filename ="test1.dat";
-    double * return_data = NULL;
-    int num_obj = 0;
-    int num_rows = 0;
-    int datasize = 0;
+// void print_read_datsets(const char * filename){
+//     // const char * filename ="uniform-250-10-3d.txt";
+//     // const char * filename ="test1.dat";
+//     double * return_data = NULL;
+//     int num_obj = 0;
+//     int num_rows = 0;
+//     int datasize = 0;
 
-    int x = read_datasets_(filename, &return_data, &num_obj, &num_rows, &datasize);
-    if(x != 0){
-        printf("error detected %d", x);
+//     int x = read_datasets_(filename, &return_data, &num_obj, &num_rows, &datasize);
+//     if(x != 0){
+//         printf("error detected %d", x);
+//     }
+
+// }
+
+void test_normalised(){
+    double data[] = {1,2,3,4,5,6,7,8,9,10,14,32};
+    int nobj = 2;
+    int npoints = 6;
+    bool maximise[] = {FALSE, FALSE};
+    double lower_range = 0;
+    double upper_range = 10;
+    double lbound[] = {1,2};
+    double ubound[] = {9,10};
+
+    normalise_(data, nobj, npoints, maximise,lower_range, upper_range);
+    for(int i = 0; i <10; i++){
+        printf("%f ", data[i]);
     }
-
 }
 
 
 int main()
 {   
-   
+   test_normalised();
 
     return 0;
 }

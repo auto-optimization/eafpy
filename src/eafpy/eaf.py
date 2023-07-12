@@ -418,3 +418,95 @@ def epsilon_mult(data, ref, maximise=False):
 
     """
     return _epilison_select(data, ref, maximise=maximise, add_or_mult="mult")
+
+
+def normalise(data, range=[0, 1], lower="na", upper="na", maximise=False):
+    """Normalise
+    Normalise points per coordinate to a range, e.g., range =[1,2], where the minimum value will correspond to 1 and the maximum to 2.\
+    if bounds a
+
+
+    ::
+    
+        normalise(data, to.range = c(1, 2), lower = NA, upper = NA, maximise = FALSE)
+
+    Parameters
+    ----------
+    data : numpy array
+        Numpy array of numerical values, where each row gives the coordinates of a point in objective space.
+        If the array is created from the :func:`read_datasets` function, remove the last (set) column
+    range : numpy array or list of 2 points
+        Normalise values to this range. If the objective is maximised, it is normalised to c(to.range[1], to.range[0]) instead.
+
+    range, upper: numpy array or list
+        Bounds on the values. If NA, the maximum and minimum values of each coordinate are used.
+        
+    maximise : single bool, or list of booleans
+        Whether the objectives must be maximised instead of minimised. \
+        Either a single boolean value that applies to all objectives or a list of booleans, with one value per objective. \
+        Also accepts a 1d numpy array with value 0/1 for each objective
+
+    Returns
+    -------
+    numpy array
+        Returns normalised data input. **Note this will pass the array by reference, so the original data array **  
+
+    Examples
+    --------
+    >>> dat = np.array([[3.5,5.5], [3.6,4.1], [4.1,3.2], [5.5,1.5]])
+    >>> ref = np.array([[1, 6], [2,5], [3,4], [4,3], [5,2], [6,1]])
+    >>> eaf.epsilon_additive(dat, ref = ref)
+    2.5
+
+    >>> eaf.epsilon_mult(dat, ref = ref)
+    3.5
+    """
+    data = np.asfarray(data)
+    objects = data.shape[1]
+    points = data.shape[0]
+    range = np.asfarray(range)
+    if range.shape[0] != 2:
+        raise ValueError("Range must be an array like with 2 entries")
+
+    if isinstance(lower, str) or isinstance(upper, str):
+        # If bounds not set, assume calculate bounds in C code
+        # Set values to 0 so the function can still call
+        lower = np.zeros(objects, dtype=np.double)
+        upper = np.zeros(objects, dtype=np.double)
+        use_bound_calc = True
+    else:
+        use_bound_calc = False
+        lower = np.asfarray(lower)
+        upper = np.asfarray(upper)
+        if lower.shape[0] != objects or upper.shape[0] != objects:
+            raise ValueError(
+                "upper or lower bound arg has different number of objectives to data"
+            )
+
+    maximise = _parse_maximise(maximise, data.shape[1])
+
+    data_p = ffi.from_buffer("double *", data)
+
+    nobj = ffi.cast("int", objects)
+    npoints = ffi.cast("int", points)
+    maximise_p = ffi.from_buffer("bool []", maximise)
+    lbound_p = ffi.from_buffer("double []", lower)
+    ubound_p = ffi.from_buffer("double []", upper)
+    use_bound_calc = ffi.cast("bool", use_bound_calc)
+
+    lib.normalise_(
+        data_p,
+        nobj,
+        npoints,
+        maximise_p,
+        range[0],
+        range[1],
+        lbound_p,
+        ubound_p,
+        use_bound_calc,
+    )
+
+    data_buf = ffi.buffer(data_p, ffi.sizeof("double") * points * objects)
+    data_nparray = np.frombuffer(data_buf)
+
+    return data_nparray.reshape(-1, objects)
