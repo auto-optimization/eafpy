@@ -210,7 +210,7 @@ def test_normalise():
             [25, 15, 5],
         ]
     )
-    # With default range = [0,1] all columns should have their values normalised
+    # With default range = [0,1] - all columns should have their values normalised to same value
     expected_outcome = np.asfarray(np.tile(np.linspace(0, 1, num=6).reshape(6, -1), 3))
 
     assert np.allclose(eaf.normalise(A), expected_outcome)
