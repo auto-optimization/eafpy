@@ -573,7 +573,7 @@ def subset(dataset, set=-2, range=[]):
     """Subset is a convienance function for extracting a set or range of sets from a larger dataset. 
     It takes a dataset with multiple set numbers, and returns 1 or more sets (with their set numbers)
     
-    Use the :func:`data_subset` to choose a single set and use set numbers
+    Use the :func:`data_subset` to choose a single set and use set numbers.
     
 
     Parameters
