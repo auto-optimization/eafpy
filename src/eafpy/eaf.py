@@ -347,6 +347,33 @@ def filter_dominated(data, maximise=False, keep_weakly=False):
     return data[is_nondominated(data, maximise, keep_weakly)]
 
 
+def filter_dominated_sets(dataset, maximise=False, keep_weakly=False):
+    """Filter dominated sets for multiple sets
+
+    Executes the :func:`filter_dominated` function for every set in a dataset \
+    and returns back a dataset, preserving set 
+
+    Examples
+    --------
+    >>> dataset = eaf.read_datasets("input1")
+    >>> subset = eaf.subset(dataset, range = [3,5])
+    >>> normal_sets = eaf.filter_dominated_sets(subset)
+    np.array([[...]]) # Returns sets 3,4,5 with dominated points within each set removed
+
+    See Also
+    --------
+    This function for data without set numbers - :func:`filter_dominated` 
+    """
+    new_sets = []
+    for set in np.unique(dataset[:, -1]):
+        set_data = dataset[dataset[:, -1] == set, :-1]
+        filter_set = filter_dominated(set_data, maximise, keep_weakly)
+        set_nums = np.full(filter_set.shape[0], set).reshape(-1, 1)
+        new_set = np.hstack((filter_set, set_nums))
+        new_sets.append(new_set)
+    return np.vstack(new_sets)
+
+
 def _epilison_select(data, ref, maximise=False, add_or_mult="add"):
     # epsilon_ selects either episilon additive or multiplicative based on char is_add
     if add_or_mult == "add":
@@ -422,9 +449,7 @@ def epsilon_mult(data, ref, maximise=False):
 
 def normalise(data, range=[0, 1], lower="na", upper="na", maximise=False):
     """Normalise
-    Normalise points per coordinate to a range, e.g., range =[1,2], where the minimum value will correspond to 1 and the maximum to 2.\
-    if bounds a
-
+    Normalise points per coordinate to a range, e.g., range = [1,2], where the minimum value will correspond to 1 and the maximum to 2.\
 
     ::
     
@@ -433,12 +458,12 @@ def normalise(data, range=[0, 1], lower="na", upper="na", maximise=False):
     Parameters
     ----------
     data : numpy array
-        Numpy array of numerical values, where each row gives the coordinates of a point in objective space.
-        If the array is created from the :func:`read_datasets` function, remove the last (set) column
+        A single set : A Numpy array of numerical values, where each row gives the coordinates of a point in objective space.
+        See :func:`normalise_sets` to normalise data that includes set numbers (Multiple sets)
     range : numpy array or list of 2 points
         Normalise values to this range. If the objective is maximised, it is normalised to c(to.range[1], to.range[0]) instead.
 
-    range, upper: numpy array or list
+    upper, lower: list or np array
         Bounds on the values. If NA, the maximum and minimum values of each coordinate are used.
         
     maximise : single bool, or list of booleans
@@ -454,12 +479,18 @@ def normalise(data, range=[0, 1], lower="na", upper="na", maximise=False):
     Examples
     --------
     >>> dat = np.array([[3.5,5.5], [3.6,4.1], [4.1,3.2], [5.5,1.5]])
-    >>> ref = np.array([[1, 6], [2,5], [3,4], [4,3], [5,2], [6,1]])
-    >>> eaf.epsilon_additive(dat, ref = ref)
-    2.5
+    >>> eaf.normalise(dat)
+    np.array([[0.   , 1.   ],
+              [0.05 , 0.65 ],
+              [0.3  , 0.425],
+              [1.   , 0.   ]])
 
-    >>> eaf.epsilon_mult(dat, ref = ref)
-    3.5
+    # TODO add more examples showing different arguments
+
+    See Also
+    --------
+    This function for muliple sets - :func:`normalise_sets` 
+
     """
     data = np.asfarray(data)
     objects = data.shape[1]
@@ -467,6 +498,8 @@ def normalise(data, range=[0, 1], lower="na", upper="na", maximise=False):
     range = np.asfarray(range)
     if range.shape[0] != 2:
         raise ValueError("Range must be an array like with 2 entries")
+    if objects == 1:
+        raise ValueError("function only suitable for 2 dimensions or higher")
 
     if isinstance(lower, str) or isinstance(upper, str):
         # If bounds not set, assume calculate bounds in C code
@@ -510,3 +543,115 @@ def normalise(data, range=[0, 1], lower="na", upper="na", maximise=False):
     data_nparray = np.frombuffer(data_buf)
 
     return data_nparray.reshape(-1, objects)
+
+
+def normalise_sets(dataset, range=[0, 1], lower="na", upper="na", maximise=False):
+    """Normalise dataset with multiple sets
+
+    Executes the :func:`normalise` function for every set in a dataset (Performs normalise on every set seperately)
+
+    Examples
+    --------
+    >>> dataset = eaf.read_datasets("input1")
+    >>> subset = eaf.subset(dataset, range = [3,5])
+    >>> normal_sets = eaf.normalise_sets(subset)
+    np.array([[...]]) # Returns sets 3,4,5
+
+    See Also
+    --------
+    This function for data without set numbers - :func:`normalise`
+    """
+    for set in np.unique(dataset[:, -1]):
+        setdata = dataset[dataset[:, -1] == set, :-1]
+        dataset[dataset[:, -1] == set, :-1] = normalise(
+            setdata, range=[0, 1], lower="na", upper="na", maximise=False
+        )
+    return dataset
+
+
+def subset(dataset, set=-2, range=[]):
+    """Subset is a convienance function for extracting a set or range of sets from a larger dataset. 
+    It takes a dataset with multiple set numbers, and returns 1 or more sets (with their set numbers)
+    
+    Use the :func:`data_subset` to choose a single set and use set numbers
+    
+
+    Parameters
+    ----------
+    dataset : numpy array
+        Numpy array of numerical values and set numbers, containing multiple sets. For example the output \
+         of the :func:`read_datasets` function
+    Set : integer
+        Select a single set from the dataset, where the selected set is equal to this argument
+
+    range: list (length 2)
+        Select sets from the dataset with an inequality. range[0] <= Set_num <= Range[1] 
+        
+    Returns
+    -------
+    numpy array
+        returns back a numpy array with the same columns as the input, with certain datasets selected
+
+    Examples
+    --------
+    >>> dataset = read_datasets("input1")
+    >>> subset = subset(dataset, set = 1)
+    np.array([[...]]) # Returns 1 set from dataset, where set number = 1
+    
+
+    >>> subset = subset(dataset, range =[4, 7])
+    np.array([[...]]) # Return 4 set from dataset, including sets (4,5,6,7) 
+
+    See Also
+    --------
+    :func:`data_subset`
+
+    """
+    if (not range and set == -2) or (range and set != -2):
+        raise ValueError("Enter a range or set")
+    elif set != -2:
+        return np.ascontiguousarray(dataset[dataset[:, -1] == set])
+    elif range:
+        if len(range) != 2:
+            raise ValueError("Range must be a list with an inequality")
+        setnames = dataset[:, -1]
+        return np.ascontiguousarray(
+            dataset[(setnames >= range[0]) & (setnames <= range[1])]
+        )
+    else:
+        raise NotImplementedError()
+
+
+def data_subset(dataset, set):
+    """Select data points from a specific dataset. Returns a single set, without the set number column
+    This can be used to parse data for inputting to functions such as :func:`igd` and :func:`hypervolume`. 
+    
+    Similar to the :func:`subset` function, but can only return 1 set and removes the last column (set number)
+
+    Parameters
+    ----------
+    dataset : numpy array
+        Numpy array of numerical values and set numbers, containing multiple sets. For example the output \
+         of the :func:`read_datasets` function
+    Set : integer
+        Select a single set from the dataset, where the selected set is equal to this argument
+
+    Returns
+    -------
+    numpy array
+        returns back a single set with only the objective data. (set numbers are excluded)
+
+    Examples
+    --------
+    >>> dataset = eaf.read_datasets("input1.dat")
+    >>> data1 = eaf.data_subset(dataset, set = 1)
+    # Select dataset 1 and remove the set number so it can be used for function such as :func:`subset`
+    >>> eaf.hypervolume(data1, [10, 10])
+    90.46272764755885
+
+    See Also
+    --------
+    :func:`subset`
+
+    """
+    return np.ascontiguousarray(subset(dataset, set, range=[])[:, :-1])

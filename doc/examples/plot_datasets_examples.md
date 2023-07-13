@@ -10,8 +10,8 @@ kernelspec:
 import eafpy as eaf
 sets = eaf.read_datasets("input1.dat")
 
-## (Optional) Select a subset of the dataset
-subset = sets[sets[:,-1] > 5]    
+## Select a subset of the dataset
+subset = eaf.subset(sets, range = [1,5])
 plot = eaf.plot_datasets(subset, type = "points")
 plot.show()
 ```
@@ -20,7 +20,8 @@ plot.show()
 ```{code-cell}
 import eafpy as eaf
 sets = eaf.read_datasets("input1.dat")
-subset = sets[sets[:,-1] > 6]    
+subset = eaf.subset(sets, range = [6,10])
+subset = eaf.filter_dominated_sets(subset)
 plot = eaf.plot_datasets(subset, type = "points, lines")
 plot.show()
 ```
@@ -29,7 +30,7 @@ plot.show()
 ```{code-cell}
 import eafpy as eaf
 sets = eaf.read_datasets("spherical-250-10-3d.txt")
-subset = sets[sets[:,-1] > 8]    
+subset = eaf.subset(sets, range = [8,10])
 plot = eaf.plot_datasets(subset)
 plot.show()
 ```
@@ -38,7 +39,7 @@ plot.show()
 ```{code-cell}
 import eafpy as eaf
 sets = eaf.read_datasets("uniform-250-10-3d.txt")
-subset = sets[sets[:,-1] > 8] 
+subset = eaf.subset(sets, range = [8,10])
 
 plot = eaf.plot_datasets(subset, type="surface")
 plot.show()
@@ -51,7 +52,7 @@ plot.show()
 import eafpy as eaf
 sets = eaf.read_datasets("uniform-250-10-3d.txt")
 
-subset = sets[sets[:,-1] < 3]    
+subset = eaf.subset(sets, range = [1,3])  
 plot = eaf.plot_datasets(subset, type="surface, points")
 plot.show()
 ```
@@ -62,7 +63,7 @@ plot.show()
 import eafpy as eaf
 sets = eaf.read_datasets("uniform-250-10-3d.txt")
 
-subset = sets[sets[:,-1] < 4]    
+subset = eaf.subset(sets, range = [1,4]) 
 plot = eaf.plot_datasets(subset, type="cube")
 plot.show()
 ```

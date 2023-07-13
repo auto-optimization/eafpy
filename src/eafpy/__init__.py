@@ -9,5 +9,9 @@ from .eaf import (
     epsilon_additive,
     epsilon_mult,
     normalise,
+    subset,
+    data_subset,
+    normalise_sets,
+    filter_dominated_sets,
 )
 from .plot import plot_datasets

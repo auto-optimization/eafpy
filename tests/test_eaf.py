@@ -227,3 +227,6 @@ def test_normalise():
     assert np.allclose(
         eaf.normalise(A, upper=[25, 25, 25], lower=[0, 0, 0]), expected_with_bounds
     )
+
+
+# TODO add tests for subset, data_subset, normalise_sets, filer_dominated_sets
