@@ -21,7 +21,6 @@ plot.show()
 import eafpy as eaf
 sets = eaf.read_datasets("input1.dat")
 subset = eaf.subset(sets, range = [6,10])
-subset = eaf.filter_dominated_sets(subset)
 plot = eaf.plot_datasets(subset, type = "points, lines")
 plot.show()
 ```

@@ -2,6 +2,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
+import eafpy.eaf as eaf
 
 _3d_margin = dict(r=5, l=5, b=20, t=20)
 
@@ -177,7 +178,7 @@ def _get_cube_plot(dataset):
     return fig
 
 
-def plot_datasets(datasets, type="points"):
+def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwargs):
     """The `plot_datasets(dataset, type="points")` function plots Pareto front datasets
     It can produce an interactive point graph, stair step graph or 3d surface graph. It accept 2 or 3 objectives
 
@@ -187,7 +188,6 @@ def plot_datasets(datasets, type="points"):
     dataset : numpy array
         The `dataset` argument must be Numpy array produced by the `read_datasets()` function - an array with 3-4 columns including the objective data and set numbers.
     type : str *default* : `"points"`
-
         The `type` argument can be `"points"`, `"lines"`, `"points,lines"` for two objective datasets,
         Or `"points"`, `"surface"` or `"cube"` for three objective datasets
 
@@ -204,11 +204,18 @@ def plot_datasets(datasets, type="points"):
         `"cube"` produces a discrete cube surface *(3 objective only*) (Not yet implemented)
 
         The function parses the type argument, so accepts abbrieviations such as `p` or `"p,l"`
+    filter_dominated : boolean
+        Boolean value for whether to automatically filter dominated points each set. default is True
+
+    layout_kwargs : keyword arguments
+        Update features of the graph such as title axis titles, colours etc. These additional parameters are passed to \
+        plotly update_layout, See here for all the layout features that can be accessed: `Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Layout/>`_
+
 
     Returns
     -------
     Plotly GO figure
-        The function returns a `Plotly GO figure` object `Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure.html/>`_
+        The function returns a `Plotly GO figure` object `Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure/>`_
 
         This means that the user can customise any part of the graph after it is created
 
@@ -222,6 +229,10 @@ def plot_datasets(datasets, type="points"):
             "Dataset must contain 2 or 3 objectives "
             "the last column must be the set number"
         )
+
+    if filter_dominated:
+        datasets = eaf.filter_dominated_sets(datasets)
+
     type_parsed = _parse_plot_type(type, dim)
 
     column_names = ["Objective 1", "Objective 2", "Set Number"]
@@ -233,7 +244,15 @@ def plot_datasets(datasets, type="points"):
 
     sets_df["Set Number"] = sets_df["Set Number"].astype(int).astype(str)
 
+    # Plotly express does not allow you to change the colour sequence after the graph is created
+    # So I add this workaround to pass the colour sequence in while it is created insteaf of to update_figure
+    colorway = px.colors.qualitative.Plotly
+    if "colorway" in layout_kwargs:
+        colorway = layout_kwargs["colorway"]
+
     if dim == 2:
+        lim_fig_x = 1.15 * max(sets_df["Objective 1"])
+        lim_fig_y = 1.15 * max(sets_df["Objective 2"])
         df_sorted = sets_df.groupby("Set Number").apply(
             lambda x: x.sort_values("Objective 1")
         )
@@ -243,8 +262,18 @@ def plot_datasets(datasets, type="points"):
             y="Objective 2",
             color="Set Number",
             title="Plot of a two objective dataset",
+            color_discrete_sequence=colorway,
         )
+
+        # Extend lines passed the figure boundaries (limited by x,yaxis_range)
+        for trace in figure.data:
+            trace.x = np.append(trace.x, trace.x[-1] + lim_fig_x)
+            trace.y = np.append(trace.y, trace.y[-1])
+            trace.x = np.insert(trace.x, 0, trace.x[-1])
+            trace.y = np.insert(trace.y, 0, trace.y[-1] + lim_fig_y)
+
         figure.update_traces(line_shape="hv", mode=type_parsed)
+        figure.update_layout(xaxis_range=[0, lim_fig_x], yaxis_range=[0, lim_fig_y])
 
     elif dim == 3:
         if "surface" in type_parsed:
@@ -257,6 +286,7 @@ def plot_datasets(datasets, type="points"):
                 y="Objective 2",
                 z="Objective 3",
                 color="Set Number",
+                color_discrete_map=colorway,
             )
             figure.update_traces(marker_size=4)
             figure.update_layout(
@@ -269,5 +299,5 @@ def plot_datasets(datasets, type="points"):
             raise NotImplementedError
     else:
         raise NotImplementedError
-
+    figure.update_layout(layout_kwargs)
     return figure

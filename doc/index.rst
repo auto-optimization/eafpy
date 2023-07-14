@@ -12,6 +12,7 @@ The EAF python package allows for easy calculation and visulisation of the empir
    :caption: Contents:
 
    examples/plot_datasets_examples.md
+   examples/style_plots.md
 
 Indices and tables
 ==================
