@@ -213,14 +213,14 @@ def add_extremes(x, y, extreme, maximise):
     np.concatenate((best1, x, extreme[0])), np.concatenate((extreme[1], y, best2))
 
 
-xlim = ylim = None
-log = ""
-maximise = [False, False]
-xlim = get_xylim(xlim, maximise[0], data=x)
-ylim = get_xylim(ylim, maximise[1], data=y)
-extreme = get_extremes(xlim, ylim, maximise, log)
+# xlim = ylim = None
+# log = ""
+# maximise = [False, False]
+# xlim = get_xylim(xlim, maximise[0], data=x)
+# ylim = get_xylim(ylim, maximise[1], data=y)
+# extreme = get_extremes(xlim, ylim, maximise, log)
 
-x, y = add_extremes(x, y, extreme, maximise)
+# x, y = add_extremes(x, y, extreme, maximise)
 
 
 def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwargs):

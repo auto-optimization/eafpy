@@ -56,13 +56,15 @@ def read_datasets(filename):
 
     Examples
     --------
-    >>> eaf.read_dataset("input1.dat")
-    np.array([
-       [ 8.07559653,  2.40702554,  1.   ],
-       [ 8.66094446,  3.64050144,  1.   ],
-       [ 0.20816431,  4.62275469,  1.   ],
-       [ 4.8814328 ,  9.09473137,  1.   ], ...
-    ])
+    >>> eaf.read_datasets("./doc/examples/input1.dat") # doctest: +ELLIPSIS
+    array([[ 8.07559653,  2.40702554,  1.        ],
+           [ 8.66094446,  3.64050144,  1.        ],
+           [ 0.20816431,  4.62275469,  1.        ],
+           ...
+           [ 4.92599726,  2.70492519, 10.        ],
+           [ 1.22234394,  5.68950311, 10.        ],
+           [ 7.99466959,  2.81122537, 10.        ],
+           [ 2.12700289,  2.43114174, 10.        ]])
 
     The numpy array represents this data:
 
@@ -241,7 +243,7 @@ def hypervolume(data, ref):
     ----------
     data : numpy array
         Numpy array of numerical values, where each row gives the coordinates of a point in objective space.
-        If the array is created from the `read_dataset()` function, remove the last column
+        If the array is created from the `read_datasets()` function, remove the last column
     ref : numpy array or list
         Reference point set as a numpy array or list. Must be same length as a single point in the \
         dataset
@@ -257,12 +259,13 @@ def hypervolume(data, ref):
     >>> eaf.hypervolume(dat, ref = [10, 10])
     38.0
 
-    >>> dat = read_datasets("input1.dat")
-     # Select Set 1 of dataset, and remove set number column
+    Select Set 1 of dataset, and remove set number column
+    >>> dat = eaf.read_datasets("./doc/examples/input1.dat")
     >>> set1 = dat[dat[:,2]==1, :2]
-     # This set contains dominated points so remove them
-    >>> set1 = eaf.filter_dominiated(set1)
-    >>> hv = eaf.hypervolume(set1, ref= [10, 10])
+    
+    This set contains dominated points so remove them
+    >>> set1 = eaf.filter_dominated(set1)
+    >>> eaf.hypervolume(set1, ref= [10, 10])
     90.46272764755885
 
     """
@@ -293,7 +296,7 @@ def is_nondominated(data, maximise=False, keep_weakly=False):
     ----------
     data : numpy array
         Numpy array of numerical values, where each row gives the coordinates of a point in objective space.
-        If the array is created from the `read_dataset()` function, remove the last column.
+        If the array is created from the `read_datasets()` function, remove the last column.
     maximise : single bool, or list of booleans
         Whether the objectives must be maximised instead of minimised. \
         Either a single boolean value that applies to all objectives or a list of boolean values, with one value per objective. \
@@ -312,19 +315,21 @@ def is_nondominated(data, maximise=False, keep_weakly=False):
         
     Examples
     --------
-    **nondominated** examples
-        >>> S = np.array([[1,1], [0,1], [1,0], [1,0]])
-        >>> eaf.is_nondominated(S)
-        [False, True, false, True]
+    >>> S = np.array([[1,1], [0,1], [1,0], [1,0]])
+    >>> eaf.is_nondominated(S)
+    array([False,  True, False,  True])
 
-        >>> eaf.is_nondominated(S, maximise = True)
-        [True, False, False, False]
+    >>> eaf.is_nondominated(S, maximise = True)
+    array([ True, False, False, False])
 
-        >>> eaf.filter_dominated(S)
-        np.array([0,1], [1,0])
+    >>> eaf.filter_dominated(S)
+    array([[0, 1],
+           [1, 0]])
 
-        >>> eaf.filter_dominated(S, keep_weakly = True)
-        np.array([0,1], [1,0], [1,0])
+    >>> eaf.filter_dominated(S, keep_weakly = True)
+    array([[0, 1],
+           [1, 0],
+           [1, 0]])
     """
     data = np.asfarray(data)
     nobj = data.shape[1]
@@ -355,10 +360,22 @@ def filter_dominated_sets(dataset, maximise=False, keep_weakly=False):
 
     Examples
     --------
-    >>> dataset = eaf.read_datasets("input1")
+    >>> dataset = eaf.read_datasets("./doc/examples/input1.dat")
     >>> subset = eaf.subset(dataset, range = [3,5])
-    >>> normal_sets = eaf.filter_dominated_sets(subset)
-    np.array([[...]]) # Returns sets 3,4,5 with dominated points within each set removed
+    >>> eaf.filter_dominated_sets(subset)
+    array([[2.60764118, 6.31309852, 3.        ],
+           [3.22509709, 6.1522834 , 3.        ],
+           [0.37731545, 9.02211752, 3.        ],
+           [4.61023932, 2.29231998, 3.        ],
+           [0.2901393 , 8.32259412, 4.        ],
+           [1.54506255, 0.38303122, 4.        ],
+           [4.43498452, 4.13150648, 5.        ],
+           [9.78758589, 1.41238277, 5.        ],
+           [7.85344142, 3.02219054, 5.        ],
+           [0.9017068 , 7.49376946, 5.        ],
+           [0.17470556, 8.89066343, 5.        ]])
+
+    The above returns sets 3,4,5 with dominated points within each set removed.
 
     See Also
     --------
@@ -480,10 +497,10 @@ def normalise(data, range=[0, 1], lower="na", upper="na", maximise=False):
     --------
     >>> dat = np.array([[3.5,5.5], [3.6,4.1], [4.1,3.2], [5.5,1.5]])
     >>> eaf.normalise(dat)
-    np.array([[0.   , 1.   ],
-              [0.05 , 0.65 ],
-              [0.3  , 0.425],
-              [1.   , 0.   ]])
+    array([[0.   , 1.   ],
+           [0.05 , 0.65 ],
+           [0.3  , 0.425],
+           [1.   , 0.   ]])
 
     # TODO add more examples showing different arguments
 
@@ -552,10 +569,23 @@ def normalise_sets(dataset, range=[0, 1], lower="na", upper="na", maximise=False
 
     Examples
     --------
-    >>> dataset = eaf.read_datasets("input1")
+    >>> dataset = eaf.read_datasets("./doc/examples/input1.dat")
     >>> subset = eaf.subset(dataset, range = [3,5])
-    >>> normal_sets = eaf.normalise_sets(subset)
-    np.array([[...]]) # Returns sets 3,4,5
+    >>> eaf.normalise_sets(subset)
+    array([[0.72018642, 0.34732957, 3.        ],
+           [0.94404947, 0.65171347, 3.        ],
+           [0.97270797, 0.1509036 , 3.        ],
+           [1.        , 0.16307826, 3.        ],
+           [0.26113787, 0.59745906, 3.        ],
+           [0.67499969, 0.97436405, 3.        ],
+           [0.33343274, 0.57356308, 3.        ],
+           [0.        , 1.        , 3.        ],
+           ...
+           [1.        , 0.        , 5.        ],
+           [0.79879657, 0.21247419, 5.        ],
+           [0.07562783, 0.80266586, 5.        ],
+           [0.        , 0.98703813, 5.        ],
+           [0.6229605 , 0.8613516 , 5.        ]])
 
     See Also
     --------
@@ -594,13 +624,49 @@ def subset(dataset, set=-2, range=[]):
 
     Examples
     --------
-    >>> dataset = read_datasets("input1")
-    >>> subset = subset(dataset, set = 1)
-    np.array([[...]]) # Returns 1 set from dataset, where set number = 1
-    
-
-    >>> subset = subset(dataset, range =[4, 7])
-    np.array([[...]]) # Return 4 set from dataset, including sets (4,5,6,7) 
+    >>> dataset = read_datasets("./doc/examples/input1.dat")
+    >>> subset(dataset, set = 1)
+    array([[8.07559653, 2.40702554, 1.        ],
+           [8.66094446, 3.64050144, 1.        ],
+           [0.20816431, 4.62275469, 1.        ],
+           [4.8814328 , 9.09473137, 1.        ],
+           [0.22997367, 1.11772205, 1.        ],
+           [1.51643636, 3.07933731, 1.        ],
+           [6.08152841, 4.58743853, 1.        ],
+           [2.3530968 , 0.79055172, 1.        ],
+           [8.7475454 , 1.71575862, 1.        ],
+           [0.58799475, 0.73891181, 1.        ]])
+    >>> subset(dataset, range =[4, 6])
+    array([[9.9751443 , 3.41528862, 4.        ],
+           [7.07633622, 4.44385483, 4.        ],
+           [1.54507257, 2.71814725, 4.        ],
+           [3.00766139, 4.63709876, 4.        ],
+           [3.40976512, 2.1136231 , 4.        ],
+           [4.08294878, 7.69585918, 4.        ],
+           [0.2901393 , 8.32259412, 4.        ],
+           [6.32324143, 1.28140989, 4.        ],
+           [7.74140672, 5.00066389, 4.        ],
+           [1.54506255, 0.38303122, 4.        ],
+           [8.11318284, 6.45581597, 5.        ],
+           [4.43498452, 4.13150648, 5.        ],
+           [7.86851636, 3.17334347, 5.        ],
+           [8.68699143, 5.3129827 , 5.        ],
+           [8.75833731, 8.98886885, 5.        ],
+           [9.78758589, 1.41238277, 5.        ],
+           [7.85344142, 3.02219054, 5.        ],
+           [0.9017068 , 7.49376946, 5.        ],
+           [0.17470556, 8.89066343, 5.        ],
+           [6.1631503 , 7.93840121, 5.        ],
+           [4.10476852, 9.67891782, 6.        ],
+           [8.57911868, 0.35169752, 6.        ],
+           [4.96525837, 1.94353305, 6.        ],
+           [8.17231096, 9.76977853, 6.        ],
+           [6.78498493, 0.56380796, 6.        ],
+           [2.71891214, 6.94327481, 6.        ],
+           [3.4186965 , 9.38437467, 6.        ],
+           [6.45431955, 4.06044388, 6.        ],
+           [1.13096306, 9.72645436, 6.        ],
+           [8.34008115, 5.70698919, 6.        ]])
 
     See Also
     --------
@@ -643,9 +709,10 @@ def data_subset(dataset, set):
 
     Examples
     --------
-    >>> dataset = eaf.read_datasets("input1.dat")
+    >>> dataset = eaf.read_datasets("./doc/examples/input1.dat")
     >>> data1 = eaf.data_subset(dataset, set = 1)
-    # Select dataset 1 and remove the set number so it can be used for function such as :func:`subset`
+    
+    The above selects dataset 1 and removes the set number so it can be used for function such as :func:`subset`
     >>> eaf.hypervolume(data1, [10, 10])
     90.46272764755885
 
