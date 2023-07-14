@@ -178,6 +178,51 @@ def _get_cube_plot(dataset):
     return fig
 
 
+def get_xylim(lim, maximise, data):
+    # FIXME: This seems too complicated.
+    if maximise and lim is not None:
+        lim = -lim
+    if lim is None:
+        lim = np.array([np.min(data), np.max(data)])
+    if maximise:
+        lim = np.array([np.min(-lim), np.max(-lim)])
+    return lim
+
+
+def get_extremes(xlim, ylim, maximise, log):
+    if "x" in log:
+        xlim = np.log(xlim)
+    if "y" in log:
+        ylim = np.log(ylim)
+    extreme1 = (
+        xlim[0] - 0.05 * diff(xlim) if maximise[0] else xlim[1] + 0.05 * diff(xlim)
+    )
+    extreme2 = (
+        ylim[0] - 0.05 * diff(xlim) if maximise[1] else ylim[1] + 0.05 * diff(ylim)
+    )
+    if "x" in log:
+        extreme1 = np.exp(extreme1)
+    if "y" in log:
+        extreme2 = np.exp(extreme2)
+    return np.array([extreme1, extreme2])
+
+
+def add_extremes(x, y, extreme, maximise):
+    best1 = np.max(x) if maximise[0] else np.min(x)
+    best2 = np.max(y) if maximise[1] else np.min(y)
+    np.concatenate((best1, x, extreme[0])), np.concatenate((extreme[1], y, best2))
+
+
+xlim = ylim = None
+log = ""
+maximise = [False, False]
+xlim = get_xylim(xlim, maximise[0], data=x)
+ylim = get_xylim(ylim, maximise[1], data=y)
+extreme = get_extremes(xlim, ylim, maximise, log)
+
+x, y = add_extremes(x, y, extreme, maximise)
+
+
 def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwargs):
     """The `plot_datasets(dataset, type="points")` function plots Pareto front datasets
     It can produce an interactive point graph, stair step graph or 3d surface graph. It accept 2 or 3 objectives
