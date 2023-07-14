@@ -286,7 +286,7 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
                 y="Objective 2",
                 z="Objective 3",
                 color="Set Number",
-                color_discrete_map=colorway,
+                color_discrete_sequence=colorway,
             )
             figure.update_traces(marker_size=4)
             figure.update_layout(
