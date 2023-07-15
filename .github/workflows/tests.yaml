@@ -11,15 +11,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  eafpy-lint-black:
+  lint-black:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: psf/black@stable
 
-  eafpy-run-tests:
+  run-tests:
     timeout-minutes: 15
-    needs: eafpy-lint-black
+    needs: lint-black
     if: "! contains(github.event.head_commit.message, '[skip ci]')"
     name: Test ${{ matrix.c.os }} (${{ matrix.c.python-version }})
     runs-on: ${{ matrix.c.os }}
@@ -52,9 +52,9 @@ jobs:
       - name: Run tox
         run: tox
         
-  eafpy-build-package:
+  build-package:
     timeout-minutes: 10
-    needs: eafpy-run-tests
+    needs: run-tests
     if: "! contains(github.event.head_commit.message, '[skip ci]')"
     runs-on:  ${{ matrix.os }}
     strategy:
@@ -85,9 +85,9 @@ jobs:
           name: distributions
           path: dist/
 
-  eafpy-build-doc:
+  build-doc:
     timeout-minutes: 10
-    needs: eafpy-build-package
+    needs: build-package
     if: "! contains(github.event.head_commit.message, '[skip ci]') && contains(github.event.head_commit.message, '[build doc]')"
     runs-on:  ubuntu-latest
     steps:
@@ -127,8 +127,8 @@ jobs:
         with:
           path: doc/_build/html/
 
-  eafpy-deploy-doc:
-    needs: eafpy-build-doc
+  deploy-doc:
+    needs: build-doc
     if: "! contains(github.event.head_commit.message, '[skip ci]')"
     permissions:
       pages: write      # to deploy to Pages
@@ -149,9 +149,9 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v2 
 
-  eafpy-run-tests:
+  coverage:
     timeout-minutes: 15
-    needs: eafpy-build-doc
+    needs: build-doc
     if: "! contains(github.event.head_commit.message, '[skip ci]')"
     name: Coverage ${{ matrix.os }} (${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
@@ -162,7 +162,6 @@ jobs:
       max-parallel: 1
       matrix:
           - {os: ubuntu-latest,  python-version: '3.11'}
-
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
