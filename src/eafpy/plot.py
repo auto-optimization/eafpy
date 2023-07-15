@@ -184,43 +184,21 @@ def get_xylim(lim, maximise, data):
         lim = -lim
     if lim is None:
         lim = np.array([np.min(data), np.max(data)])
+        lim += 0.05 * np.diff(lim) * np.array([-1, 1])
     if maximise:
         lim = np.array([np.min(-lim), np.max(-lim)])
     return lim
 
 
-def get_extremes(xlim, ylim, maximise, log):
-    if "x" in log:
-        xlim = np.log(xlim)
-    if "y" in log:
-        ylim = np.log(ylim)
-    extreme1 = (
-        xlim[0] - 0.05 * diff(xlim) if maximise[0] else xlim[1] + 0.05 * diff(xlim)
+def add_extremes(x, y, maximise):
+    best_x = np.max(x) if maximise[0] else np.min(x)
+    best_y = np.max(y) if maximise[1] else np.min(y)
+    dtype = np.finfo(x.dtype)
+    inf_x = dtype.min if maximise[0] else dtype.max
+    inf_y = dtype.min if maximise[1] else dtype.max
+    return np.concatenate([[best_x], x, [inf_x]]), np.concatenate(
+        [[inf_y], y, [best_y]]
     )
-    extreme2 = (
-        ylim[0] - 0.05 * diff(xlim) if maximise[1] else ylim[1] + 0.05 * diff(ylim)
-    )
-    if "x" in log:
-        extreme1 = np.exp(extreme1)
-    if "y" in log:
-        extreme2 = np.exp(extreme2)
-    return np.array([extreme1, extreme2])
-
-
-def add_extremes(x, y, extreme, maximise):
-    best1 = np.max(x) if maximise[0] else np.min(x)
-    best2 = np.max(y) if maximise[1] else np.min(y)
-    np.concatenate((best1, x, extreme[0])), np.concatenate((extreme[1], y, best2))
-
-
-# xlim = ylim = None
-# log = ""
-# maximise = [False, False]
-# xlim = get_xylim(xlim, maximise[0], data=x)
-# ylim = get_xylim(ylim, maximise[1], data=y)
-# extreme = get_extremes(xlim, ylim, maximise, log)
-
-# x, y = add_extremes(x, y, extreme, maximise)
 
 
 def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwargs):
@@ -296,29 +274,25 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
         colorway = layout_kwargs["colorway"]
 
     if dim == 2:
-        lim_fig_x = 1.15 * max(sets_df["Objective 1"])
-        lim_fig_y = 1.15 * max(sets_df["Objective 2"])
-        df_sorted = sets_df.groupby("Set Number").apply(
-            lambda x: x.sort_values("Objective 1")
-        )
+        sets_df.sort_values(["Set Number", "Objective 1"], inplace=True)
+
         figure = px.line(
-            df_sorted,
+            sets_df,
             x="Objective 1",
             y="Objective 2",
             color="Set Number",
             title="Plot of a two objective dataset",
             color_discrete_sequence=colorway,
         )
-
-        # Extend lines passed the figure boundaries (limited by x,yaxis_range)
+        maximise = [False, False]
+        xlim = get_xylim(None, maximise[0], sets_df["Objective 1"])
+        ylim = get_xylim(None, maximise[1], sets_df["Objective 2"])
+        # Extend lines past the figure boundaries.
         for trace in figure.data:
-            trace.x = np.append(trace.x, trace.x[-1] + lim_fig_x)
-            trace.y = np.append(trace.y, trace.y[-1])
-            trace.x = np.insert(trace.x, 0, trace.x[-1])
-            trace.y = np.insert(trace.y, 0, trace.y[-1] + lim_fig_y)
+            trace.x, trace.y = add_extremes(trace.x, trace.y, maximise)
 
         figure.update_traces(line_shape="hv", mode=type_parsed)
-        figure.update_layout(xaxis_range=[0, lim_fig_x], yaxis_range=[0, lim_fig_y])
+        figure.update_layout(xaxis_range=xlim, yaxis_range=ylim)
 
     elif dim == 3:
         if "surface" in type_parsed:
