@@ -31,6 +31,20 @@ Libeaf contains wrapper functions for the EAF C library.
 The CFFI library is used to create C binding
 """
 
+
+def np2d_to_double_array(x):
+    data_p = ffi.from_buffer("double []", x)
+    ncols = ffi.cast("int", x.shape[1])
+    nrows = ffi.cast("int", x.shape[0])
+    return data_p, nrows, ncols
+
+
+def np1d_to_double_array(x):
+    size = ffi.cast("int", x.shape[0])
+    x = ffi.from_buffer("double []", x)
+    return x, size
+
+
 import lzma
 import shutil
 import tempfile
@@ -105,24 +119,20 @@ def read_datasets(filename):
     # Create buffer with the correct array size in bytes
     data_buf = ffi.buffer(data_p[0], datasize_p[0])
     # Convert 1d numpy array to 2d array with (n obj... , sets) columns
-    array = np.frombuffer(data_buf).reshape((-1, ncols_p[0]))
-    return array
+    return np.frombuffer(data_buf).reshape((-1, ncols_p[0]))
 
 
 def _parse_maximise(maximise, nobj):
     # Converts maximise array or single bool to ndarray format
-    # I.E if 3 objectives, maximise = True -> maximise = (1,1,1)
-    # eg. 3 objectives, maximise = [True, False, True] -> maximise = (1,0,1)
-    maximise = np.atleast_1d(maximise).astype(int)
+    maximise = np.atleast_1d(maximise).astype(bool)
     if len(maximise) == 1:
         maximise = np.full((nobj), maximise[0])
-    else:
-        if maximise.shape[0] != nobj:
-            raise ValueError(
-                "Maximise array must have same # of cols as data"
-                f"{maximise.shape[0]} != {nobj}"
-            )
-    return np.ascontiguousarray(maximise).astype(bool)
+    elif maximise.shape[0] != nobj:
+        raise ValueError(
+            "Maximise array must have same # of cols as data"
+            f"{maximise.shape[0]} != {nobj}"
+        )
+    return np.ascontiguousarray(maximise)
 
 
 def _unary_refset_common(data, ref, maximise):
@@ -138,7 +148,6 @@ def _unary_refset_common(data, ref, maximise):
             f"data and ref need to have the same number of columns ({nobj} != {ref.shape[1]})"
         )
     maximise = _parse_maximise(maximise, nobj)
-
     return data, ref, maximise
 
 
@@ -190,11 +199,8 @@ def igd(data, ref, maximise=False):
 
     """
     data, ref, maximise = _unary_refset_common(data, ref, maximise)
-    data_p = ffi.from_buffer("double []", data)
-    nobj = ffi.cast("int", data.shape[1])
-    npoints = ffi.cast("int", data.shape[0])
-    ref_p = ffi.from_buffer("double []", ref)
-    ref_size = ffi.cast("int", ref.shape[0])
+    data_p, npoints, nobj = np2d_to_double_array(data)
+    ref_p, ref_size = np1d_to_double_array(ref)
     maximise_p = ffi.from_buffer("bool []", maximise)
     return lib.igd_C(data_p, nobj, npoints, ref_p, ref_size, maximise_p)
 
@@ -205,11 +211,8 @@ def igd_plus(data, ref, maximise=False):
     See :func:`igd`
     """
     data, ref, maximise = _unary_refset_common(data, ref, maximise)
-    data_p = ffi.from_buffer("double []", data)
-    nobj = ffi.cast("int", data.shape[1])
-    npoints = ffi.cast("int", data.shape[0])
-    ref_p = ffi.from_buffer("double []", ref)
-    ref_size = ffi.cast("int", ref.shape[0])
+    data_p, npoints, nobj = np2d_to_double_array(data)
+    ref_p, ref_size = np1d_to_double_array(ref)
     maximise_p = ffi.from_buffer("bool []", maximise)
     return lib.igd_plus_C(data_p, nobj, npoints, ref_p, ref_size, maximise_p)
 
@@ -223,11 +226,8 @@ def avg_hausdorff_dist(data, ref, maximise=False, p=1):
         raise ValueError(f"'p' must be larger than zero")
 
     data, ref, maximise = _unary_refset_common(data, ref, maximise)
-    data_p = ffi.from_buffer("double []", data)
-    nobj = ffi.cast("int", data.shape[1])
-    npoints = ffi.cast("int", data.shape[0])
-    ref_p = ffi.from_buffer("double []", ref)
-    ref_size = ffi.cast("int", ref.shape[0])
+    data_p, npoints, nobj = np2d_to_double_array(data)
+    ref_p, ref_size = np1d_to_double_array(ref)
     maximise_p = ffi.from_buffer("bool []", maximise)
     p = ffi.cast("unsigned int", p)
     return lib.avg_Hausdorff_dist_C(
@@ -282,10 +282,8 @@ def hypervolume(data, ref):
         )
 
     ref_buf = ffi.from_buffer("double []", ref)
-    data_p = ffi.from_buffer("double []", data)
-    data_points = ffi.cast("int", data.shape[0])
-    data_objs = ffi.cast("int", data.shape[1])
-    hv = lib.fpli_hv(data_p, data_objs, data_points, ref_buf)
+    data_p, npoints, nobj = np2d_to_double_array(data)
+    hv = lib.fpli_hv(data_p, nobj, npoints, ref_buf)
     return hv
 
 
@@ -334,10 +332,7 @@ def is_nondominated(data, maximise=False, keep_weakly=False):
     data = np.asfarray(data)
     nobj = data.shape[1]
     maximise = _parse_maximise(maximise, nobj)
-
-    data_p = ffi.from_buffer("double []", data)
-    nobj = ffi.cast("int", nobj)
-    npoints = ffi.cast("int", data.shape[0])
+    data_p, npoints, nobj = np2d_to_double_array(data)
     maximise_p = ffi.from_buffer("bool []", maximise)
     keep_weakly = ffi.cast("bool", bool(keep_weakly))
     nondom = lib.is_nondominated_(data_p, nobj, npoints, maximise_p, keep_weakly)
@@ -391,23 +386,12 @@ def filter_dominated_sets(dataset, maximise=False, keep_weakly=False):
     return np.vstack(new_sets)
 
 
-def _epilison_select(data, ref, maximise=False, add_or_mult="add"):
-    # epsilon_ selects either episilon additive or multiplicative based on char is_add
-    if add_or_mult == "add":
-        epilson_type = 0
-    elif add_or_mult == "mult":
-        epilson_type = 1
-    else:
-        raise ValueError("Enter add or mult")
-
+def _epsilon_select(data, ref, maximise, is_add):
     data, ref, maximise = _unary_refset_common(data, ref, maximise)
-    data_p = ffi.from_buffer("double []", data)
-    nobj = ffi.cast("int", data.shape[1])
-    npoints = ffi.cast("int", data.shape[0])
-    ref_p = ffi.from_buffer("double []", ref)
-    ref_size = ffi.cast("int", ref.shape[0])
+    data_p, npoints, nobj = np2d_to_double_array(data)
+    ref_p, ref_size = np1d_to_double_array(ref)
     maximise_p = ffi.from_buffer("bool []", maximise)
-    is_add = ffi.cast("char", epilson_type)  # Select between add multiply
+    is_add = ffi.cast("bool", is_add)  # Select between add multiply
     return lib.epsilon_(data_p, nobj, npoints, ref_p, ref_size, maximise_p, is_add)
 
 
@@ -452,7 +436,7 @@ def epsilon_additive(data, ref, maximise=False):
     >>> eaf.epsilon_mult(dat, ref = ref)
     3.5
     """
-    return _epilison_select(data, ref, maximise=maximise, add_or_mult="add")
+    return _epsilon_select(data, ref, maximise=maximise, is_add=True)
 
 
 def epsilon_mult(data, ref, maximise=False):
@@ -461,7 +445,7 @@ def epsilon_mult(data, ref, maximise=False):
     See :func:`epsilon_additive`
 
     """
-    return _epilison_select(data, ref, maximise=maximise, add_or_mult="mult")
+    return _epsilon_select(data, ref, maximise=maximise, is_add=False)
 
 
 def normalise(data, range=[0, 1], lower="na", upper="na", maximise=False):
@@ -534,11 +518,7 @@ def normalise(data, range=[0, 1], lower="na", upper="na", maximise=False):
             )
 
     maximise = _parse_maximise(maximise, data.shape[1])
-
-    data_p = ffi.from_buffer("double *", data)
-
-    nobj = ffi.cast("int", objects)
-    npoints = ffi.cast("int", points)
+    data_p, npoints, nobj = np2d_to_double_array(data)
     maximise_p = ffi.from_buffer("bool []", maximise)
     lbound_p = ffi.from_buffer("double []", lower)
     ubound_p = ffi.from_buffer("double []", upper)
@@ -558,7 +538,6 @@ def normalise(data, range=[0, 1], lower="na", upper="na", maximise=False):
 
     data_buf = ffi.buffer(data_p, ffi.sizeof("double") * points * objects)
     data_nparray = np.frombuffer(data_buf)
-
     return data_nparray.reshape(-1, objects)
 
 
