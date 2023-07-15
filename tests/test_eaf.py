@@ -106,16 +106,16 @@ def test_plt_dta_types():
     X = eaf.read_datasets("tests/test_data/input1.dat")
     with pytest.raises(Exception) as expt:
         eaf.plot_datasets(datasets="Wrong input")
-        assert expt.type == TypeError
+    assert expt.type == TypeError
     with pytest.raises(Exception) as expt:
         eaf.plot_datasets(datasets=np.ndarray([50, 1]))
-        assert expt.type == ValueError
+    assert expt.type == ValueError
     with pytest.raises(Exception) as expt:
         eaf.plot_datasets(datasets=np.ndarray([50, 5]))
-        assert expt.type == ValueError
+    assert expt.type == ValueError
     with pytest.raises(Exception) as expt:
         eaf.plot_datasets(X, type="Bugel horn")
-        assert expt.type == ValueError
+    assert expt.type == ValueError
     eaf.plot_datasets(X, type="points,lines")
     eaf.plot_datasets(X, type="p,l")
     eaf.plot_datasets(X, type="l  ,p")
