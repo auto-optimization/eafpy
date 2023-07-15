@@ -153,21 +153,22 @@ jobs:
     timeout-minutes: 15
     needs: build-doc
     if: "! contains(github.event.head_commit.message, '[skip ci]')"
-    name: Coverage ${{ matrix.os }} (${{ matrix.python-version }})
-    runs-on: ${{ matrix.os }}
+    name: Coverage ${{ matrix.c.os }} (${{ matrix.c.python-version }})
+    runs-on: ${{ matrix.c.os }}
     strategy:
       # When set to true, GitHub cancels all in-progress jobs if any matrix job fails.
       fail-fast: true
       # The maximum number of jobs that can run simultaneously
       max-parallel: 1
       matrix:
+        c:
           - {os: ubuntu-latest,  python-version: '3.11'}
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.c.python-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.c.python-version }}
           cache: 'pip'
     
       - name: Install dependencies
