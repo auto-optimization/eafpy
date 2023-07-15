@@ -52,14 +52,6 @@ jobs:
       - name: Run tox
         run: tox
         
-      - name: Upload coverage to Codecov
-        if: matrix.c.os == 'ubuntu-latest' && matrix.c.python-version == '3.10' 
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
-          verbose: true
-          
   eafpy-build-package:
     timeout-minutes: 10
     needs: eafpy-run-tests
@@ -157,11 +149,40 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v2 
 
+  eafpy-run-tests:
+    timeout-minutes: 15
+    needs: eafpy-build-doc
+    if: "! contains(github.event.head_commit.message, '[skip ci]')"
+    name: Coverage ${{ matrix.os }} (${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # When set to true, GitHub cancels all in-progress jobs if any matrix job fails.
+      fail-fast: true
+      # The maximum number of jobs that can run simultaneously
+      max-parallel: 1
+      matrix:
+          - {os: ubuntu-latest,  python-version: '3.11'}
 
-      
-      
-
-
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
     
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tox tox-gh-actions
 
-          
+      - name: Run coverage using tox
+        run: tox -e coverage
+        
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          verbose: true
+
