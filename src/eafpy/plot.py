@@ -243,9 +243,14 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
         This means that the user can customise any part of the graph after it is created
 
     """
-    datasets = np.asarray(datasets)
-    if not isinstance(datasets, np.ndarray):
-        raise TypeError("Dataset must be of type numpy array")
+    try:
+        datasets = np.asarray(datasets)
+    except Exception as ex:
+        raise TypeError("dataset cannot be converted to a numpy array") from ex
+
+    if len(datasets.shape) != 2:
+        raise ValueError("dataset must be a numpy 2D matrix")
+
     dim = datasets.shape[1] - 1
     if dim > 3:
         raise ValueError(

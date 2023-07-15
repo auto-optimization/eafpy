@@ -106,7 +106,7 @@ def test_plt_dta_types():
     X = eaf.read_datasets("tests/test_data/input1.dat")
     with pytest.raises(Exception) as expt:
         eaf.plot_datasets(datasets="Wrong input")
-    assert expt.type == TypeError
+    assert expt.type == ValueError
     with pytest.raises(Exception) as expt:
         eaf.plot_datasets(datasets=np.ndarray([50, 1]))
     assert expt.type == ValueError

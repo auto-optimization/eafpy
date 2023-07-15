@@ -3,6 +3,7 @@ import cffi
 
 ffibuilder = cffi.FFI()
 
+# FIXME: Can we generate this automatically or read it from a pyeaf.h file?
 ffibuilder.cdef(
     """
     int read_datasets_(const char * filename, double **data_p, int *ncols_p, int *datasize_p);
