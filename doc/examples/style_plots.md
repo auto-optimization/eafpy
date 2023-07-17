@@ -45,7 +45,7 @@ print("available presets: " + str(dir(px.colors.qualitative)))
 print("Example of a preset: " + str(px.colors.qualitative.Prism))
 
 ```
-The `colorway` argument takes priority of the `template` (A template comes with its own colorway)
+The `colorway` argument takes priority over the `template` colorway (A template includes its own colorway)
 
 ```{code-cell}
 import eafpy as eaf

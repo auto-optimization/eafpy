@@ -20,6 +20,14 @@ eafpy.c\_bindings module
    :undoc-members:
    :show-inheritance:
 
+eafpy.conftest module
+---------------------
+
+.. automodule:: eafpy.conftest
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 eafpy.eaf module
 ----------------
 

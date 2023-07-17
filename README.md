@@ -218,7 +218,7 @@ py build_c_eaf.py
 
 ### Building the documentation
 #### Build doc in the CI
-You need to include the tag `[build doc]` in your commit to automatically build and deploy the documentation to github pages. You should test your changes locally first:
+The CI will automatically build and deploy doc to the github pages when a new commit is added to the master
 
 #### Build doc locally
 
@@ -249,6 +249,7 @@ wsl -d ubuntu
 # You should now be in a WSL terminal. You might have to install pip first
 pip install -r requirements_dev.txt
 cd doc
+make clean
 make html
 ```
 #### Building the automatic docstring for sphinx
@@ -257,6 +258,7 @@ To build the pages that are produced from docstrings, execute this
 cd doc
 sphinx-apidoc -f -o . ../src/
 # Re-make the docs to see the changes
+make clean
 make html 
 ```
 This uses the sphinx `sphinxcontrib-napoleon` extension to build numpy docstrings

@@ -691,7 +691,7 @@ def data_subset(dataset, set):
     >>> dataset = eaf.read_datasets("./doc/examples/input1.dat")
     >>> data1 = eaf.data_subset(dataset, set = 1)
     
-    The above selects dataset 1 and removes the set number so it can be used for function such as :func:`subset`
+    The above selects dataset 1 and removes the set number so it can be used as an input to functions such as :func:`hypervolume`
     >>> eaf.hypervolume(data1, [10, 10])
     90.46272764755885
 

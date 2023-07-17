@@ -79,22 +79,6 @@ def _gen_3d_mesh_plot(dataset, type):
     return fig
 
 
-""" Take a numpy array of points and add the addtional points that make a cube from the origin
-
-:param np_dataset: Numpy dataset, it should be fetched using the read_dataset function
-:type np_dataset: numpy float ndarray
-...
-:return: Returns a numpy array with shape [8x dataset rows,  dataset columns + 1]. Every 4th row contains the point from the input dataset. 
-         the proceding 3 rows contain one dimension of the point. For example if the first data point in the input argument is [3,3,3, set]
-         then the array will look like this:
-         [3,3,3, set, cubenumber = 0]
-         [3,0,0, set, 0]
-         [0,3,0, set, 0]
-         [0,0,3, set, 0]
-:rtype: numpy float ndarray
-"""
-
-
 def _get_cube_points(dataset):
     ds_cube = np.zeros((dataset.shape[0] * 8, 5), dtype=float)
     cube_num = 0
@@ -268,12 +252,11 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
         column_names.insert(2, "Objective 3")
     sets_df = pd.DataFrame(datasets, columns=column_names)
 
-    # convert to string without decimal points, plotly interprets ints as discrete colour sequences
-
+    # convert set num to string without decimal points, plotly interprets ints as discrete colour sequences
     sets_df["Set Number"] = sets_df["Set Number"].astype(int).astype(str)
 
     # Plotly express does not allow you to change the colour sequence after the graph is created
-    # So I add this workaround to pass the colour sequence in while it is created insteaf of to update_figure
+    # So I add this workaround to pass the colour sequence in while it is created instead of to update_figure
     colorway = px.colors.qualitative.Plotly
     if "colorway" in layout_kwargs:
         colorway = layout_kwargs["colorway"]
@@ -289,6 +272,7 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
             title="Plot of a two objective dataset",
             color_discrete_sequence=colorway,
         )
+
         maximise = [False, False]
         xlim = get_xylim(None, maximise[0], sets_df["Objective 1"])
         ylim = get_xylim(None, maximise[1], sets_df["Objective 2"])
@@ -323,5 +307,6 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
             raise NotImplementedError
     else:
         raise NotImplementedError
+
     figure.update_layout(layout_kwargs)
     return figure
