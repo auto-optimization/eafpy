@@ -7,7 +7,7 @@
 #include "nondominated.h"
 
 void test_read_double_data(){
-    const char * filename ="uniform-250-10-3d.txt";
+    const char * filename ="input1.dat";
     double * return_data = NULL;
     int num_obj = 0;
     int *cumsizes = NULL;
@@ -51,26 +51,10 @@ void test_read_double_data(){
 
 // }
 
-void test_normalised(){
-    double data[] = {1,2,3,4,5,6,7,8,9,10,14,32};
-    int nobj = 2;
-    int npoints = 6;
-    bool maximise[] = {FALSE, FALSE};
-    double lower_range = 0;
-    double upper_range = 10;
-    double lbound[] = {1,2};
-    double ubound[] = {9,10};
-
-    normalise_(data, nobj, npoints, maximise,lower_range, upper_range);
-    for(int i = 0; i <10; i++){
-        printf("%f ", data[i]);
-    }
-}
-
 
 int main()
 {   
-   test_normalised();
+   test_read_double_data();
 
     return 0;
 }

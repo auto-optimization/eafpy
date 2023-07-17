@@ -190,3 +190,72 @@ eaf_polygon_t *eaf_compute_polygon_old (eaf_t **eaf, int nlevels);
 void eaf_print_polygon (FILE* stream, eaf_t **eaf, int nlevels);
 eaf_polygon_t * eaf_compute_rectangles (eaf_t **eaf, int nlevels);
 
+
+int get_cumsizes(double *data, int nobj, int npoints){
+
+}
+
+
+int get_eaf_(double *data, int nobj, int npoints, double * percentiles, int npercentiles, int nsets, double * eafpoints){
+
+    int * cumsizes = malloc(sizeof(int) * nsets);
+
+
+    int last_ell = data[nobj];
+    int cumlative_pointer = 0;
+    int cumlative_sum;
+    for(int i = 0; i < npoints; i++){
+        cumlative_sum = cumlative_sum++;
+        if(data[(i * nobj )-1] /= last_ell){
+            
+            cumsizes[cumlative_pointer] = cumlative_sum;
+            cumlative_pointer++;
+        }
+        
+
+
+    }
+
+
+    int *levels;
+     if (percentiles != NULL) {
+        levels = malloc(sizeof(int) * npercentiles);
+        for (int k = 0; k < npercentiles; k++)
+            levels[k] = percentile2level(percentiles[k], nsets);
+    } else {
+        levels = malloc(sizeof(int) * nsets);
+        for (int k = 0; k < nsets; k++)
+            levels[k] = k + 1;
+    }
+    eaf_t **eaf = attsurf (data, nobj, cumsizes, nsets, levels, npercentiles);
+    int totalpoints = eaf_totalpoints (eaf, npercentiles);
+
+    double * rmat = malloc(sizeof(double) * totalpoints);
+
+    int pos = 0;
+    int k;
+    for (k = 0; k < npercentiles; k++) {
+        int npoints = eaf[k]->size;
+
+        int i;
+        for (i = 0; i < npoints; i++) {
+            int j;
+            for (j = 0; j < nobj; j++) {
+                rmat[pos + j * totalpoints] = eaf[k]->data[j + i * nobj];
+            }
+            rmat[pos + nobj * totalpoints] = percentiles[k];
+            pos++;
+        }
+        eaf_delete (eaf[k]);
+    }
+
+    free(eaf);
+    return totalpoints;
+
+    // Convert percentiles to levels
+    // Calculate EAF and returns eaf_t object 
+    // put eaf data into eaf.c
+
+
+}
+

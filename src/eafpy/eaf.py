@@ -701,3 +701,10 @@ def data_subset(dataset, set):
 
     """
     return np.ascontiguousarray(subset(dataset, set, range=[])[:, :-1])
+
+
+def eaf(data, percentiles):
+    data = np.asfarray(data)
+    objects = data.shape[1]
+    points = data.shape[0]
+    data_p, npoints, nobj = np2d_to_double_array(data)
