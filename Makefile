@@ -9,5 +9,10 @@ build:
 test:
 	tox
 
-doc:
+doc: clean
 	$(MAKE) -C doc html
+
+clean:
+	$(RM) -rf .pytest_cache/ .tox/ build/ src/eafpy.egg-info/ __pycache__/
+	$(MAKE) -C doc clean
+
