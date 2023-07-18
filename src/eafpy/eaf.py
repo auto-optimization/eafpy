@@ -177,7 +177,7 @@ def igd(data, ref, maximise=False):
         Whether the objectives must be maximised instead of minimised. \
         Either a single boolean value that applies to all objectives or a list of booleans, with one value per objective. \
         Also accepts a 1d numpy array with value 0/1 for each objective
-    P : Hausdorff distance parameter (default: 1L).
+    p : Hausdorff distance parameter (default: 1L).
 
     Returns
     -------
@@ -376,6 +376,9 @@ def filter_dominated_sets(dataset, maximise=False, keep_weakly=False):
     --------
     This function for data without set numbers - :func:`filter_dominated` 
     """
+    # FIXME: it will be faster to stack filter_set, then do:
+    # dataset[filter_set, :]
+    # to filter in one go.
     new_sets = []
     for set in np.unique(dataset[:, -1]):
         set_data = dataset[dataset[:, -1] == set, :-1]
