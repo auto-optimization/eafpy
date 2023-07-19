@@ -705,6 +705,20 @@ def data_subset(dataset, set):
 
 def eaf(data, percentiles):
     data = np.asfarray(data)
-    objects = data.shape[1]
-    points = data.shape[0]
-    data_p, npoints, nobj = np2d_to_double_array(data)
+    percentiles = np.asfarray(percentiles)
+    data_p, npoints, ncols = np2d_to_double_array(data)
+    percentile_p, npercentiles = np1d_to_double_array(percentiles)
+    eaf_npoints = ffi.cast("int *", 0)
+    nsets = ffi.cast("int", len(np.unique(data[:, -1])))
+
+    eaf_data = lib.get_eaf_(
+        data_p, ncols, npoints, percentile_p, npercentiles, nsets, eaf_npoints
+    )
+    print(eaf_npoints)
+    eaf_buf = ffi.buffer(eaf_data, ffi.sizeof("double") * data.shape[1] * eaf_npoints)
+    eaf_arr = np.frombuffer(eaf_buf)
+
+    return eaf_arr
+
+
+# dat = eaf.eaf.eaf(eaf.read_datasets("doc/examples/input1.dat"), [25,100])

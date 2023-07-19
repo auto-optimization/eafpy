@@ -34,6 +34,8 @@
 
 *************************************************************************/
 #include <stdlib.h>
+#include <stdint.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -1034,3 +1036,69 @@ eaf_compute_rectangles (eaf_t **eaf, int nlevels)
     return regions;
 #undef eaf_point
 }
+
+int *get_cumsizes_(double *data, int ncols, int npoints, int nsets){
+    // Get the cumulative sizes of the sets from an array data points and sets
+    // Remember to free the cumulative sizes pointer after use
+    int * cumsizes = malloc(sizeof(int) * nsets);
+    int last_diff_data = (int)data[ncols-1];
+    int this_data = (int)data[ncols-1];
+    int cumlative_pointer = 0;
+    int cumlative_sum = 0;
+    int data_pointer = 0;
+
+    for(int i = 0; i < npoints; i++){
+        data_pointer = ncols-1 + i*ncols;
+        this_data = data[data_pointer];
+        if(this_data != last_diff_data){
+            last_diff_data = this_data;
+            cumsizes[cumlative_pointer] = cumlative_sum;
+            cumlative_pointer++;
+        }
+        cumlative_sum++;
+    }
+    cumsizes[cumlative_pointer] = cumlative_sum;
+    return cumsizes;
+}
+
+double * get_eaf_(double *data, int ncols, int npoints, double * percentiles, int npercentiles, int nsets, int * eaf_npoints){
+    int nobj = ncols -1;
+    int * cumsizes = get_cumsizes_(data, ncols, npoints, nsets); // Remember to free
+    int *levels;
+     if (percentiles != NULL) {
+        levels = malloc(sizeof(int) * npercentiles);
+        for (int k = 0; k < npercentiles; k++)
+            levels[k] = percentile2level(percentiles[k], nsets);
+    } else {
+        levels = malloc(sizeof(int) * nsets);
+        for (int k = 0; k < nsets; k++)
+            levels[k] = k + 1;
+    }
+    eaf_t **eaf = attsurf (data, nobj, cumsizes, nsets, levels, npercentiles);
+    int totalpoints = eaf_totalpoints (eaf, npercentiles);
+    eaf_npoints[0] = totalpoints;
+    double * rmat = malloc(sizeof(double) * totalpoints);
+
+    int pos = 0;
+    int k;
+    for (k = 0; k < npercentiles; k++) {
+        int npoints = eaf[k]->size;
+        int i;
+        for (i = 0; i < npoints; i++) {
+            int j;
+            for (j = 0; j < nobj; j++) {
+                rmat[pos + j * totalpoints] = eaf[k]->data[j + i * nobj];
+            }
+            rmat[pos + nobj * totalpoints] = percentiles[k];
+            pos++;
+        }
+        eaf_delete(eaf[k]);
+    } 
+    free(eaf);
+    free(cumsizes);
+    return rmat;
+    // Convert percentiles to levels
+    // Calculate EAF and returns eaf_t object 
+    // put eaf data into eaf.c
+}
+
