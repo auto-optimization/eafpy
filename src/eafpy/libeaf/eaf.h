@@ -190,7 +190,8 @@ eaf_polygon_t *eaf_compute_polygon_old (eaf_t **eaf, int nlevels);
 void eaf_print_polygon (FILE* stream, eaf_t **eaf, int nlevels);
 eaf_polygon_t * eaf_compute_rectangles (eaf_t **eaf, int nlevels);
 
-
+// Get the cumulative sizes of sets from an array of data + set numbers
 int *get_cumsizes_(double *data, int nobj, int npoints, int nsets);
 
-double * get_eaf_(double *data, int ncols, int npoints, double * percentiles, int npercentiles, int nsets, int * eaf_npoints){
+// Function for making it easier to get the EAF into python
+double * get_eaf_(double *data, int ncols, int npoints, double * percentiles, int npercentiles, bool use_percentile, int nsets, int * eaf_npoints, int * sizeof_eaf);

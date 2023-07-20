@@ -1061,11 +1061,13 @@ int *get_cumsizes_(double *data, int ncols, int npoints, int nsets){
     return cumsizes;
 }
 
-double * get_eaf_(double *data, int ncols, int npoints, double * percentiles, int npercentiles, int nsets, int * eaf_npoints){
+double * get_eaf_(double *data, int ncols, int npoints, double * percentiles, int npercentiles, bool use_percentile, int nsets, int * eaf_npoints, int * sizeof_eaf){
+    printf("Began \n");
     int nobj = ncols -1;
     int * cumsizes = get_cumsizes_(data, ncols, npoints, nsets); // Remember to free
+    
     int *levels;
-     if (percentiles != NULL) {
+     if (use_percentile==TRUE) {
         levels = malloc(sizeof(int) * npercentiles);
         for (int k = 0; k < npercentiles; k++)
             levels[k] = percentile2level(percentiles[k], nsets);
@@ -1074,19 +1076,31 @@ double * get_eaf_(double *data, int ncols, int npoints, double * percentiles, in
         for (int k = 0; k < nsets; k++)
             levels[k] = k + 1;
     }
+    printf("Levels: ");
+    
     eaf_t **eaf = attsurf (data, nobj, cumsizes, nsets, levels, npercentiles);
-    int totalpoints = eaf_totalpoints (eaf, npercentiles);
-    eaf_npoints[0] = totalpoints;
-    double * rmat = malloc(sizeof(double) * totalpoints);
+    free (levels);
 
+    printf("attsurf calculated \n");
+    int totalpoints = eaf_totalpoints(eaf, npercentiles);
+    
+    printf("npoints calculated \n");
+    int sizeof_eaf_ = sizeof(double) * totalpoints * nobj + 1;
+    
+    double * rmat = malloc(sizeof_eaf_);
+    printf("sizeof eaf = %d \n",sizeof_eaf_);
+    
     int pos = 0;
     int k;
     for (k = 0; k < npercentiles; k++) {
         int npoints = eaf[k]->size;
         int i;
+        printf("perc %d \t", k);
         for (i = 0; i < npoints; i++) {
             int j;
+            printf("point %d \t", i);
             for (j = 0; j < nobj; j++) {
+                printf("obj %d \t", i);
                 rmat[pos + j * totalpoints] = eaf[k]->data[j + i * nobj];
             }
             rmat[pos + nobj * totalpoints] = percentiles[k];
@@ -1094,11 +1108,10 @@ double * get_eaf_(double *data, int ncols, int npoints, double * percentiles, in
         }
         eaf_delete(eaf[k]);
     } 
+    *sizeof_eaf = sizeof_eaf_;
+    *eaf_npoints = totalpoints;
     free(eaf);
     free(cumsizes);
     return rmat;
-    // Convert percentiles to levels
-    // Calculate EAF and returns eaf_t object 
-    // put eaf data into eaf.c
 }
 
