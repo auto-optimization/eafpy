@@ -13,6 +13,7 @@ The EAF python package allows for easy calculation and visulisation of the empir
 
    examples/plot_datasets_examples.md
    examples/style_plots.md
+   examples/heatmap_prototype.md
 
 Indices and tables
 ==================
