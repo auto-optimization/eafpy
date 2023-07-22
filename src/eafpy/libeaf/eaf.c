@@ -1065,24 +1065,39 @@ double * get_eaf_(double *data, int ncols, int npoints, double * percentiles, in
     printf("Began \n");
     int nobj = ncols -1;
     int * cumsizes = get_cumsizes_(data, ncols, npoints, nsets); // Remember to free
-    
+    int number_levels_selected = 0;
     int *levels;
-     if (use_percentile==TRUE) {
-        levels = malloc(sizeof(int) * npercentiles);
-        for (int k = 0; k < npercentiles; k++)
-            levels[k] = percentile2level(percentiles[k], nsets);
-    } else {
-        levels = malloc(sizeof(int) * nsets);
-        for (int k = 0; k < nsets; k++)
-            levels[k] = k + 1;
+    int *calculated_percentiles;
+    int *percentiles_selected;
+
+    if(use_percentile == FALSE){
+        // Calculate the percentiles based on number of sets -> Number of levels = number of sets
+        
+        calculated_percentiles = malloc(sizeof(int) * nsets);
+        for(int i = 1;i<nsets+1;i++){
+            calculated_percentiles[i] = (i * 100)/nsets;
+        }
+        number_levels_selected = nsets;
+        percentiles_selected = calculated_percentiles;
+    }else{
+        // Use the percentiles array as an input
+        number_levels_selected = npercentiles;
+        percentiles_selected = calculated_percentiles;
     }
+
+    // Convert the percentiles to levels, where perc
+    levels = malloc(sizeof(int) * number_levels_selected);
+    for (int k = 0; k < number_levels_selected; k++){
+        levels[k] = percentile2level(percentiles[k], number_levels_selected);
+    }
+
     printf("Levels: ");
     
-    eaf_t **eaf = attsurf (data, nobj, cumsizes, nsets, levels, npercentiles);
+    eaf_t **eaf = attsurf (data, nobj, cumsizes, nsets, levels, number_levels_selected);
     free (levels);
 
     printf("attsurf calculated \n");
-    int totalpoints = eaf_totalpoints(eaf, npercentiles);
+    int totalpoints = eaf_totalpoints(eaf, number_levels_selected);
     
     printf("npoints calculated \n");
     int sizeof_eaf_ = sizeof(double) * totalpoints * nobj + 1;
