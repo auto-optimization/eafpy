@@ -1060,73 +1060,95 @@ int *get_cumsizes_(double *data, int ncols, int npoints, int nsets){
     cumsizes[cumlative_pointer] = cumlative_sum;
     return cumsizes;
 }
+void print_int_array(int * arr, int size, char* str){
+    printf("%s: ", str);
+    for(int i=0;i<size;i++){
+        printf("%d ", arr[i]);
+    }
+    printf("\n");
+}
+void print_double_array(double * arr, int size, char* str){
+    printf("%s: ", str);
+    for(int i=0;i<size;i++){
+        printf("%f ", arr[i]);
+    }
+    printf("\n");
+}
 
 double * get_eaf_(double *data, int ncols, int npoints, double * percentiles, int npercentiles, bool use_percentile, int nsets, int * eaf_npoints, int * sizeof_eaf){
     printf("Began \n");
     int nobj = ncols -1;
     int * cumsizes = get_cumsizes_(data, ncols, npoints, nsets); // Remember to free
+    print_int_array(cumsizes, nsets, "Cumsizes");
     int number_levels_selected = 0;
     int *levels;
-    int *calculated_percentiles;
-    int *percentiles_selected;
+    double *calculated_percentiles = malloc(sizeof(double) * nsets);;
+    double *percentiles_selected;
+    printf("nsets: %d npercentiles %d nobj %d  \n", nsets, npercentiles, nobj);
+    
 
     if(use_percentile == FALSE){
         // Calculate the percentiles based on number of sets -> Number of levels = number of sets
-        
-        calculated_percentiles = malloc(sizeof(int) * nsets);
         for(int i = 1;i<nsets+1;i++){
-            calculated_percentiles[i] = (i * 100)/nsets;
+            calculated_percentiles[i-1] = (i * 100)/nsets;
         }
         number_levels_selected = nsets;
         percentiles_selected = calculated_percentiles;
     }else{
-        // Use the percentiles array as an input
-        number_levels_selected = npercentiles;
-        percentiles_selected = calculated_percentiles;
+        // Use the percentiles array to select the percentiles
+        number_levels_selected = npercentiles; // 1 percentile maps to one level
+        percentiles_selected = percentiles;
     }
-
+    print_double_array(percentiles_selected, number_levels_selected, "Percentiles");
     // Convert the percentiles to levels, where perc
     levels = malloc(sizeof(int) * number_levels_selected);
     for (int k = 0; k < number_levels_selected; k++){
-        levels[k] = percentile2level(percentiles[k], number_levels_selected);
+        levels[k] = percentile2level(percentiles_selected[k], nsets);
     }
-
-    printf("Levels: ");
+    print_int_array(levels, number_levels_selected, "Levels");
     
+
     eaf_t **eaf = attsurf (data, nobj, cumsizes, nsets, levels, number_levels_selected);
     free (levels);
 
     printf("attsurf calculated \n");
     int totalpoints = eaf_totalpoints(eaf, number_levels_selected);
     
-    printf("npoints calculated \n");
-    int sizeof_eaf_ = sizeof(double) * totalpoints * nobj + 1;
+    printf("npoints calculated as %d. Total matrix size = %d \n", totalpoints, (totalpoints * (nobj + 1)));
+    int sizeof_eaf_ = sizeof(double) * totalpoints * (nobj + 1);
     
-    double * rmat = malloc(sizeof_eaf_);
+    double * return_matrix = malloc(sizeof_eaf_);
     printf("sizeof eaf = %d \n",sizeof_eaf_);
-    
+
     int pos = 0;
-    int k;
-    for (k = 0; k < npercentiles; k++) {
-        int npoints = eaf[k]->size;
-        int i;
-        printf("perc %d \t", k);
-        for (i = 0; i < npoints; i++) {
-            int j;
-            printf("point %d \t", i);
-            for (j = 0; j < nobj; j++) {
-                printf("obj %d \t", i);
-                rmat[pos + j * totalpoints] = eaf[k]->data[j + i * nobj];
+    printf("Writing to rmat. Levels selected = %d \n", number_levels_selected);
+    for (int k = 0; k < number_levels_selected; k++) {
+        printf("\neaf %d ",k);
+        int this_level_npoints = eaf[k]->size;
+        printf("ok. perc %d level_points = %d \n", k, this_level_npoints);
+        for (int i = 0; i < this_level_npoints; i++) {
+            printf("\tpoint %d \n", i);
+            for (int j = 0; j < nobj; j++) {
+                printf("\t\tobj %d rmat_index %d: ", j, pos*ncols+j);
+                return_matrix[pos*ncols+j] = eaf[k]->data[j + i * nobj];
+                printf("ok \n" );
             }
-            rmat[pos + nobj * totalpoints] = percentiles[k];
+            printf("\t\tpercentile index: %d ", pos*ncols+ncols-1);
+            return_matrix[pos*ncols+ncols-1] = percentiles_selected[k];
+            printf("ok \n" );
             pos++;
         }
+        printf("Deleting eaf %d: ",k);
         eaf_delete(eaf[k]);
+        printf("ok \n");
     } 
-    *sizeof_eaf = sizeof_eaf_;
-    *eaf_npoints = totalpoints;
+    printf("Finished writing to return_matrix");
+    
+    free(calculated_percentiles);
     free(eaf);
     free(cumsizes);
-    return rmat;
+    *sizeof_eaf = sizeof_eaf_;
+    *eaf_npoints = totalpoints;
+    return return_matrix;
 }
 

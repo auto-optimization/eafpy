@@ -705,15 +705,16 @@ def data_subset(dataset, set):
 
 def eaf(data, percentiles=[]):
     data = np.asfarray(data)
+    num_data_columns = data.shape[1]
     percentiles = np.asfarray(percentiles)
     data_p, npoints, ncols = np2d_to_double_array(data)
 
-    use_percentiles = True if len(percentiles) != 0 else False
-    use_percentiles = ffi.cast("bool", use_percentiles)
+    choose_percentiles = True if len(percentiles) != 0 else False
+    choose_percentiles = ffi.cast("bool", choose_percentiles)
 
     percentile_p, npercentiles = np1d_to_double_array(percentiles)
-    eaf_npoints = ffi.cast("int *", 0)
-    sizeof_eaf = ffi.cast("int *", 0)
+    eaf_npoints = ffi.new("int *", 0)
+    sizeof_eaf = ffi.new("int *", 0)
     nsets = ffi.cast("int", len(np.unique(data[:, -1])))
 
     eaf_data = lib.get_eaf_(
@@ -722,16 +723,14 @@ def eaf(data, percentiles=[]):
         npoints,
         percentile_p,
         npercentiles,
-        use_percentiles,
+        choose_percentiles,
         nsets,
         eaf_npoints,
         sizeof_eaf,
     )
-    eaf_buf = ffi.buffer(eaf_data, sizeof_eaf)
+    eaf_buf = ffi.buffer(eaf_data, sizeof_eaf[0])
     eaf_arr = np.frombuffer(eaf_buf)
-    print(sizeof_eaf)
-    print(eaf_npoints)
-    return eaf_arr
+    return np.reshape(eaf_arr, (-1, num_data_columns))
 
 
 # dat = eaf.eaf.eaf(eaf.read_datasets("doc/examples/input1.dat"), [25,100])
