@@ -703,19 +703,69 @@ def data_subset(dataset, set):
     return np.ascontiguousarray(subset(dataset, set, range=[])[:, :-1])
 
 
-def eaf(data, percentiles=[]):
+def get_eaf(data, percentiles=[]):
+    """Empiracal attainment function (EAF) calculation
+    
+    Calculate EAF in 2d or 3d from the input dataset
+
+    Parameters
+    ----------
+    dataset : numpy array
+        Numpy array of numerical values and set numbers, containing multiple sets. For example the output \
+         of the :func:`read_datasets` function
+    percentiles : list
+        A list of percentiles to calculate. If empty, all possible percentiles are calculated. Note the maximum 
+
+    Returns
+    -------
+    numpy array
+        Returns a numpy array containing the EAF data points, with the same number of columns as the input argument, \
+        but a different number of rows. The last column represents the EAF percentile for that data point
+
+    Examples
+    --------
+    >>> dataset = eaf.read_datasets("./doc/examples/input1.dat")
+    >>> subset = eaf.subset(dataset, range = [7,10])
+    >>> eaf.get_eaf(subset)
+    array([[  0.36688707,   7.        ,  25.        ],
+       [  1.06855707,   6.7102429 ,  25.        ],
+       [  1.58498886,   2.87955367,  25.        ],
+       [  8.        ,   1.44806325,  25.        ],
+       [  9.        ,   0.79293574,  25.        ],
+       [  1.50186503,   9.        ,  50.        ],
+       [  1.58498886,   6.7102429 ,  50.        ],
+       [  3.34035397,   2.89377444,  50.        ],
+       [  8.        ,   2.87955367,  50.        ],
+       [  9.        ,   1.44806325,  50.        ],
+       [  2.0113941 ,   9.38738442,  75.        ],
+       [  2.62349839,   7.20701734,  75.        ],
+       [  3.34035397,   6.7102429 ,  75.        ],
+       [  4.93663823,   6.20957074,  75.        ],
+       [  7.        ,   4.5359082 ,  75.        ],
+       [  8.        ,   2.89377444,  75.        ],
+       [  9.30137043,   2.14328532,  75.        ],
+       [  2.62349839,   9.38738442, 100.        ],
+       [  3.34035397,   7.20701734, 100.        ],
+       [  4.93663823,   6.7102429 , 100.        ],
+       [  7.        ,   6.20957074, 100.        ],
+       [  8.        ,   4.5359082 , 100.        ]])
+
+    """
     data = np.asfarray(data)
     num_data_columns = data.shape[1]
     percentiles = np.asfarray(percentiles)
+    # Get C pointers + matrix size for calling CFFI generated extension module
     data_p, npoints, ncols = np2d_to_double_array(data)
 
+    # If percentiles array is empty, calculate all the levels in C code from the data
+    # Else use the percentiles argument to calculate the levels
     choose_percentiles = True if len(percentiles) != 0 else False
     choose_percentiles = ffi.cast("bool", choose_percentiles)
 
     percentile_p, npercentiles = np1d_to_double_array(percentiles)
     eaf_npoints = ffi.new("int *", 0)
     sizeof_eaf = ffi.new("int *", 0)
-    nsets = ffi.cast("int", len(np.unique(data[:, -1])))
+    nsets = ffi.cast("int", len(np.unique(data[:, -1])))  # Get nu,m of sets from data
 
     eaf_data = lib.get_eaf_(
         data_p,
@@ -728,9 +778,7 @@ def eaf(data, percentiles=[]):
         eaf_npoints,
         sizeof_eaf,
     )
+
     eaf_buf = ffi.buffer(eaf_data, sizeof_eaf[0])
     eaf_arr = np.frombuffer(eaf_buf)
     return np.reshape(eaf_arr, (-1, num_data_columns))
-
-
-# dat = eaf.eaf.eaf(eaf.read_datasets("doc/examples/input1.dat"), [25,100])

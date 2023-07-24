@@ -30,6 +30,7 @@
 
 *************************************************************************/
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <float.h>
@@ -58,9 +59,13 @@
 /* If the input are always integers, adjusting this type will
    certainly improve performance.  */
 #ifndef objective_t
+/* MSVC does not like comparing macros 
+so change objective_t to int AND change objective_macro_is_double 
+to something else for integer */
 #define objective_t double
+#define objective_macro_is_double 
 #endif
-#if objective_t == double
+#ifdef objective_macro_is_double
 # define objective_MAX INFINITY
 # define objective_MIN -INFINITY
 # define objective_t_scanf_format "%lf"
@@ -190,8 +195,15 @@ eaf_polygon_t *eaf_compute_polygon_old (eaf_t **eaf, int nlevels);
 void eaf_print_polygon (FILE* stream, eaf_t **eaf, int nlevels);
 eaf_polygon_t * eaf_compute_rectangles (eaf_t **eaf, int nlevels);
 
-// Get the cumulative sizes of sets from an array of data + set numbers
-int *get_cumsizes_(double *data, int nobj, int npoints, int nsets);
-
-// Function for making it easier to get the EAF into python
-double * get_eaf_(double *data, int ncols, int npoints, double * percentiles, int npercentiles, bool use_percentile, int nsets, int * eaf_npoints, int * sizeof_eaf);
+// Wrapper function for getting array of EAF data, for use in python wrapper
+double * get_eaf_(double *data, /*Flat row major order data matrix input, including objectives and set numbers */
+                int ncols,  /*Number of columns in the input data array (ncols = number of objectives + 1) */
+                int npoints, /*Number of data points (rows) in input data column */
+                double * percentiles, /*array of percentiles to calculate EAF for, if choose_percentiles argument is true */
+                int npercentiles, /*Length of percentiles array */
+                bool choose_percentiles, /*If true,  */
+                int nsets, /*Number of different sets in the data input matrix */
+                int * eaf_npoints, /*Return single integer containing the number of rows in the output matrix  */
+                int * sizeof_eaf /*Size in bytes of the returned matrix of EAF data points */
+                /*-> Returns pointer to row major order array containing the EAF data points and relevant percentiles  */
+                );

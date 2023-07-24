@@ -229,4 +229,18 @@ def test_normalise():
     )
 
 
+def test_get_eaf():
+    datasets = eaf.read_datasets("tests/test_data/input1.dat")
+    eaf_input1 = eaf.get_eaf(datasets)
+    expected_eaf_input1 = np.load("tests/test_data/expected_output/eaf_input1.npy")
+    assert np.allclose(eaf_input1, expected_eaf_input1)
+    dataset_3d = eaf.read_datasets("tests/test_data/spherical-250-10-3d.txt")
+    eaf_spherical_3d = eaf.get_eaf(dataset_3d)
+    expected_spherical_3d = np.load(
+        "tests/test_data/expected_output/eaf_spherical-250-10-3d.npy"
+    )
+    assert np.allclose(eaf_spherical_3d, expected_spherical_3d)
+    # TODO check these values are correct
+
+
 # TODO add tests for subset, data_subset, normalise_sets, filer_dominated_sets
