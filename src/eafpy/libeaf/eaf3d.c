@@ -365,7 +365,6 @@ void printitem(FILE * stream, objective_t *value, int dim)
     fprintf (stream, "\n");
 }
 
-
 void add2output(avl_tree_t *output, avl_node_t *tnode)
 {
     if(output->top != NULL){
@@ -378,7 +377,6 @@ void add2output(avl_tree_t *output, avl_node_t *tnode)
 }
 
 void add2output_all(avl_tree_t *output, avl_tree_t *tree_add){
-  
     avl_node_t *node = tree_add->head;
     avl_unlink_node(tree_add, node);
     free(node->item);
@@ -398,7 +396,6 @@ void add2output_all(avl_tree_t *output, avl_tree_t *tree_add){
         }
     }
 }
-
 
 
 //this fuction is called only when item isn't dominated by any point in tree.
@@ -423,7 +420,6 @@ add2set(avl_tree_t *tree, avl_node_t *prevnode, avl_node_t *tnode, objective_t *
     }
 
 }
-
 
 static void avl_add_promoter(avl_node_t *avlnode, int set, avl_node_t *promoter)
 {
@@ -528,8 +524,6 @@ static avl_node_t * find_point_below(avl_tree_t *tree, objective_t *item){
     
 }
 
-
-
 static objective_t * new_point(objective_t x1, objective_t x2, objective_t x3)
 {
     objective_t *value = malloc(3 * sizeof(objective_t));
@@ -549,13 +543,21 @@ eaf3df(dlnode_t *list, avl_tree_t **set, avl_tree_t **level,
     
     /*levelNode[t] is the point being verified (possibly to be promoted) from level t,
       corresponds to s_t in pseudocode */
-    avl_node_t *levelNode[nset];
+
+    // avl_node_t *levelNode[nset]; // FIX for MSVC
+    avl_node_t **levelNode = malloc(sizeof(avl_node_t*) * nset);
+
+    // avl_node_t auxNodes[nset]; 
+    avl_node_t *auxNodes = malloc(sizeof(avl_node_t) * nset);
+
+    /* these points are needed to represent the intersections of new
+    with the point, of each level, immediately at new's left */
+                                  
+    // objective_t auxValues[nset][2]; // FIX for MSVC
+    objective_t *auxValues = malloc(sizeof(objective_t) * nset * 2);
     
-    avl_node_t auxNodes[nset]; /* these points are needed to represent the intersections of new
-                                  with the point, of each level, immediately at new's left */
-    objective_t auxValues[nset][2];
-    
-    avl_node_t *promoters[nset];
+    // avl_node_t *promoters[nset]; // FIX for MSVC
+    avl_node_t **promoters = malloc(sizeof(avl_node_t*) * nset);
 
     dlnode_t *new = list->next; //new - represents the new point
 
@@ -567,8 +569,12 @@ eaf3df(dlnode_t *list, avl_tree_t **set, avl_tree_t **level,
     tnode = avl_init_node(malloc(sizeof(avl_node_t)), copy_point(new->x));
     avl_add_promoter(tnode, new->set, NULL);
     avl_insert_after(level[0], level[0]->head, tnode);
-    
-    bool mask[nset]; // needed to know how many different sets were considered so far
+
+    // FIX for MSVC 
+    // bool mask[nset]; // needed to know how many different sets were considered so far
+    bool *mask = malloc(sizeof(bool) * nset);
+
+
     memset(mask, false, nset * sizeof(mask[0]));
     mask[new->set] = true;
 
@@ -605,10 +611,13 @@ eaf3df(dlnode_t *list, avl_tree_t **set, avl_tree_t **level,
                 /* the intersection point of new with the point in level k immediately at
                    new's left should be added to level k+1, so this intersection point is
                    saved in levelNode in order to be added later */
-                auxValues[k][0] = new->x[0];
-                auxValues[k][1] = node_point(leftNodeL)[1];
                 
-                auxNodes[k].item = auxValues[k];
+                // auxValues[k][0] = new->x[0]; // FIX for MSVC -segfaults here
+                // auxValues[k][1] = node_point(leftNodeL)[1];
+                auxValues[k*nset+0] = new->x[0];
+                auxValues[k*nset+1] = node_point(leftNodeL)[1];
+                // auxNodes[k].item = auxValues[k]; 
+                auxNodes[k].item = &auxValues[k]; 
                 auxNodes[k].next = leftNodeL->next;
                 
                 levelNode[k] = &auxNodes[k];
@@ -619,7 +628,8 @@ eaf3df(dlnode_t *list, avl_tree_t **set, avl_tree_t **level,
                 promoters[k] = levelNode[k];
             }
         }
-
+        
+        
         /* setNode: a point from new's set at its right, it also corresponds to
            q in pseudocode. */
         avl_node_t *setNode = newPrev;
@@ -684,7 +694,10 @@ eaf3df(dlnode_t *list, avl_tree_t **set, avl_tree_t **level,
             mask[new->set] = true;
         }
     }
+    // FIX for MSVC
+    free(auxNodes);
 }
+
 
 
 static void
@@ -694,7 +707,6 @@ freetree(avl_tree_t *avltree)
     aux=avltree->head;
     
     if(aux){    
-        
         while(aux){
             aux2 = aux;
             aux = aux2->next;
@@ -706,6 +718,7 @@ freetree(avl_tree_t *avltree)
     free(avltree);
 }
 
+//FIXME use more discriptive function name
 static void
 freetree2(avl_tree_t *avltree)
 {
@@ -825,7 +838,10 @@ eaf3d (objective_t *data, const int *cumsize, int nruns,
     /* FIXME: This should be done earlier instead of creating the trees. */
 
     eaf_t **eaf = malloc(nlevels * sizeof(eaf_t*));
-    int attained[nruns];
+    // FIX for MSVC
+    // int attained[nruns];
+    int *attained = malloc(sizeof(int) * nruns);
+
     for (int l = 0; l < nlevels; l++) {
         eaf[l] = eaf_create (nobj, nruns, ntotal);
         int k = attlevel[l] - 1;
@@ -840,5 +856,6 @@ eaf3d (objective_t *data, const int *cumsize, int nruns,
             aux = aux->next;
         }
     }
+    free(attained);
     return eaf;
 }
