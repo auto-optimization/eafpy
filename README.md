@@ -14,6 +14,7 @@
 - [x] setup for C extensions (see below)
 - [ ] Rename the package to just `eaf`
 - [x] Move all `*.c` and `*.h` files to `libeaf/` so that the C code is separated from the Python code.
+- [ ] Setup for building and publishing the package in pip: https://mathspp.com/blog/how-to-create-a-python-package-in-2022#publish-the-real-package
 - [ ] Other nice things to have (but lower priority):
   - [x] Coverage: https://github.com/codecov/example-python (see also: https://mathspp.com/blog/how-to-create-a-python-package-in-2022#running-coverage-py-with-tox)
   - [ ] Setup pre-commit to run by github actions: https://pre-commit.ci/ . Look at this example:
