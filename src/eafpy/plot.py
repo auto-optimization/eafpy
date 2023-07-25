@@ -307,6 +307,32 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
             raise NotImplementedError
     else:
         raise NotImplementedError
-
     figure.update_layout(layout_kwargs)
     return figure
+
+
+def eaf_plot(dataset):
+    # FIXME add maximise
+    fig = plot_datasets(
+        dataset, type="line", filter_dominated=False, colorway=["black"]
+    )
+    dtype = np.finfo(dataset.dtype)
+    maxd = dtype.max
+    for line in fig.data:
+        # FIXME Combine line and fill traces
+        fig.add_trace(
+            go.Scatter(
+                x=[0, line.x[0]],
+                y=[maxd, line.y[0]],
+                mode="lines",
+                fill="tozeroy",
+                line={"shape": "hv"},
+            )
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=line.x, y=line.y, mode="lines", fill="tozeroy", line={"shape": "hv"}
+            )
+        )
+
+    return fig

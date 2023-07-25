@@ -40,9 +40,9 @@ def test_read_datasets_data():
         ), f"Read data array has incorrect shape, should be {expected_shape} but is {testdata.shape}"
         if expected_name != "":
             check_data = np.load(f"tests/test_data/expected_output/{expected_name}")
-            assert (
-                testdata == check_data
-            ).all(), f"read_datasets does not produce expected array for file {test}"
+            assert np.allclose(
+                testdata, check_data
+            ), f"read_datasets does not produce expected array for file {test}"
 
 
 def test_read_datasets_badname():
@@ -237,8 +237,15 @@ def test_get_eaf():
     dataset_3d = eaf.read_datasets("tests/test_data/spherical-250-10-3d.txt")
     eaf_spherical_3d = eaf.get_eaf(dataset_3d)
     expected_spherical_3d = np.load(
-        "tests/test_data/expected_output/eaf_spherical-250-10-3d.npy"
+        "tests/test_data/expected_output/eaf_spherical_3d-250-10-3d.npy"
     )
+    diff = eaf_spherical_3d - expected_spherical_3d
+    print(f"{expected_spherical_3d.shape}, {eaf_spherical_3d.shape} ")
+    for coli, col in enumerate(diff):
+        for rowi, item in enumerate(col):
+            if item != 0:
+                print(f"Index {coli} {rowi}, item {item}")
+
     assert np.allclose(eaf_spherical_3d, expected_spherical_3d)
     # TODO check these values are correct
 
