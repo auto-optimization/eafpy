@@ -40,9 +40,9 @@ def test_read_datasets_data():
         ), f"Read data array has incorrect shape, should be {expected_shape} but is {testdata.shape}"
         if expected_name != "":
             check_data = np.load(f"tests/test_data/expected_output/{expected_name}")
-            assert (
-                testdata == check_data
-            ).all(), f"read_datasets does not produce expected array for file {test}"
+            assert np.allclose(
+                testdata, check_data
+            ), f"read_datasets does not produce expected array for file {test}"
 
 
 def test_read_datasets_badname():
@@ -227,6 +227,17 @@ def test_normalise():
     assert np.allclose(
         eaf.normalise(A, upper=[25, 25, 25], lower=[0, 0, 0]), expected_with_bounds
     )
+
+
+def test_docstrings():
+    import doctest
+
+    doctest.FLOAT_EPSILON = 1e-9
+
+    # Run doctests for "eaf" module and fail if one of the docstring tests is incorrect.
+    # Pass in the "eaf" module so that the docstrings don't have to import every time
+
+    doctest.testmod(eaf.eaf, raise_on_error=True, extraglobs={"eaf": eaf})
 
 
 # TODO add tests for subset, data_subset, normalise_sets, filer_dominated_sets

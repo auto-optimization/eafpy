@@ -1,4 +1,5 @@
 import numpy as np
+
 import os
 from eafpy.c_bindings import lib, ffi
 
@@ -552,17 +553,23 @@ def normalise_sets(dataset, range=[0, 1], lower="na", upper="na", maximise=False
     Examples
     --------
     >>> dataset = eaf.read_datasets("./doc/examples/input1.dat")
-    >>> subset = eaf.subset(dataset, range = [3,5])
+    >>> subset = eaf.subset(dataset, range = [4,5])
     >>> eaf.normalise_sets(subset)
-    array([[0.72018642, 0.34732957, 3.        ],
-           [0.94404947, 0.65171347, 3.        ],
-           [0.97270797, 0.1509036 , 3.        ],
-           [1.        , 0.16307826, 3.        ],
-           [0.26113787, 0.59745906, 3.        ],
-           [0.67499969, 0.97436405, 3.        ],
-           [0.33343274, 0.57356308, 3.        ],
-           [0.        , 1.        , 3.        ],
-           ...
+    array([[1.        , 0.38191742, 4.        ],
+           [0.70069111, 0.5114669 , 4.        ],
+           [0.12957487, 0.29411141, 4.        ],
+           [0.28059067, 0.53580626, 4.        ],
+           [0.32210885, 0.21797067, 4.        ],
+           [0.39161668, 0.92106178, 4.        ],
+           [0.        , 1.        , 4.        ],
+           [0.62293227, 0.11315216, 4.        ],
+           [0.76936124, 0.58159784, 4.        ],
+           [0.12957384, 0.        , 4.        ],
+           [0.82581672, 0.66566917, 5.        ],
+           [0.44318444, 0.35888982, 5.        ],
+           [0.80036477, 0.23242446, 5.        ],
+           [0.88550836, 0.51482968, 5.        ],
+           [0.89293026, 1.        , 5.        ],
            [1.        , 0.        , 5.        ],
            [0.79879657, 0.21247419, 5.        ],
            [0.07562783, 0.80266586, 5.        ],
@@ -576,7 +583,7 @@ def normalise_sets(dataset, range=[0, 1], lower="na", upper="na", maximise=False
     for set in np.unique(dataset[:, -1]):
         setdata = dataset[dataset[:, -1] == set, :-1]
         dataset[dataset[:, -1] == set, :-1] = normalise(
-            setdata, range=[0, 1], lower="na", upper="na", maximise=False
+            setdata, range=range, lower="na", upper="na", maximise=False
         )
     return dataset
 
