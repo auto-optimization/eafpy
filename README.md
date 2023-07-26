@@ -99,10 +99,13 @@ Once we are able to read the data into Python, the package should offer utilitie
      ![areas](https://mlopez-ibanez.github.io/eaf/reference/eafplot-8.png)
 
 ### TODO plots
-- [ ] 2d line plots -> The points should extend out to infinity for the first and last point
+- [x] 2d line plots -> The points should extend out to infinity for the first and last point
 - [ ] 3d cube plots -> The cube should extend down from infinity to the point for minimisation, instead of from zero
   - [ ] There is a bug in how I have drawn the triangles where a lot of the triangles sit on top of each other, add an optimisation that fixes all the unneccesary intersections
-- [ ] EAF plots -> Need to be able to shade areas of the plots with different colors
+- [x] EAF plots -> Need to be able to shade areas of the plots with different colors
+- [ ] Make EAF plots capable of minimisation
+- [ ] Add labels to filled areas
+- [ ] Add subplot functionality 
   
 
 ## Developer instructions
