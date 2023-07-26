@@ -311,28 +311,35 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
     return figure
 
 
-def eaf_plot(dataset):
+def eaf_plot(dataset, **layout_kwargs):
+    colorway = ["black"] * 10
+    if "colorway" in layout_kwargs:
+        colorway = layout_kwargs["colorway"] * 15
     # FIXME add maximise
-    fig = plot_datasets(
-        dataset, type="line", filter_dominated=False, colorway=["black"]
-    )
+    fig = plot_datasets(dataset, type="line", filter_dominated=False, colorway=colorway)
     dtype = np.finfo(dataset.dtype)
-    maxd = dtype.max
-    for line in fig.data:
-        # FIXME Combine line and fill traces
+    float_inf = dtype.max
+
+    for i, line in enumerate(fig.data):
+        # Add new points to create a filled area from the first point to the X=0 line
+        new_line_x = np.concatenate((np.array([0, line.x[0]]), line.x))
+        new_line_y = np.concatenate((np.array([float_inf, line.y[0]]), line.y))
+
         fig.add_trace(
             go.Scatter(
-                x=[0, line.x[0]],
-                y=[maxd, line.y[0]],
+                x=new_line_x,
+                y=new_line_y,
                 mode="lines",
                 fill="tozeroy",
                 line={"shape": "hv"},
+                marker=dict(color=colorway[i]),
+                # fillcolor=colorway[i],
+                legendgroup=line.name,
+                showlegend=False,
             )
         )
-        fig.add_trace(
-            go.Scatter(
-                x=line.x, y=line.y, mode="lines", fill="tozeroy", line={"shape": "hv"}
-            )
-        )
-
+    fig.update_layout(
+        legend_title_text="Percentile",
+    )
+    fig.update_layout(layout_kwargs)
     return fig
