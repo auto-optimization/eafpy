@@ -338,6 +338,54 @@ def eaf_plot(dataset, **layout_kwargs):
                 showlegend=False,
             )
         )
+
+    fig.update_layout(
+        legend_title_text="Percentile",
+    )
+    fig.update_layout(layout_kwargs)
+    return fig
+
+
+def eaf_plot_max(dataset, **layout_kwargs):
+    colorway = ["black"] * 10
+    if "colorway" in layout_kwargs:
+        colorway = layout_kwargs["colorway"] * 15
+    # FIXME add maximise
+    fig = plot_datasets(dataset, type="line", filter_dominated=False, colorway=colorway)
+    dtype = np.finfo(dataset.dtype)
+    float_inf = dtype.max
+
+    for i, line in enumerate(fig.data):
+        # Add new points to create a filled area from the first point to the X=0 line
+
+        fig.add_trace(
+            go.Scatter(
+                x=np.array([0, float_inf]),
+                y=np.array([float_inf, float_inf]),
+                mode="lines",
+                fill="tonextx",
+                line={"shape": "hv"},
+                marker=dict(color=colorway[i]),
+                # fillcolor=colorway[i],
+                legendgroup=line.name,
+                showlegend=False,
+            )
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=line.x,
+                y=line.y,
+                mode="lines",
+                fill="tonextx",
+                line={"shape": "hv"},
+                marker=dict(color=colorway[i]),
+                # fillcolor=colorway[i],
+                legendgroup=line.name,
+                showlegend=False,
+            )
+        )
+
     fig.update_layout(
         legend_title_text="Percentile",
     )
