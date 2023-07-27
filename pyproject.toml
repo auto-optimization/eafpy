@@ -22,7 +22,6 @@ classifiers = [
 ]
 
 
-
 [project.urls]
 "Homepage" = "https://github.com/auto-optimization/eafpy"
 "Bug Tracker" = "https://github.com/auto-optimization/eafpy/issues"

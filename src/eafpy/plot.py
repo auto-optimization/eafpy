@@ -3,8 +3,75 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 import eafpy.eaf as eaf
+from matplotlib import colors
 
 _3d_margin = dict(r=5, l=5, b=20, t=20)
+
+
+def _np_RGBA_to_strings(rgba_arr):
+    rgba_strings = []
+    for i in range(rgba_arr.shape[0]):
+        rgba = np.round(rgba_arr[i], 4)
+        rgba_strings.append(f"rgba({rgba[0]},{rgba[1]},{rgba[2]},{rgba[3]})")
+    return rgba_strings
+
+
+def create_opacity_gradient(color, num_steps, start_opacity=0.0, end_opacity=1.0):
+    """Create opacity gradient list for use in plotly colorscales
+    Linearly interpolates between starting and ending opacity
+
+    Parameters
+    ----------
+    color : string
+        The name of a standard CSS colour
+    steps : integer
+        Number of steps between the start and end opacity. Also the size of the list returned
+    start_opacity, end_opacity : floats
+        Choose what the starting and ending values of opacity are for the list of colours (between 0 and 1)
+
+    Returns
+    -------
+    list
+        A list of RGBA string values compatible with plotly colorscales, interpolating opacity between two values
+    # TODO add examples of this in the styling tutorial
+    """
+    # TODO make compatible with an "rgba()" input as well
+    # Convert the color to RGBA format
+    rgba_color = colors.to_rgba(color)
+
+    # Create a 2d array of colours, where the alpha value is linearly interpolated from the start to end value
+    gradient = np.tile(rgba_color, ((num_steps, 1)))
+    gradient[:, -1] = np.linspace(start_opacity, end_opacity, num=num_steps)
+
+    gradient_strings = _np_RGBA_to_strings(gradient)
+    return gradient_strings
+
+
+def create_colour_gradient(color_a, color_b, num_steps):
+    """Create colour gradient list for use in plotly colorscales
+    Linearly interpolates between two colours using a define amount of steps
+
+    Parameters
+    ----------
+    color_a, color_b : string
+        The names of standard CSS colours to create a gradient
+    steps : integer
+        Number of steps between between the starting and ending colour. Also the size of the list returned
+
+    Returns
+    -------
+    list
+        A list of RGBA string values compatible with plotly colorscales
+    """
+    # TODO make compatible with an "rgba()" input as well
+    a_rgba = np.array(colors.to_rgba(color_a))
+    b_rgba = np.array(colors.to_rgba(color_b))
+    colour_gradient = np.ndarray((num_steps, 4))
+    for step in range(num_steps):
+        difference = b_rgba - a_rgba
+        colour_gradient[step, :] = a_rgba + step * (difference / (num_steps - 1))
+    colour_gradient_strings = _np_RGBA_to_strings(colour_gradient)
+    return colour_gradient_strings
 
 
 def _get_3d_title(title):
@@ -259,10 +326,13 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
     # So I add this workaround to pass the colour sequence in while it is created instead of to update_figure
     colorway = px.colors.qualitative.Plotly
     if "colorway" in layout_kwargs:
-        colorway = layout_kwargs["colorway"]
+        colorway = layout_kwargs["colorway"] * 10
 
     if dim == 2:
-        sets_df.sort_values(["Set Number", "Objective 1"], inplace=True)
+        # Sort the the points by Objective 1 within each set, while keeping the set order (May be inefficient)
+        for set in sets_df["Set Number"].unique():
+            mask = sets_df["Set Number"] == set
+            sets_df.loc[mask] = sets_df.loc[mask].sort_values(by="Objective 1").values
 
         figure = px.line(
             sets_df,
@@ -312,82 +382,69 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
 
 
 def eaf_plot(dataset, **layout_kwargs):
-    colorway = ["black"] * 10
-    if "colorway" in layout_kwargs:
-        colorway = layout_kwargs["colorway"] * 15
-    # FIXME add maximise
-    fig = plot_datasets(dataset, type="line", filter_dominated=False, colorway=colorway)
+    # Get the pareto surfaces
+    lines_plot = plot_datasets(dataset, type="line", filter_dominated=False)
+    # Sort the lines by percentile
+    ordered_lines = sorted(lines_plot.data, key=lambda x: int(x["name"]))
     dtype = np.finfo(dataset.dtype)
     float_inf = dtype.max
 
-    for i, line in enumerate(fig.data):
-        # Add new points to create a filled area from the first point to the X=0 line
-        new_line_x = np.concatenate((np.array([0, line.x[0]]), line.x))
-        new_line_y = np.concatenate((np.array([float_inf, line.y[0]]), line.y))
-
-        fig.add_trace(
-            go.Scatter(
-                x=new_line_x,
-                y=new_line_y,
-                mode="lines",
-                fill="tozeroy",
-                line={"shape": "hv"},
-                marker=dict(color=colorway[i]),
-                # fillcolor=colorway[i],
-                legendgroup=line.name,
-                showlegend=False,
-            )
-        )
-
-    fig.update_layout(
-        legend_title_text="Percentile",
+    # Add an line to fill down from infinity to the last percentile
+    infinity_line = dict(
+        x=np.array([0, float_inf]),
+        y=np.array([float_inf, float_inf]),
+        name=lines_plot.data[-1].name,
     )
-    fig.update_layout(layout_kwargs)
-    return fig
+    ordered_lines.append(infinity_line)
+    percentile_names = np.unique(dataset[:, -1]).astype(int)
+    num_percentiles = len(percentile_names)
 
-
-def eaf_plot_max(dataset, **layout_kwargs):
-    colorway = ["black"] * 10
+    # Set a default colorway
+    colorway = create_opacity_gradient(
+        "black", num_percentiles, start_opacity=0.6
+    )  # Set default colourway
     if "colorway" in layout_kwargs:
-        colorway = layout_kwargs["colorway"] * 15
-    # FIXME add maximise
-    fig = plot_datasets(dataset, type="line", filter_dominated=False, colorway=colorway)
-    dtype = np.finfo(dataset.dtype)
-    float_inf = dtype.max
+        colorway = layout_kwargs["colorway"] * 10
+    fig = go.Figure()
 
-    for i, line in enumerate(fig.data):
-        # Add new points to create a filled area from the first point to the X=0 line
-
-        fig.add_trace(
-            go.Scatter(
-                x=np.array([0, float_inf]),
-                y=np.array([float_inf, float_inf]),
-                mode="lines",
-                fill="tonextx",
-                line={"shape": "hv"},
-                marker=dict(color=colorway[i]),
-                # fillcolor=colorway[i],
-                legendgroup=line.name,
-                showlegend=False,
+    for i, line in enumerate(ordered_lines):
+        # The first point is a line, not a fill
+        if i == 0:
+            fig.add_trace(
+                go.Scatter(
+                    x=line["x"],
+                    y=line["y"],
+                    mode="lines",
+                    line={"shape": "hv"},
+                    showlegend=False,
+                    legendgroup=str(percentile_names[i]),
+                    marker=dict(color=colorway[i + 1]),
+                    fillcolor=colorway[i],
+                )
             )
-        )
-
-        fig.add_trace(
-            go.Scatter(
-                x=line.x,
-                y=line.y,
-                mode="lines",
-                fill="tonextx",
-                line={"shape": "hv"},
-                marker=dict(color=colorway[i]),
-                # fillcolor=colorway[i],
-                legendgroup=line.name,
-                showlegend=False,
+        else:
+            fig.add_trace(
+                go.Scatter(
+                    x=line["x"],
+                    y=line["y"],
+                    mode="lines",
+                    fill="tonexty",
+                    line={"shape": "hv"},
+                    marker=dict(color=colorway[i - 1]),
+                    fillcolor=colorway[i - 1],
+                    name=str(
+                        percentile_names[i - 1]
+                    ),  # There is one more scatter than percentiles
+                    legendgroup=str(percentile_names[i - 1]),
+                    showlegend=True,
+                )
             )
-        )
 
     fig.update_layout(
         legend_title_text="Percentile",
+        xaxis_title="Objective 0",
+        yaxis_title="Objective 1",
+        title="2d Empirical Attainment Function",
     )
     fig.update_layout(layout_kwargs)
     return fig
