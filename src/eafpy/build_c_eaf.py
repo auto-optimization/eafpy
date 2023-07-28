@@ -1,3 +1,13 @@
+"""C library compilation config
+
+This script is part of the compilation of the C library using CFFi. 
+
+Every time a new C function is created, its prototype must be added to the `ffibuilder.cdef` function call
+
+The header files required must be placed in the first argument of `ffibuilder.set_source`, and any additional `.C` files must be added to the `sources` argument of `ffibuilder.set_source`
+
+"""
+
 import os
 import cffi
 
@@ -19,6 +29,8 @@ ffibuilder.cdef(
 )
 
 file_path = os.path.dirname(os.path.realpath(__file__))
+
+
 libeaf_path = os.path.join(file_path, "libeaf")
 ffibuilder.set_source(
     "eafpy.c_bindings",

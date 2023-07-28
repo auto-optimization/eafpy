@@ -3,75 +3,31 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 import eafpy.eaf as eaf
-from matplotlib import colors
+import eafpy.colour as colour
+
 
 _3d_margin = dict(r=5, l=5, b=20, t=20)
 
 
-def _np_RGBA_to_strings(rgba_arr):
-    rgba_strings = []
-    for i in range(rgba_arr.shape[0]):
-        rgba = np.round(rgba_arr[i], 4)
-        rgba_strings.append(f"rgba({rgba[0]},{rgba[1]},{rgba[2]},{rgba[3]})")
-    return rgba_strings
-
-
-def create_opacity_gradient(color, num_steps, start_opacity=0.0, end_opacity=1.0):
-    """Create opacity gradient list for use in plotly colorscales
-    Linearly interpolates between starting and ending opacity
-
-    Parameters
-    ----------
-    color : string
-        The name of a standard CSS colour
-    steps : integer
-        Number of steps between the start and end opacity. Also the size of the list returned
-    start_opacity, end_opacity : floats
-        Choose what the starting and ending values of opacity are for the list of colours (between 0 and 1)
-
-    Returns
-    -------
-    list
-        A list of RGBA string values compatible with plotly colorscales, interpolating opacity between two values
-    # TODO add examples of this in the styling tutorial
-    """
-    # TODO make compatible with an "rgba()" input as well
-    # Convert the color to RGBA format
-    rgba_color = colors.to_rgba(color)
-
-    # Create a 2d array of colours, where the alpha value is linearly interpolated from the start to end value
-    gradient = np.tile(rgba_color, ((num_steps, 1)))
-    gradient[:, -1] = np.linspace(start_opacity, end_opacity, num=num_steps)
-
-    gradient_strings = _np_RGBA_to_strings(gradient)
-    return gradient_strings
-
-
-def create_colour_gradient(color_a, color_b, num_steps):
-    """Create colour gradient list for use in plotly colorscales
-    Linearly interpolates between two colours using a define amount of steps
-
-    Parameters
-    ----------
-    color_a, color_b : string
-        The names of standard CSS colours to create a gradient
-    steps : integer
-        Number of steps between between the starting and ending colour. Also the size of the list returned
-
-    Returns
-    -------
-    list
-        A list of RGBA string values compatible with plotly colorscales
-    """
-    # TODO make compatible with an "rgba()" input as well
-    a_rgba = np.array(colors.to_rgba(color_a))
-    b_rgba = np.array(colors.to_rgba(color_b))
-    colour_gradient = np.ndarray((num_steps, 4))
-    for step in range(num_steps):
-        difference = b_rgba - a_rgba
-        colour_gradient[step, :] = a_rgba + step * (difference / (num_steps - 1))
-    colour_gradient_strings = _np_RGBA_to_strings(colour_gradient)
-    return colour_gradient_strings
+def _apply_default_themes(fig):
+    # This theme may be preferable as it has a white background so could make for a more "scientific" look
+    fig.update_layout(
+        plot_bgcolor="white",
+    )
+    fig.update_xaxes(
+        mirror=True,
+        ticks="outside",
+        showline=True,
+        linecolor="black",
+        gridcolor="lightgrey",
+    )
+    fig.update_yaxes(
+        mirror=True,
+        ticks="outside",
+        showline=True,
+        linecolor="black",
+        gridcolor="lightgrey",
+    )
 
 
 def _get_3d_title(title):
@@ -283,13 +239,13 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
 
     layout_kwargs : keyword arguments
         Update features of the graph such as title axis titles, colours etc. These additional parameters are passed to \
-        plotly update_layout, See here for all the layout features that can be accessed: `Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Layout/>`_
+        plotly update_layout, See here for all the layout features that can be accessed: `Layout Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Layout/>`_
 
 
     Returns
     -------
     Plotly GO figure
-        The function returns a `Plotly GO figure` object `Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure/>`_
+        The function returns a `Plotly GO figure` object `Figure Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure/>`_
 
         This means that the user can customise any part of the graph after it is created
 
@@ -381,7 +337,30 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
     return figure
 
 
-def eaf_plot(dataset, **layout_kwargs):
+def eaf_plot(dataset, line_colours=[], **layout_kwargs):
+    """eaf_plot() conviently plots attainment surfaces in 2d
+
+    Parameters
+    ----------
+    dataset : numpy array
+        The `dataset` argument must be Numpy array produced by the `get_eaf()` function - an array with 3 columns including the objective data and percentiles
+    colorway : list 
+        Colorway is a single colour, or list of colours, for the percentile groups. The colours can be CSS colours such as 'black', 8-digit hexedecimal RGBA integers \
+        or strings of RGBA values such as `rgba(1,1,0,0.5)`. Default is "black". You can use the :func:`colour.discrete_colour_gradient` to create a gradient between two colours \
+    line_colours :
+        The same as colorway but defining the boundaries between percentile groups. The default value is to follow colorway. You can set it to `rgb(0,0,0,0)` to make the boundaries invisible
+    layout_kwargs : keyword arguments
+        Update features of the graph such as title axis titles, colours etc. These additional parameters are passed to \
+        plotly update_layout, See here for all the layout features that can be accessed: `Layout Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Layout/>`_
+
+    Returns
+    -------
+    Plotly GO figure
+        The function returns a `Plotly GO figure` object `Figure Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure/>`_
+
+        This means that the user can customise any part of the graph after it is created
+
+    """
     # Get the pareto surfaces
     lines_plot = plot_datasets(dataset, type="line", filter_dominated=False)
     # Sort the lines by percentile
@@ -400,11 +379,19 @@ def eaf_plot(dataset, **layout_kwargs):
     num_percentiles = len(percentile_names)
 
     # Set a default colorway
-    colorway = create_opacity_gradient(
+    colorway = colour.discrete_opacity_gradient(
         "black", num_percentiles, start_opacity=0.6
-    )  # Set default colourway
+    )
     if "colorway" in layout_kwargs:
-        colorway = layout_kwargs["colorway"] * 10
+        colorway = (
+            layout_kwargs["colorway"] * num_percentiles
+        )  # Ensure that if colour is single value eg "red" it still works
+    if line_colours:
+        # Ensure that if colour is single value eg "red" it still works
+        if not isinstance(line_colours, list):
+            line_colours = [line_colours] * num_percentiles
+    else:
+        line_colours = colorway  # Set default line colour to match colourway
     fig = go.Figure()
 
     for i, line in enumerate(ordered_lines):
@@ -417,9 +404,10 @@ def eaf_plot(dataset, **layout_kwargs):
                     mode="lines",
                     line={"shape": "hv"},
                     showlegend=False,
+                    name=str(percentile_names[i]),
                     legendgroup=str(percentile_names[i]),
-                    marker=dict(color=colorway[i + 1]),
                     fillcolor=colorway[i],
+                    marker=dict(color=line_colours[i]),
                 )
             )
         else:
@@ -430,13 +418,13 @@ def eaf_plot(dataset, **layout_kwargs):
                     mode="lines",
                     fill="tonexty",
                     line={"shape": "hv"},
-                    marker=dict(color=colorway[i - 1]),
                     fillcolor=colorway[i - 1],
                     name=str(
                         percentile_names[i - 1]
                     ),  # There is one more scatter than percentiles
                     legendgroup=str(percentile_names[i - 1]),
                     showlegend=True,
+                    marker=dict(color=line_colours[i - 1]),
                 )
             )
 
@@ -446,5 +434,6 @@ def eaf_plot(dataset, **layout_kwargs):
         yaxis_title="Objective 1",
         title="2d Empirical Attainment Function",
     )
+
     fig.update_layout(layout_kwargs)
     return fig

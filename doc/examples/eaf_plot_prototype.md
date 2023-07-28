@@ -8,6 +8,7 @@ kernelspec:
 ```{code-cell}
 import eafpy as eaf
 dat = eaf.read_datasets("input1.dat")
-eafs = eaf.get_eaf(dat, percentiles = [25, 50, 75])
+eafs = eaf.get_eaf(dat, percentiles = [25, 50, 75, 100])
 fig = eaf.plot.eaf_plot(eafs)
-fig.show()```
+fig.show()
+```
