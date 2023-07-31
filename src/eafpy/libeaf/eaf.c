@@ -34,6 +34,8 @@
 
 *************************************************************************/
 #include <stdlib.h>
+#include <stdint.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -1034,3 +1036,98 @@ eaf_compute_rectangles (eaf_t **eaf, int nlevels)
     return regions;
 #undef eaf_point
 }
+
+int *get_cumsizes_(double *data, int ncols, int npoints, int nsets){
+    // Get the cumulative sizes each sets from an array data points and sets
+    // Remember to free the cumulative sizes pointer after use
+    // See *get_eaf_ for arguments
+    int * cumsizes = malloc(sizeof(int) * nsets);
+    int last_diff_data = (int)data[ncols-1];
+    int this_data = (int)data[ncols-1];
+    int cumlative_pointer = 0;
+    int cumlative_sum = 0;
+    int data_pointer = 0;
+
+    for(int i = 0; i < npoints; i++){
+        data_pointer = ncols-1 + i*ncols;
+        this_data = data[data_pointer];
+        if(this_data != last_diff_data){
+            last_diff_data = this_data;
+            cumsizes[cumlative_pointer] = cumlative_sum;
+            cumlative_pointer++;
+        }
+        cumlative_sum++;
+    }
+    cumsizes[cumlative_pointer] = cumlative_sum;
+    return cumsizes;
+}
+
+// Wrapper function for getting array of EAF data, for use in python wrapper
+double *get_eaf_(double *data, /*Flat row major order data matrix input, including objectives and set numbers */
+                int ncols,  /*Number of columns in the input data array (ncols = number of objectives + 1) */
+                int npoints, /*Number of data points (rows) in input data column */
+                double * percentiles, /*array of percentiles to calculate EAF for, if choose_percentiles argument is true */
+                int npercentiles, /*Length of percentiles array */
+                bool choose_percentiles, /*If true,  */
+                int nsets, /*Number of different sets in the data input matrix */
+                int * eaf_npoints, /*Return single integer containing the number of rows in the output matrix  */
+                int * sizeof_eaf /*Size in bytes of the returned matrix of EAF data points */
+                /*-> Returns pointer to row major order array containing the EAF data points and relevant percentiles  */
+    ){
+    int nobj = ncols -1;
+    // Calculate cumulative size of each set
+    int * cumsizes = get_cumsizes_(data, ncols, npoints, nsets); // Remember to free
+    int number_levels_selected = 0;
+    int *levels;
+    double *calculated_percentiles = malloc(sizeof(double) * nsets);;
+    double *percentiles_selected;
+
+    if(choose_percentiles == FALSE){
+        // Calculate the percentiles based on number of sets -> Number of levels = number of sets
+        for(int i = 1;i<nsets+1;i++){
+            calculated_percentiles[i-1] = (i * 100)/nsets;
+        }
+        number_levels_selected = nsets;
+        percentiles_selected = calculated_percentiles; 
+    }else{
+        // Use the percentiles array to select the percentiles
+        number_levels_selected = npercentiles; // 1 percentile maps to one level
+        percentiles_selected = percentiles;
+    }
+    // Convert the selected percentiles to levels
+    levels = malloc(sizeof(int) * number_levels_selected);
+    for (int k = 0; k < number_levels_selected; k++){
+        levels[k] = percentile2level(percentiles_selected[k], nsets);
+    }
+    
+    eaf_t **eaf = attsurf (data, nobj, cumsizes, nsets, levels, number_levels_selected);
+    free (levels);
+
+    int totalpoints = eaf_totalpoints(eaf, number_levels_selected);
+    
+    int sizeof_eaf_ = sizeof(double) * totalpoints * (nobj + 1);
+    
+    double * return_matrix = malloc(sizeof_eaf_);
+    int point_count = 0;
+    for (int k = 0; k < number_levels_selected; k++) {
+        int this_level_npoints = eaf[k]->size;
+        for (int i = 0; i < this_level_npoints; i++) {
+            for (int j = 0; j < nobj; j++) {
+                // Add EAF co-oordinates to flat array in row major order
+                return_matrix[point_count*ncols+j] = eaf[k]->data[j + i * nobj];
+            }
+            // After every (number of objective) co-ordinates, add the relevant percentile
+            return_matrix[point_count*ncols+ncols-1] = percentiles_selected[k];
+            point_count++;
+        }
+        eaf_delete(eaf[k]);
+    } 
+    
+    free(calculated_percentiles);
+    free(eaf);
+    free(cumsizes);
+    *sizeof_eaf = sizeof_eaf_;
+    *eaf_npoints = totalpoints;
+    return return_matrix;
+}
+

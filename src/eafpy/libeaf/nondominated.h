@@ -268,7 +268,7 @@ void find_bounds(double * data, int nobj, int npoints, double ** lbounds, double
     // Remember to free this memory in function call
 }
 
-void normalise_ (double *data, int nobj, int npoints, const bool * maximise,const double lower_range, 
+void normalise_ (double *data, int nobj, int npoints, const bool * maximise, const double lower_range, 
         const double upper_range, double * lbounds, double * ubounds, bool calc_bounds)
 {
     signed char * minmax = create_minmax_bool(nobj, maximise);

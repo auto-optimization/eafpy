@@ -3,8 +3,31 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 import eafpy.eaf as eaf
+import eafpy.colour as colour
+
 
 _3d_margin = dict(r=5, l=5, b=20, t=20)
+
+
+def _apply_default_themes(fig):
+    # This theme may be preferable as it has a white background so could make for a more "scientific" look
+    fig.update_layout(
+        plot_bgcolor="white",
+    )
+    fig.update_xaxes(
+        mirror=True,
+        ticks="outside",
+        showline=True,
+        linecolor="black",
+        gridcolor="lightgrey",
+    )
+    fig.update_yaxes(
+        mirror=True,
+        ticks="outside",
+        showline=True,
+        linecolor="black",
+        gridcolor="lightgrey",
+    )
 
 
 def _get_3d_title(title):
@@ -216,13 +239,13 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
 
     layout_kwargs : keyword arguments
         Update features of the graph such as title axis titles, colours etc. These additional parameters are passed to \
-        plotly update_layout, See here for all the layout features that can be accessed: `Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Layout/>`_
+        plotly update_layout, See here for all the layout features that can be accessed: `Layout Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Layout/>`_
 
 
     Returns
     -------
     Plotly GO figure
-        The function returns a `Plotly GO figure` object `Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure/>`_
+        The function returns a `Plotly GO figure` object `Figure Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure/>`_
 
         This means that the user can customise any part of the graph after it is created
 
@@ -259,10 +282,13 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
     # So I add this workaround to pass the colour sequence in while it is created instead of to update_figure
     colorway = px.colors.qualitative.Plotly
     if "colorway" in layout_kwargs:
-        colorway = layout_kwargs["colorway"]
+        colorway = layout_kwargs["colorway"] * 10
 
     if dim == 2:
-        sets_df.sort_values(["Set Number", "Objective 1"], inplace=True)
+        # Sort the the points by Objective 1 within each set, while keeping the set order (May be inefficient)
+        for set in sets_df["Set Number"].unique():
+            mask = sets_df["Set Number"] == set
+            sets_df.loc[mask] = sets_df.loc[mask].sort_values(by="Objective 1").values
 
         figure = px.line(
             sets_df,
@@ -307,6 +333,107 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
             raise NotImplementedError
     else:
         raise NotImplementedError
-
     figure.update_layout(layout_kwargs)
     return figure
+
+
+def plot_eaf(dataset, line_colours=[], **layout_kwargs):
+    """eaf_plot() conviently plots attainment surfaces in 2d
+
+    Parameters
+    ----------
+    dataset : numpy array
+        The `dataset` argument must be Numpy array produced by the `get_eaf()` function - an array with 3 columns including the objective data and percentiles
+    colorway : list 
+        Colorway is a single colour, or list of colours, for the percentile groups. The colours can be CSS colours such as 'black', 8-digit hexedecimal RGBA integers \
+        or strings of RGBA values such as `rgba(1,1,0,0.5)`. Default is "black". You can use the :func:`colour.discrete_colour_gradient` to create a gradient between two colours \
+    line_colours :
+        The same as colorway but defining the boundaries between percentile groups. The default value is to follow colorway. You can set it to `rgb(0,0,0,0)` to make the boundaries invisible
+    layout_kwargs : keyword arguments
+        Update features of the graph such as title axis titles, colours etc. These additional parameters are passed to \
+        plotly update_layout, See here for all the layout features that can be accessed: `Layout Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Layout/>`_
+
+    Returns
+    -------
+    Plotly GO figure
+        The function returns a `Plotly GO figure` object `Figure Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure/>`_
+
+        This means that the user can customise any part of the graph after it is created
+
+    """
+    # Get the pareto surfaces
+    lines_plot = plot_datasets(dataset, type="line", filter_dominated=False)
+    # Sort the lines by percentile
+    ordered_lines = sorted(lines_plot.data, key=lambda x: int(x["name"]))
+    dtype = np.finfo(dataset.dtype)
+    float_inf = dtype.max
+
+    # Add an line to fill down from infinity to the last percentile
+    infinity_line = dict(
+        x=np.array([0, float_inf]),
+        y=np.array([float_inf, float_inf]),
+        name=lines_plot.data[-1].name,
+    )
+    ordered_lines.append(infinity_line)
+    percentile_names = np.unique(dataset[:, -1]).astype(int)
+    num_percentiles = len(percentile_names)
+
+    # Set a default colorway
+    colorway = colour.discrete_opacity_gradient(
+        "black", num_percentiles, start_opacity=0.6
+    )
+    if "colorway" in layout_kwargs:
+        colorway = (
+            layout_kwargs["colorway"] * num_percentiles
+        )  # Ensure that if colour is single value eg "red" it still works
+    if line_colours:
+        # Ensure that if colour is single value eg "red" it still works
+        if not isinstance(line_colours, list):
+            line_colours = [line_colours] * num_percentiles
+    else:
+        line_colours = colorway  # Set default line colour to match colourway
+    fig = go.Figure()
+
+    for i, line in enumerate(ordered_lines):
+        # The first point is a line, not a fill
+        if i == 0:
+            fig.add_trace(
+                go.Scatter(
+                    x=line["x"],
+                    y=line["y"],
+                    mode="lines",
+                    line={"shape": "hv"},
+                    showlegend=False,
+                    name=str(percentile_names[i]),
+                    legendgroup=str(percentile_names[i]),
+                    fillcolor=colorway[i],
+                    marker=dict(color=line_colours[i]),
+                )
+            )
+        else:
+            fig.add_trace(
+                go.Scatter(
+                    x=line["x"],
+                    y=line["y"],
+                    mode="lines",
+                    fill="tonexty",
+                    line={"shape": "hv"},
+                    fillcolor=colorway[i - 1],
+                    name=str(
+                        percentile_names[i - 1]
+                    ),  # There is one more scatter than percentiles
+                    legendgroup=str(percentile_names[i - 1]),
+                    showlegend=True,
+                    marker=dict(color=line_colours[i - 1]),
+                )
+            )
+
+    fig.update_layout(
+        legend_title_text="Percentile",
+        xaxis_title="Objective 0",
+        yaxis_title="Objective 1",
+        title="2d Empirical Attainment Function",
+    )
+
+    fig.update_layout(layout_kwargs)
+    return fig

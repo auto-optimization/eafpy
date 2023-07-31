@@ -13,5 +13,6 @@ from .eaf import (
     data_subset,
     normalise_sets,
     filter_dominated_sets,
+    get_eaf,
 )
-from .plot import plot_datasets
+from .plot import plot_datasets, plot_eaf
