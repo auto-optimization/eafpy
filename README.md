@@ -14,6 +14,7 @@
 - [x] setup for C extensions (see below)
 - [ ] Rename the package to just `eaf`
 - [x] Move all `*.c` and `*.h` files to `libeaf/` so that the C code is separated from the Python code.
+- [ ] Setup for building and publishing the package in pip: https://mathspp.com/blog/how-to-create-a-python-package-in-2022#publish-the-real-package
 - [ ] Other nice things to have (but lower priority):
   - [x] Coverage: https://github.com/codecov/example-python (see also: https://mathspp.com/blog/how-to-create-a-python-package-in-2022#running-coverage-py-with-tox)
   - [ ] Setup pre-commit to run by github actions: https://pre-commit.ci/ . Look at this example:
@@ -98,10 +99,13 @@ Once we are able to read the data into Python, the package should offer utilitie
      ![areas](https://mlopez-ibanez.github.io/eaf/reference/eafplot-8.png)
 
 ### TODO plots
-- [ ] 2d line plots -> The points should extend out to infinity for the first and last point
+- [x] 2d line plots -> The points should extend out to infinity for the first and last point
 - [ ] 3d cube plots -> The cube should extend down from infinity to the point for minimisation, instead of from zero
   - [ ] There is a bug in how I have drawn the triangles where a lot of the triangles sit on top of each other, add an optimisation that fixes all the unneccesary intersections
-- [ ] EAF plots -> Need to be able to shade areas of the plots with different colors
+- [x] EAF plots -> Need to be able to shade areas of the plots with different colors
+- [ ] Make EAF plots capable of minimisation
+- [ ] Add labels to filled areas
+- [ ] Add subplot functionality 
   
 
 ## Developer instructions

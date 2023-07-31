@@ -4,14 +4,17 @@ from eafpy.c_bindings import lib, ffi
 
 
 class ReadDatasetsError(Exception):
-    """
-    Custom exception class for an error returned by the read_datasets function
+    """Custom exception class for an error returned by the read_datasets function
 
-    Attributes:
-    Error - Error code returned by C library
+    Attributes
+    ----------
+    error_code : int
+        Error code returned by read_datasets C function, which maps to a string from
+    error_strings : list
+        List of strings that map to the error code
     """
 
-    errors = [
+    error_strings = [
         "NO_ERROR",
         "READ_INPUT_FILE_EMPTY",
         "READ_INPUT_WRONG_INITIAL_DIM",
@@ -20,9 +23,9 @@ class ReadDatasetsError(Exception):
         "ERROR_COLUMNS",
     ]
 
-    def __init__(self, error):
-        self.error = error
-        self.message = self.errors[abs(error)]
+    def __init__(self, error_code):
+        self.error = error_code
+        self.message = self.error_strings[abs(error_code)]
         super().__init__(self.message)
 
 
@@ -177,7 +180,7 @@ def igd(data, ref, maximise=False):
         Whether the objectives must be maximised instead of minimised. \
         Either a single boolean value that applies to all objectives or a list of booleans, with one value per objective. \
         Also accepts a 1d numpy array with value 0/1 for each objective
-    P : Hausdorff distance parameter (default: 1L).
+    p : Hausdorff distance parameter (default: 1L).
 
     Returns
     -------
@@ -376,6 +379,9 @@ def filter_dominated_sets(dataset, maximise=False, keep_weakly=False):
     --------
     This function for data without set numbers - :func:`filter_dominated` 
     """
+    # FIXME: it will be faster to stack filter_set, then do:
+    # dataset[filter_set, :]
+    # to filter in one go.
     new_sets = []
     for set in np.unique(dataset[:, -1]):
         set_data = dataset[dataset[:, -1] == set, :-1]
@@ -669,6 +675,7 @@ def subset(dataset, set=-2, range=[]):
 
 def data_subset(dataset, set):
     """Select data points from a specific dataset. Returns a single set, without the set number column
+
     This can be used to parse data for inputting to functions such as :func:`igd` and :func:`hypervolume`. 
     
     Similar to the :func:`subset` function, but can only return 1 set and removes the last column (set number)

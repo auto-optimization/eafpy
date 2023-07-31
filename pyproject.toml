@@ -21,6 +21,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
+
 [project.urls]
 "Homepage" = "https://github.com/auto-optimization/eafpy"
 "Bug Tracker" = "https://github.com/auto-optimization/eafpy/issues"
