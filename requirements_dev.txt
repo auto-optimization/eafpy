@@ -19,7 +19,7 @@ jupyter
 ipykernel
 kaleido
 myst-nb 
-matplotlib
+matplotlib >= 3.6
 sphinxcontrib-napoleon
 
 jupyterlab
