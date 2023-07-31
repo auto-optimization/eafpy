@@ -251,4 +251,10 @@ def test_get_eaf():
     # TODO check these values are correct
 
 
+def test_eaf_3d():
+    dataset_3d = eaf.read_datasets("tests/test_data/spherical-250-10-3d.txt")
+    eaf_spherical_3d = eaf.get_eaf(dataset_3d)
+    print(eaf_spherical_3d.shape)
+
+
 # TODO add tests for subset, data_subset, normalise_sets, filer_dominated_sets

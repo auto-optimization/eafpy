@@ -614,6 +614,9 @@ eaf3df(dlnode_t *list, avl_tree_t **set, avl_tree_t **level,
                 levelNode[k] = &auxNodes[k];
                 promoters[k] = leftNodeL;
                 
+                printf("k: %d, aux_values: %f %f\n",k, auxValues[k][0], auxValues[k][1]);
+                printf("Aux addresses %d %d\n\n",k, &auxValues[k][0], &auxValues[k][1]);
+                
             } else {
                 levelNode[k] = find_point_below(level[k], newPrev->item);
                 promoters[k] = levelNode[k];
@@ -692,7 +695,7 @@ freetree(avl_tree_t *avltree)
 {
     avl_node_t *aux, *aux2;
     aux=avltree->head;
-    
+
     if(aux){    
         
         while(aux){
