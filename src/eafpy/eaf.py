@@ -760,6 +760,11 @@ def get_eaf(data, percentiles=[]):
     """
     data = np.asfarray(data)
     num_data_columns = data.shape[1]
+    if num_data_columns != 3:
+        assert NotImplementedError(
+            "Only 2d Datasets are currently supported for calculating eaf"
+        )
+
     percentiles = np.asfarray(percentiles)
     # Get C pointers + matrix size for calling CFFI generated extension module
     data_p, npoints, ncols = np2d_to_double_array(data)

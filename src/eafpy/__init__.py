@@ -15,4 +15,4 @@ from .eaf import (
     filter_dominated_sets,
     get_eaf,
 )
-from .plot import plot_datasets
+from .plot import plot_datasets, plot_eaf

@@ -337,7 +337,7 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
     return figure
 
 
-def eaf_plot(dataset, line_colours=[], **layout_kwargs):
+def plot_eaf(dataset, line_colours=[], **layout_kwargs):
     """eaf_plot() conviently plots attainment surfaces in 2d
 
     Parameters

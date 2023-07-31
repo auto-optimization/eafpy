@@ -62,7 +62,7 @@ def parse_colour_to_nparray(colour):
             )
         else:
             raise ValueError(
-                f"String color argument : '{colour}' is not recognised. It must be CSS color or 'rgba(w,x,y,z)' string"
+                f"String color argument : '{colour}' is not recognised. It must be known CSS4 color or 'rgba(w,x,y,z)' string"
             )
     elif isinstance(colour, int):
         # Accept 8 digit hexadecimal number where every 2 digits represent one of (RGBA). Alpha value is the least significant byte
