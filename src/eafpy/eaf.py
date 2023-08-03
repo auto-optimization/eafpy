@@ -13,15 +13,13 @@ import tempfile
 class ReadDatasetsError(Exception):
     """Custom exception class for an error returned by the read_datasets function
 
-    Attributes
+    Parameters
     ----------
     error_code : int
         Error code returned by read_datasets C function, which maps to a string from
-    error_strings : list
-        List of strings that map to the error code
     """
 
-    error_strings = [
+    _error_strings = [
         "NO_ERROR",
         "READ_INPUT_FILE_EMPTY",
         "READ_INPUT_WRONG_INITIAL_DIM",
@@ -32,7 +30,7 @@ class ReadDatasetsError(Exception):
 
     def __init__(self, error_code):
         self.error = error_code
-        self.message = self.error_strings[abs(error_code)]
+        self.message = self._error_strings[abs(error_code)]
         super().__init__(self.message)
 
 
