@@ -27,7 +27,6 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.extlinks",
-    "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
     "myst_nb",
     "sphinx.ext.autosectionlabel",
