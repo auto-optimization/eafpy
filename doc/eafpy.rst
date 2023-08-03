@@ -1,6 +1,11 @@
 eafpy package
 =============
 
+.. automodule:: eafpy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Submodules
 ----------
 
@@ -32,14 +37,6 @@ eafpy.plot module
 -----------------
 
 .. automodule:: eafpy.plot
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: eafpy
    :members:
    :undoc-members:
    :show-inheritance:

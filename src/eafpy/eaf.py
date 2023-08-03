@@ -1,6 +1,13 @@
 import os
 import numpy as np
+
+## Libeaf contains wrapper functions for the EAF C library.
+## The CFFI library is used to create C binding
 from eafpy.c_bindings import lib, ffi
+from ._utils import *
+import lzma
+import shutil
+import tempfile
 
 
 class ReadDatasetsError(Exception):
@@ -27,30 +34,6 @@ class ReadDatasetsError(Exception):
         self.error = error_code
         self.message = self.error_strings[abs(error_code)]
         super().__init__(self.message)
-
-
-"""
-Libeaf contains wrapper functions for the EAF C library. 
-The CFFI library is used to create C binding
-"""
-
-
-def np2d_to_double_array(x):
-    data_p = ffi.from_buffer("double []", x)
-    ncols = ffi.cast("int", x.shape[1])
-    nrows = ffi.cast("int", x.shape[0])
-    return data_p, nrows, ncols
-
-
-def np1d_to_double_array(x):
-    size = ffi.cast("int", x.shape[0])
-    x = ffi.from_buffer("double []", x)
-    return x, size
-
-
-import lzma
-import shutil
-import tempfile
 
 
 def read_datasets(filename):
@@ -123,17 +106,6 @@ def read_datasets(filename):
     data_buf = ffi.buffer(data_p[0], datasize_p[0])
     # Convert 1d numpy array to 2d array with (n obj... , sets) columns
     return np.frombuffer(data_buf).reshape((-1, ncols_p[0]))
-
-
-def atleast_1d_of_length_n(x, n):
-    x = np.atleast_1d(x)
-    if len(x) == 1:
-        x = np.full((n), x[0])
-    elif x.shape[0] != n:
-        raise ValueError(
-            f"array must have same number of elements as data columns {x.shape[0]} != {n}"
-        )
-    return np.ascontiguousarray(x)
 
 
 def _parse_maximise(maximise, nobj):
