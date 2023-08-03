@@ -2,8 +2,8 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
-import eafpy.eaf as eaf
-import eafpy.colour as colour
+from . import eaf
+from . import colour
 
 
 _3d_margin = dict(r=5, l=5, b=20, t=20)
