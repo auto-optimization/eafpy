@@ -4,14 +4,6 @@ eafpy package
 Submodules
 ----------
 
-eafpy.build\_c\_eaf module
---------------------------
-
-.. automodule:: eafpy.build_c_eaf
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 eafpy.c\_bindings module
 ------------------------
 
@@ -24,14 +16,6 @@ eafpy.colour module
 -------------------
 
 .. automodule:: eafpy.colour
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-eafpy.conftest module
----------------------
-
-.. automodule:: eafpy.conftest
    :members:
    :undoc-members:
    :show-inheritance:
