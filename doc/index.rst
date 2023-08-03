@@ -4,17 +4,23 @@
    contain the root `toctree` directive.
 
 EAF documentation
-=================================
-The EAF python package allows for easy calculation and visulisation of the empircal attainment function
+=================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
+   :hidden:
 
-   examples/plot_datasets_examples.md
-   examples/style_plots.md
-   examples/heatmap_prototype.md
-   examples/eaf_plot.md
+   API reference <api/index>
+   Examples <examples/index>
+
+:Release: |version|
+:Date: |today|
+
+The EAF python package allows for easy calculation and visualization of the empirical attainment function (EAF).
+
+See the :ref:`API reference <api>` or the :ref:`examples <examples>`.
+
+
 
 Indices and tables
 ==================

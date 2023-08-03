@@ -35,6 +35,18 @@ html_theme = "pydata_sphinx_theme"
 html_theme_options = {
     "use_edit_page_button": True,
     "primary_sidebar_end": ["indices.html", "sidebar-ethical-ads.html"],
+    "icon_links": [
+        {
+            # Label for this link
+            "name": "GitHub",
+            # URL where the link will redirect
+            "url": "https://github.com/auto-optimization/eafpy",  # required
+            # Icon class (if "type": "fontawesome"), or path to local image (if "type": "local")
+            "icon": "fa-brands fa-square-github",
+            # The type of image to be used (see below for details)
+            "type": "fontawesome",
+        }
+    ],
 }
 html_context = {
     "github_user": "auto-optimization",
@@ -42,13 +54,11 @@ html_context = {
     "github_version": "main",
     "doc_path": "doc",
 }
+
 suppress_warnings = ["mystnb.unknown_mime_type"]
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-
-
-language = "English"
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -56,7 +66,7 @@ language = "English"
 # Sphinx awesome theme currently breaks the jupyter plotly example
 # html_permalinks_icon = "<span>#</span>"
 
-html_static_path = ["_static"]
+# html_static_path = ["_static"]
 
 # Napoleon settings
 napoleon_google_docstring = False

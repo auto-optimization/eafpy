@@ -9,7 +9,7 @@ build:
 test:
 	tox
 
-doc: clean
+doc:
 	tox -e docs
 	$(MAKE) -C doc html
 
