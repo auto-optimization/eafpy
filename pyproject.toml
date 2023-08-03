@@ -12,15 +12,17 @@ description = "Python wrapper for empirical attainment function (EAF) C library"
 readme = "README.md"
 requires-python = ">=3.7"
 dependencies = [
-    "numpy",
-     "cffi",
+  "cffi >=1.15.1",
+  "numpy >= 1.22.3",
+  "pandas >= 2.0.2",
+  "plotly >= 5.15.0",
+  "matplotlib >= 3.6",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-
 
 [project.urls]
 Homepage = "https://auto-optimization.github.io/eafpy/"
@@ -34,7 +36,9 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
-# pyproject.toml
+[tool.setuptools.package-data]
+eafpy = ["*.h", "*.c"]
+
 [tool.pytest.ini_options]
 minversion = "7.0"
 pythonpath = [
