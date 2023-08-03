@@ -107,6 +107,7 @@ jobs:
       - name: build the package
         run:
           python3 -m build
+          
       - name: install the package
         run:
           pip install .
@@ -117,12 +118,10 @@ jobs:
           
       - name: Build the docs
         run: |
-          cd doc/
-          make clean
-          sphinx-apidoc -f -o . ../src/
-          make html
-          cd ..
-
+          make -C doc clean
+          tox -e docs
+          make -C doc html
+          
       - name: Upload docs as github pages artifact
         uses: actions/upload-pages-artifact@main
         with:

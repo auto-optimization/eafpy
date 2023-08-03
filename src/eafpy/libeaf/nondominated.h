@@ -268,25 +268,15 @@ void find_bounds(double * data, int nobj, int npoints, double ** lbounds, double
     // Remember to free this memory in function call
 }
 
-void normalise_ (double *data, int nobj, int npoints, const bool * maximise, const double lower_range, 
-        const double upper_range, double * lbounds, double * ubounds, bool calc_bounds)
+void normalise_(double *data, int nobj, int npoints, const bool * maximise,
+                const double lower_range, const double upper_range,
+                const double * lbounds, const double * ubounds)
 {
     signed char * minmax = create_minmax_bool(nobj, maximise);
-    double *calc_lbound = malloc(sizeof(double) * nobj);
-    double *calc_ubound = malloc(sizeof(double) * nobj);
-
-    find_bounds(data, nobj, npoints, &calc_lbound, &calc_ubound);
-    if(calc_bounds == TRUE){
-        normalise(data, nobj, npoints, minmax, AGREE_NONE,lower_range, upper_range,
-            calc_lbound, calc_ubound);
-    }else{
-        normalise(data, nobj, npoints, minmax, AGREE_NONE,lower_range, upper_range,
-            lbounds, ubounds);
-    }
-    
-    
-    free(calc_lbound);
-    free(calc_ubound);
+    const signed char agree = AGREE_MINIMISE;
+    agree_objectives (data, nobj, npoints, minmax, agree);
+    normalise(data, nobj, npoints, minmax, agree, lower_range, upper_range,
+              lbounds, ubounds);
     free(minmax);
 }
 

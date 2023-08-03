@@ -201,20 +201,13 @@ def test_epsilon():
 
 def test_normalise():
     A = np.array(
-        [
-            [0, 0, 0],
-            [5, 3, 1],
-            [10, 6, 2],
-            [15, 9, 3],
-            [20, 12, 4],
-            [25, 15, 5],
-        ]
+        [[0, 0, 0], [5, 3, 1], [10, 6, 2], [15, 9, 3], [20, 12, 4], [25, 15, 5]]
     )
-    # With default range = [0,1] - all columns should have their values normalised to same value
-    expected_outcome = np.asfarray(np.tile(np.linspace(0, 1, num=6).reshape(6, -1), 3))
+    # With default to_range = [0,1] - all columns should have their values normalised to same value
+    expected_outcome = np.tile(np.linspace(0, 1, num=6).reshape(6, -1), 3)
 
     assert np.allclose(eaf.normalise(A), expected_outcome)
-    assert np.allclose(eaf.normalise(A, range=[0, 10]), 10 * expected_outcome)
+    assert np.allclose(eaf.normalise(A, to_range=[0, 10]), 10 * expected_outcome)
     expected_with_bounds = np.transpose(
         np.array(
             [
