@@ -801,3 +801,32 @@ def get_eaf(data, percentiles=[]):
     eaf_buf = ffi.buffer(eaf_data, sizeof_eaf[0])
     eaf_arr = np.frombuffer(eaf_buf)
     return np.reshape(eaf_arr, (-1, num_data_columns))
+
+
+def get_diff_eaf_(data, num_intervals):
+    data = np.asfarray(data)
+    num_data_columns = data.shape[1]
+    data_p, npoints, ncols = np2d_to_double_array(data)
+    eaf_npoints = ffi.new("int *", 0)
+    sizeof_eaf = ffi.new("int *", 0)
+    nsets = ffi.cast("int", len(np.unique(data[:, -1])))  # Get num of sets from data
+    num_intervals = ffi.cast("int", num_intervals)
+
+    eaf_diff_data = lib.compute_eafdiff_(
+        data_p,
+        ncols,
+        npoints,
+        num_intervals,
+        nsets,
+        eaf_npoints,
+        sizeof_eaf,
+    )
+
+    eaf_buf = ffi.buffer(eaf_diff_data, sizeof_eaf[0])
+    eaf_arr = np.frombuffer(eaf_buf)
+    return np.reshape(eaf_arr, (-1, num_data_columns))
+
+
+def test_diff_eaf():
+    dat = read_datasets("doc/examples/input1.dat")
+    get_diff_eaf_(dat, 5)

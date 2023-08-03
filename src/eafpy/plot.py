@@ -185,18 +185,6 @@ def _get_cube_plot(dataset):
     return fig
 
 
-def get_xylim(lim, maximise, data):
-    # FIXME: This seems too complicated.
-    if maximise and lim is not None:
-        lim = -lim
-    if lim is None:
-        lim = np.array([np.min(data), np.max(data)])
-        lim += 0.05 * np.diff(lim) * np.array([-1, 1])
-    if maximise:
-        lim = np.array([np.min(-lim), np.max(-lim)])
-    return lim
-
-
 def add_extremes(x, y, maximise):
     best_x = np.max(x) if maximise[0] else np.min(x)
     best_y = np.max(y) if maximise[1] else np.min(y)
@@ -300,14 +288,11 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
         )
 
         maximise = [False, False]
-        xlim = get_xylim(None, maximise[0], sets_df["Objective 1"])
-        ylim = get_xylim(None, maximise[1], sets_df["Objective 2"])
         # Extend lines past the figure boundaries.
         for trace in figure.data:
             trace.x, trace.y = add_extremes(trace.x, trace.y, maximise)
 
         figure.update_traces(line_shape="hv", mode=type_parsed)
-        figure.update_layout(xaxis_range=xlim, yaxis_range=ylim)
 
     elif dim == 3:
         if "surface" in type_parsed:

@@ -1062,17 +1062,10 @@ int *get_cumsizes_(double *data, int ncols, int npoints, int nsets){
     return cumsizes;
 }
 
-// Wrapper function for getting array of EAF data, for use in python wrapper
-double *get_eaf_(double *data, /*Flat row major order data matrix input, including objectives and set numbers */
-                int ncols,  /*Number of columns in the input data array (ncols = number of objectives + 1) */
-                int npoints, /*Number of data points (rows) in input data column */
-                double * percentiles, /*array of percentiles to calculate EAF for, if choose_percentiles argument is true */
-                int npercentiles, /*Length of percentiles array */
-                bool choose_percentiles, /*If true,  */
-                int nsets, /*Number of different sets in the data input matrix */
-                int * eaf_npoints, /*Return single integer containing the number of rows in the output matrix  */
-                int * sizeof_eaf /*Size in bytes of the returned matrix of EAF data points */
-                /*-> Returns pointer to row major order array containing the EAF data points and relevant percentiles  */
+
+// Wrapper function for getting array of EAF data, for use in python wrapper. See declaration for more comments
+double *get_eaf_(double *data, int ncols, int npoints, double * percentiles, int npercentiles,
+                bool choose_percentiles, int nsets, int * eaf_npoints, int * sizeof_eaf
     ){
     int nobj = ncols -1;
     // Calculate cumulative size of each set
@@ -1101,7 +1094,6 @@ double *get_eaf_(double *data, /*Flat row major order data matrix input, includi
     }
     
     eaf_t **eaf = attsurf (data, nobj, cumsizes, nsets, levels, number_levels_selected);
-    free (levels);
 
     int totalpoints = eaf_totalpoints(eaf, number_levels_selected);
     
@@ -1124,10 +1116,80 @@ double *get_eaf_(double *data, /*Flat row major order data matrix input, includi
     } 
     
     free(calculated_percentiles);
-    free(eaf);
+    free (levels);
     free(cumsizes);
+    free(eaf);
     *sizeof_eaf = sizeof_eaf_;
     *eaf_npoints = totalpoints;
+    return return_matrix;
+}
+
+ 
+double *compute_eafdiff_(double *data, int ncols, int npoints, int nsets, int num_intervals, int *return_num_points, int * sizeof_return_vector)
+{
+    // FIXME there is a lot of repeated code compared to get_eaf_()
+    int nobj = ncols -1;
+    // Calculate cumulative size of each set
+    int *cumsizes = get_cumsizes_(data, ncols, npoints, nsets); // Remember to free
+    int *levels;
+    double *calculated_percentiles = malloc(sizeof(double) * nsets);;
+    int number_levels_selected = nsets;
+    for(int i = 1;i<nsets+1;i++){
+        calculated_percentiles[i-1] = (i * 100)/nsets;
+    }
+    // Convert the selected percentiles to levels
+    levels = malloc(sizeof(int) * nsets);
+    for (int k = 0; k < number_levels_selected; k++){
+        levels[k] = percentile2level(calculated_percentiles[k], nsets);
+    }
+    
+    eaf_t **eaf = attsurf (data, nobj, cumsizes, nsets, levels, number_levels_selected);
+   
+    int nsets1 = nsets / 2;
+    int nsets2 = nsets - nsets1;
+    int totalpoints = eaf_totalpoints (eaf, number_levels_selected);
+    int sizeof_eaf_ = sizeof(double) * totalpoints * (nobj + 1);
+    double * return_matrix = malloc(sizeof_eaf_);
+
+    int k;
+
+    int pos = 0;
+    for (k = 0; k < nsets; k++) {
+        int npoints = eaf[k]->size;
+        int i, j;
+
+        // FIXME: Find the most efficient order of the loop.
+        for (i = 0; i < npoints; i++) {
+            for (j = 0; j < nobj; j++) {
+                return_matrix[pos + j * totalpoints] = eaf[k]->data[j + i * nobj];
+            }
+            pos++;
+        }
+    }
+    pos += (nobj - 1) * totalpoints;
+    for (k = 0; k < nsets; k++) {
+        int i;
+        int npoints = eaf[k]->size;
+        for (i = 0; i < npoints; i++) {
+            int count_left;
+            int count_right;
+            /* bit_array_check(bit_array_offset(eaf[k]->bit_attained,i, eaf[k]->nruns), */
+            /*                 eaf[k]->attained + i * eaf[k]->nruns, npoints, nruns); */
+            attained_left_right (bit_array_offset(eaf[k]->bit_attained, i, eaf[k]->nruns),
+                                 nsets1, nsets, &count_left, &count_right);
+            return_matrix[pos] = (double) num_intervals * (double) ((count_left / (double) nsets1) - 
+                                              (count_right / (double) nsets2));
+            pos++;
+        }
+        eaf_delete (eaf[k]);
+    }
+    
+    free(calculated_percentiles);
+    free (levels);
+    free(cumsizes);
+    free(eaf);
+    *sizeof_return_vector = sizeof_eaf_;
+    *return_num_points = totalpoints;
     return return_matrix;
 }
 

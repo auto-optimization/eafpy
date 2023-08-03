@@ -60,7 +60,7 @@ plot.show()
 Use the `eaf.colour.discrete_colour_gradient` to create objects for the "colorway" argument. This function lerps between two colours in a discrete number of steps. It accepts the following type of colour arguments:
 * Standard CSS4 color name strings - Eg. "blue"
 * Strings of rgba values, 0-1 or 0-255 - Eg. 'rgba(123,54,22, 0.8)' -> this is a brown colour with 80% opacity
-* 8 digit hexedecimal numbers representing RGBA values Eg. #abcdefFF ->   This is a light blue colour with (FF/FF) = 100% opacity 
+* 8 digit hexedecimal numbers representing RGBA values Eg. #abcdefFF ->   #abcdef is a light blue colour with alpha = (FF) = 100% opacity 
 
 ```{code-cell}
 import eafpy as eaf
