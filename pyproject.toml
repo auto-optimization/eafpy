@@ -8,7 +8,7 @@ version = "0.0.0"
 authors = [
   { name="Fergus Rooney", email="fergus.rooney@outlook.com" }, {name = "Manuel López-Ibáñez", email = "manuel.lopez-ibanez@manchester.ac.uk"}
 ]
-description = "Python wrapper for empiracal attainment function (EAF) C library"
+description = "Python wrapper for empirical attainment function (EAF) C library"
 readme = "README.md"
 requires-python = ">=3.7"
 dependencies = [
@@ -23,8 +23,10 @@ classifiers = [
 
 
 [project.urls]
-"Homepage" = "https://github.com/auto-optimization/eafpy"
-"Bug Tracker" = "https://github.com/auto-optimization/eafpy/issues"
+Homepage = "https://auto-optimization.github.io/eafpy/"
+Documentation = "https://auto-optimization.github.io/eafpy/"
+Source = "https://github.com/auto-optimization/eafpy/"
+Tracker = "https://github.com/auto-optimization/eafpy/issues"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

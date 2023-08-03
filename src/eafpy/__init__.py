@@ -16,3 +16,6 @@ from .eaf import (
     get_eaf,
 )
 from .plot import plot_datasets, plot_eaf
+import importlib.metadata
+
+__version__ = importlib.metadata.version(__package__ or __name__)

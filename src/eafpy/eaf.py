@@ -422,7 +422,7 @@ def epsilon_mult(data, ref, maximise=False):
 
 
 def normalise(data, to_range=[0.0, 1.0], lower=np.nan, upper=np.nan, maximise=False):
-    """Normalise points per coordinate to a range, e.g., to_range = [1,2], where the minimum value will correspond to 1 and the maximum to 2.
+    """Normalise points per coordinate to a range, e.g., `to_range = [1,2]`, where the minimum value will correspond to 1 and the maximum to 2.
 
     Parameters
     ----------
@@ -431,20 +431,20 @@ def normalise(data, to_range=[0.0, 1.0], lower=np.nan, upper=np.nan, maximise=Fa
         See :func:`normalise_sets` to normalise data that includes set numbers (Multiple sets)
 
     to_range : numpy array or list of 2 points
-        Normalise values to this range. If the objective is maximised, it is normalised to (to_range[1], to_range[0]) instead.
+        Normalise values to this range. If the objective is maximised, it is normalised to `(to_range[1], to_range[0])` instead.
 
     upper, lower: list or np array
-        Bounds on the values. If np.nan, the maximum and minimum values of each coordinate are used.
+        Bounds on the values. If `np.nan`, the maximum and minimum values of each coordinate are used.
         
     maximise : single bool, or list of booleans
         Whether the objectives must be maximised instead of minimised. \
         Either a single boolean value that applies to all objectives or a list of booleans, with one value per objective. \
-        Also accepts a 1d numpy array with value 0/1 for each objective
+        Also accepts a 1D numpy array with values 0 or 1 for each objective
 
     Returns
     -------
     numpy array
-        Returns normalised data input. **Note this will pass the array by reference, so the original data array **  
+        Returns the data normalised as requested.
 
     Examples
     --------
