@@ -35,21 +35,20 @@ class ReadDatasetsError(Exception):
 
 
 def read_datasets(filename):
-    """Identify, and remove dominated points according to Pareto optimality.
-    Reads an input dataset file, parsing the file and returning a numpy array
+    """Reads an input dataset file, parsing the file and returning a numpy array
 
     Parameters
     ----------
-    filename : string
-        Filename of the dataset file. Each row of the table appears as one line of the file.
+    filename : str
+        Filename of the dataset file. Each row of the table appears as one line of the file. Datasets are separated by an empty line.
         If it does not contain an absolute path, the file name is relative to the current working directory.
-        If the filename has extension '.xz', it is decompressed to a temporary file before reading it.
+        If the filename has extension `'.xz'`, it is decompressed to a temporary file before reading it.
 
     Returns
     -------
-    numpy array
+    numpy.ndarray
         An array containing a representation of the data in the file.
-        The first n-1 columns contain the numerical data for each of the objectives
+        The first n-1 columns contain the numerical data for each of the objectives.
         The last column contains an identifier for which set the data is relevant to.
 
     Examples
@@ -128,37 +127,34 @@ def _unary_refset_common(data, ref, maximise):
 
 
 def igd(data, ref, maximise=False):
-    """Inverted Generational Distance (IGD and IGD+) and Averaged Hausdorff Distance
-    Functions to compute the inverted generational distance (IGD and IGD+) and the \
+    """Inverted Generational Distance (IGD and IGD+) and Averaged Hausdorff Distance.
+
+    Functions to compute the inverted generational distance (IGD and IGD+) and the
     averaged Hausdorff distance between nondominated sets of points.
 
-    ::
-    
-        igd(data, reference, maximise = FALSE)
-
-        igd_plus(data, reference, maximise = FALSE)
-
-        avg_hausdorff_dist(data, ref, maximise = FALSE, p = 1L)
-    
+    See the full documentation here: https://mlopez-ibanez.github.io/eaf/reference/igd.html
 
     Parameters
     ----------
-    data : numpy array
+    data : numpy.ndarray
         Numpy array of numerical values, where each row gives the coordinates of a point in objective space.
-        If the array is created from the :func:`read_datasets` function, remove the last (set) column
-    ref : numpy array or list
-        Reference point set as a numpy array or list. Must have same number of columns as a single point in the \
-        dataset
-    maximise : single bool, or list of booleans
-        Whether the objectives must be maximised instead of minimised. \
-        Either a single boolean value that applies to all objectives or a list of booleans, with one value per objective. \
-        Also accepts a 1d numpy array with value 0/1 for each objective
-    p : Hausdorff distance parameter (default: 1L).
+        If the array is created from the :func:`read_datasets` function, remove the last (set) column.
+
+    ref : numpy.ndarray or list
+        Reference point set as a numpy array or list. Must have same number of columns as the dataset.
+
+    maximise : bool or or list of bool
+        Whether the objectives must be maximised instead of minimised.
+        Either a single boolean value that applies to all objectives or a list of booleans, with one value per objective.
+        Also accepts a 1d numpy array with value 0/1 for each objective.
+
+    p : float, default 1
+        Hausdorff distance parameter. Must be larger than 0.
 
     Returns
     -------
     float
-        A single numerical value  
+        A single numerical value
 
     Examples
     --------
@@ -182,7 +178,7 @@ def igd(data, ref, maximise=False):
 
 
 def igd_plus(data, ref, maximise=False):
-    """Calculate igd+ indicator
+    """Calculate IGD+ indicator
 
     See :func:`igd`
     """
@@ -213,11 +209,12 @@ def avg_hausdorff_dist(data, ref, maximise=False, p=1):
 
 def hypervolume(data, ref):
     """Hypervolume indicator
+
     Computes the hypervolume metric with respect to a given reference point assuming minimization of all objectives.
 
     Parameters
     ----------
-    data : numpy array
+    data : numpy.ndarray
         Numpy array of numerical values, where each row gives the coordinates of a point in objective space.
         If the array is created from the `read_datasets()` function, remove the last column
     ref : numpy array or list
@@ -381,10 +378,10 @@ def epsilon_additive(data, ref, maximise=False):
 
     Parameters
     ----------
-    data : array_like
+    data : numpy.ndarray
         Numpy array of numerical values, where each row gives the coordinates of a point in objective space.
         If the array is created from the :func:`read_datasets` function, remove the last (set) column
-    ref : numpy array or list
+    ref : numpy.ndarray or list
         Reference point set as a numpy array or list. Must have same number of columns as a single point in the \
         dataset
     maximise : bool or list of bool
@@ -424,8 +421,8 @@ def normalise(data, to_range=[0.0, 1.0], lower=np.nan, upper=np.nan, maximise=Fa
 
     Parameters
     ----------
-    data : numpy array
-        A single set : A Numpy array of numerical values, where each row gives the coordinates of a point in objective space.
+    data : numpy.ndarray
+        Numpy array of numerical values, where each row gives the coordinates of a point in objective space.
         See :func:`normalise_sets` to normalise data that includes set numbers (Multiple sets)
 
     to_range : numpy array or list of 2 points
@@ -547,7 +544,7 @@ def subset(dataset, set=-2, range=[]):
     dataset : numpy array
         Numpy array of numerical values and set numbers, containing multiple sets. For example the output \
          of the :func:`read_datasets` function
-    Set : integer
+    set : integer
         Select a single set from the dataset, where the selected set is equal to this argument
 
     range: list (length 2)
