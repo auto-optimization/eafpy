@@ -7,7 +7,6 @@ Every time a new C function is created, its prototype must be added to the `ffib
 The header files required must be placed in the first argument of `ffibuilder.set_source`, and any additional `.C` files must be added to the `sources` argument of `ffibuilder.set_source`
 
 """
-
 import os
 import cffi
 
@@ -23,7 +22,7 @@ ffibuilder.cdef(
     double avg_Hausdorff_dist_C (const double *data, int nobj, int npoints, const double *ref, int ref_size, const bool * maximise, unsigned int p);
     bool * is_nondominated_(const double * data, int nobj, int npoint, const bool * maximise, bool keep_weakly);
     double epsilon_ (const double *data, int nobj, int data_npoints, const double *ref, int ref_npoints, const bool * maximise, bool is_add);
-    void normalise_ (double *data, int nobj, int npoints, const bool * maximise, const double lower_range, const double upper_range, double * lbounds, double * ubounds, bool calc_bounds);
+    void normalise_(double *data, int nobj, int npoints, const bool * maximise, const double lower_range, const double upper_range, const double * lbounds, const double * ubounds);
     double * get_eaf_(double *data, int ncols, int npoints, double * percentiles, int npercentiles, bool choose_percentiles, int nsets, int * eaf_npoints, int * sizeof_eaf);
     """
 )

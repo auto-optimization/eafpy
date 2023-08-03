@@ -1,6 +1,5 @@
-import numpy as np
-
 import os
+import numpy as np
 from eafpy.c_bindings import lib, ffi
 
 
@@ -126,17 +125,20 @@ def read_datasets(filename):
     return np.frombuffer(data_buf).reshape((-1, ncols_p[0]))
 
 
+def atleast_1d_of_length_n(x, n):
+    x = np.atleast_1d(x)
+    if len(x) == 1:
+        x = np.full((n), x[0])
+    elif x.shape[0] != n:
+        raise ValueError(
+            f"array must have same number of elements as data columns {x.shape[0]} != {n}"
+        )
+    return np.ascontiguousarray(x)
+
+
 def _parse_maximise(maximise, nobj):
     # Converts maximise array or single bool to ndarray format
-    maximise = np.atleast_1d(maximise).astype(bool)
-    if len(maximise) == 1:
-        maximise = np.full((nobj), maximise[0])
-    elif maximise.shape[0] != nobj:
-        raise ValueError(
-            "Maximise array must have same # of cols as data"
-            f"{maximise.shape[0]} != {nobj}"
-        )
-    return np.ascontiguousarray(maximise)
+    return atleast_1d_of_length_n(maximise, nobj).astype(bool)
 
 
 def _unary_refset_common(data, ref, maximise):
@@ -403,27 +405,19 @@ def _epsilon_select(data, ref, maximise, is_add):
 
 
 def epsilon_additive(data, ref, maximise=False):
-    """Epsilon metric
-    Computes the epsilon metric, either additive or multiplicative.
+    """Computes the epsilon metric, either additive or multiplicative. 
 
-
-    ::
-    
-        epsilon_additive(data, reference, maximise = FALSE)
-
-        epsilon_mult(data, reference, maximise = FALSE)
-        # Data and reference must all be > 0 for epsilon_mult
-
+    `data` and `reference` must all be larger than 0 for `epsilon_mult`.
 
     Parameters
     ----------
-    data : numpy array
+    data : array_like
         Numpy array of numerical values, where each row gives the coordinates of a point in objective space.
         If the array is created from the :func:`read_datasets` function, remove the last (set) column
     ref : numpy array or list
         Reference point set as a numpy array or list. Must have same number of columns as a single point in the \
         dataset
-    maximise : single bool, or list of booleans
+    maximise : bool or list of bool
         Whether the objectives must be maximised instead of minimised. \
         Either a single boolean value that applies to all objectives or a list of booleans, with one value per objective. \
         Also accepts a 1d numpy array with value 0/1 for each objective
@@ -447,7 +441,7 @@ def epsilon_additive(data, ref, maximise=False):
 
 
 def epsilon_mult(data, ref, maximise=False):
-    """multiplicative Epsilon metric
+    """multiplicative epsilon metric
 
     See :func:`epsilon_additive`
 
@@ -455,24 +449,20 @@ def epsilon_mult(data, ref, maximise=False):
     return _epsilon_select(data, ref, maximise=maximise, is_add=False)
 
 
-def normalise(data, range=[0, 1], lower="na", upper="na", maximise=False):
-    """Normalise
-    Normalise points per coordinate to a range, e.g., range = [1,2], where the minimum value will correspond to 1 and the maximum to 2.\
-
-    ::
-    
-        normalise(data, to.range = c(1, 2), lower = NA, upper = NA, maximise = FALSE)
+def normalise(data, to_range=[0.0, 1.0], lower=np.nan, upper=np.nan, maximise=False):
+    """Normalise points per coordinate to a range, e.g., to_range = [1,2], where the minimum value will correspond to 1 and the maximum to 2.
 
     Parameters
     ----------
     data : numpy array
         A single set : A Numpy array of numerical values, where each row gives the coordinates of a point in objective space.
         See :func:`normalise_sets` to normalise data that includes set numbers (Multiple sets)
-    range : numpy array or list of 2 points
-        Normalise values to this range. If the objective is maximised, it is normalised to c(to.range[1], to.range[0]) instead.
+
+    to_range : numpy array or list of 2 points
+        Normalise values to this range. If the objective is maximised, it is normalised to (to_range[1], to_range[0]) instead.
 
     upper, lower: list or np array
-        Bounds on the values. If NA, the maximum and minimum values of each coordinate are used.
+        Bounds on the values. If np.nan, the maximum and minimum values of each coordinate are used.
         
     maximise : single bool, or list of booleans
         Whether the objectives must be maximised instead of minimised. \
@@ -493,59 +483,43 @@ def normalise(data, range=[0, 1], lower="na", upper="na", maximise=False):
            [0.3  , 0.425],
            [1.   , 0.   ]])
 
-    # TODO add more examples showing different arguments
+    >>> eaf.normalise(dat, to_range = [1,2], lower = [3.5, 3.5], upper = 5.5)
+    array([[1.  , 2.  ],
+           [1.05, 1.3 ],
+           [1.3 , 0.85],
+           [2.  , 0.  ]])
 
     See Also
     --------
     This function for muliple sets - :func:`normalise_sets` 
 
     """
-    data = np.asfarray(data)
-    objects = data.shape[1]
-    points = data.shape[0]
-    range = np.asfarray(range)
-    if range.shape[0] != 2:
-        raise ValueError("Range must be an array like with 2 entries")
-    if objects == 1:
-        raise ValueError("function only suitable for 2 dimensions or higher")
-
-    if isinstance(lower, str) or isinstance(upper, str):
-        # If bounds not set, assume calculate bounds in C code
-        # Set values to 0 so the function can still call
-        lower = np.zeros(objects, dtype=np.double)
-        upper = np.zeros(objects, dtype=np.double)
-        use_bound_calc = True
-    else:
-        use_bound_calc = False
-        lower = np.asfarray(lower)
-        upper = np.asfarray(upper)
-        if lower.shape[0] != objects or upper.shape[0] != objects:
-            raise ValueError(
-                "upper or lower bound arg has different number of objectives to data"
-            )
+    # Normalise modifies the data, so we need to create a copy.
+    data = np.asfarray(data).copy()
+    npoints, nobj = data.shape
+    if nobj == 1:
+        raise ValueError("'data' must have at least two columns")
+    to_range = np.asfarray(to_range)
+    if to_range.shape[0] != 2:
+        raise ValueError("'to_range' must have length 2")
+    lower = atleast_1d_of_length_n(lower, nobj).astype(float)
+    upper = atleast_1d_of_length_n(upper, nobj).astype(float)
+    if np.any(np.isnan(lower)):
+        lower = np.where(np.isnan(lower), data.min(axis=0), lower)
+    if np.any(np.isnan(upper)):
+        upper = np.where(np.isnan(upper), data.max(axis=0), upper)
 
     maximise = _parse_maximise(maximise, data.shape[1])
     data_p, npoints, nobj = np2d_to_double_array(data)
     maximise_p = ffi.from_buffer("bool []", maximise)
     lbound_p = ffi.from_buffer("double []", lower)
     ubound_p = ffi.from_buffer("double []", upper)
-    use_bound_calc = ffi.cast("bool", use_bound_calc)
-
     lib.normalise_(
-        data_p,
-        nobj,
-        npoints,
-        maximise_p,
-        range[0],
-        range[1],
-        lbound_p,
-        ubound_p,
-        use_bound_calc,
+        data_p, nobj, npoints, maximise_p, to_range[0], to_range[1], lbound_p, ubound_p
     )
-
-    data_buf = ffi.buffer(data_p, ffi.sizeof("double") * points * objects)
-    data_nparray = np.frombuffer(data_buf)
-    return data_nparray.reshape(-1, objects)
+    data_buf = ffi.buffer(data_p, ffi.sizeof("double") * data.shape[0] * data.shape[1])
+    data = np.frombuffer(data_buf).reshape(data.shape)
+    return data
 
 
 def normalise_sets(dataset, range=[0, 1], lower="na", upper="na", maximise=False):
@@ -586,13 +560,13 @@ def normalise_sets(dataset, range=[0, 1], lower="na", upper="na", maximise=False
     for set in np.unique(dataset[:, -1]):
         setdata = dataset[dataset[:, -1] == set, :-1]
         dataset[dataset[:, -1] == set, :-1] = normalise(
-            setdata, range=range, lower="na", upper="na", maximise=False
+            setdata, to_range=range, lower=np.nan, upper=np.nan, maximise=False
         )
     return dataset
 
 
 def subset(dataset, set=-2, range=[]):
-    """Subset is a convienance function for extracting a set or range of sets from a larger dataset. 
+    """Subset is a convenience function for extracting a set or range of sets from a larger dataset. 
     It takes a dataset with multiple set numbers, and returns 1 or more sets (with their set numbers)
     
     Use the :func:`data_subset` to choose a single set and use set numbers.
@@ -800,4 +774,4 @@ def get_eaf(data, percentiles=[]):
 
     eaf_buf = ffi.buffer(eaf_data, sizeof_eaf[0])
     eaf_arr = np.frombuffer(eaf_buf)
-    return np.reshape(eaf_arr, (-1, num_data_columns))
+    return eaf_arr.reshape(-1, num_data_columns)
