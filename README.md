@@ -109,7 +109,16 @@ Once we are able to read the data into Python, the package should offer utilitie
   
 
 ## Developer instructions
-### Quick start
+### Quick start - Use the package
+```sh
+git clone https://github.com/auto-optimization/eafpy
+cd eafpy
+pip install -r requirements.txt
+py -m build
+pip install .
+# You should now be able to import the package
+```
+### Quick start - Develop the package
 
 ```sh
 pip install -r requirements_dev.txt
