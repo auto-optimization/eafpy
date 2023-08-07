@@ -8,6 +8,7 @@ from ._utils import *
 import lzma
 import shutil
 import tempfile
+import random
 
 
 class ReadDatasetsError(Exception):
@@ -766,3 +767,46 @@ def get_diff_eaf(data, num_intervals):
     eaf_buf = ffi.buffer(eaf_diff_data, sizeof_eaf[0])
     eaf_arr = np.frombuffer(eaf_buf)
     return np.reshape(eaf_arr, (-1, num_data_columns))
+
+
+def generate_rand_non_dominated_sets(num_points, num_sets=10):
+    """Create randomised non-dominated sets
+
+    Create a dataset of random non-dominated sets following a gaussian distribution. This is slow \
+    for higher number of points (> 100)
+
+    
+    Parameters
+    ----------
+    num_points : integer
+        Number of points in the resulting dataset
+    num_sets : integer
+        Number of datapoints per set. There should be an equal number of points per set so \
+        num_points % num_sets should = 0
+    Returns
+    -------
+    np.ndarray (n, 3)
+        An (n, 3) numpy array containing non dominated points and set numbers. The last column represents the set numbers
+    """
+    if num_points % num_sets != 0:
+        raise ValueError("Number of points should be divisible by number of sets")
+
+    points = []
+    while len(points) < num_points:
+        x = 10 * random.gauss(0, 1)
+        y = 10 * random.gauss(0, 1)
+        point = (x, y)
+        dominated = False
+        for p in points:
+            if (
+                p[0] <= point[0]
+                and p[1] <= point[1]
+                and (p[0] < point[0] or p[1] < point[1])
+            ):
+                dominated = True
+                break
+        if not dominated:
+            points.append(point)
+    points = np.array(points)
+    set_nums = np.arange(0, num_points) // num_sets + 1
+    return np.column_stack((points, set_nums))

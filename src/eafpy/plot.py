@@ -197,8 +197,10 @@ def add_extremes(x, y, maximise):
     )
 
 
+# Parse different types of colorway arguments into an acceptable format, or choose default
 def parse_colorway(name, length, default, **kwargs):
     if name in kwargs:
+        # Change colorway arguments to follow "rgba()" format
         if isinstance(kwargs[name], str):
             arg_to_parse = colour.parse_colour_to_nparray(kwargs[name], strings=True)
         elif isinstance(kwargs[name], list):
@@ -207,10 +209,13 @@ def parse_colorway(name, length, default, **kwargs):
                 for name in kwargs[name]
             ]
     else:
+        # Set to a default value if argument is not included
         arg_to_parse = default
     if isinstance(arg_to_parse, list):
+        # Ensure colorway is not smaller than required size
         arg_to_parse = arg_to_parse * 2 * length
     elif isinstance(arg_to_parse, str):
+        # Eg if a colorway is a single string - "red", make it into lsit
         arg_to_parse = [arg_to_parse] * 2 * length
     else:
         raise TypeError(f"Type of {name} argument is not recognised")
@@ -237,6 +242,8 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
 
         `"points,lines"` produces a stepped line graph with points *(2 objective only)*
 
+        `"fill"` produces a stepped line graph with filled areas between lines - see :func:`plot_eaf` *(2 objective only)*
+
         `"surface"` produces a smoothed 3d surface *(3 objective only*)
 
         `"surface, points"` produces a smoothed 3d surface with datapoints plotted *(3 objective only*)
@@ -249,13 +256,12 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
 
     layout_kwargs : keyword arguments
         Update features of the graph such as title axis titles, colours etc. These additional parameters are passed to \
-        plotly update_layout, See here for all the layout features that can be accessed: `Layout Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Layout/>`_
-
+        plotly update_layout, See here for all the layout features that can be accessed: `Layout Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Layout.html#plotly.graph_objects.Layout/>`_
 
     Returns
     -------
     Plotly GO figure
-        The function returns a `Plotly GO figure` object `Figure Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure/>`_
+        The function returns a `Plotly GO figure` object: `Plotly Figure reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure.html#id0/>`_
 
         This means that the user can customise any part of the graph after it is created
 
@@ -289,18 +295,23 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
     # convert set num to string without decimal points, plotly interprets ints as discrete colour sequences
     sets_df["Set Number"] = sets_df["Set Number"].astype(int).astype(str)
 
-    # Plotly express does not allow you to change the colour sequence after the graph is created
-    # So I add this workaround to pass the colour sequence in while it is created instead of to update_figure
-
     if dim == 2:
         if type_parsed == "fill":
-            figure = create_fill_plot(datasets, **layout_kwargs)
+            num_percentiles = len(np.unique(datasets[:, -1]))
+            default_fill_colorway = colour.get_default_fill_colorway(num_percentiles)
+
+            colorway = parse_colorway(
+                "colorway", num_sets, default_fill_colorway, **layout_kwargs
+            )
+            line_colours = parse_colorway(
+                "line_colours", num_sets, default_fill_colorway, **layout_kwargs
+            )
+
+            figure = create_fill_plot(datasets, colorway, line_colours)
             layout_kwargs.pop(
                 "line_colours", None
-            )  # If called by plot_datasets remove "linecolours"
-            layout_kwargs.pop(
-                "colorway", None
-            )  # If called by plot_datasets remove "linecolours"
+            )  # Make sure these arguments are not used twice
+            layout_kwargs.pop("colorway", None)
 
         else:
             colorway = parse_colorway(
@@ -363,9 +374,10 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
     return figure
 
 
-def create_fill_plot(dataset, **layout_kwargs):
+# Create a fill plot -> Such as EAF percentile  plot.
+# If a figure is given, update the figure insteaf of creating a new one
+def create_fill_plot(dataset, colorway, line_colours, figure=None, type="points"):
     # Get a line plot and sort by the last column eg. Set number or percentile
-
     lines_plot = plot_datasets(dataset, type="line", filter_dominated=False)
     ordered_lines = sorted(lines_plot.data, key=lambda x: int(x["name"]))
     float_inf = np.finfo(dataset.dtype).max  # Interpreted as infinite value by plotly
@@ -380,58 +392,65 @@ def create_fill_plot(dataset, **layout_kwargs):
     percentile_names = np.unique(dataset[:, -1]).astype(int)
     num_percentiles = len(percentile_names)
 
-    # Set a default colorway
-    default_colorway = colour.discrete_opacity_gradient(
-        "black", num_percentiles, start_opacity=0.6
+    # If figure argument is given, add to an existing figure, else create new figure
+    if figure:
+        fig = figure
+    else:
+        fig = go.Figure()
+    is_fill = "fill" in type
+    choose_mode = (
+        "lines"
+        if ("lines" in type or is_fill)
+        else ("markers" if "points" in type else "lines")
     )
-
-    colorway = parse_colorway(
-        "colorway", num_percentiles, default_colorway, **layout_kwargs
-    )
-    line_colours = parse_colorway(
-        "line_colours", num_percentiles, default=default_colorway, **layout_kwargs
-    )
-
-    # if line_colours:
-    #     # Ensure that if colour is single value eg "red" it still works
-    #     if not isinstance(line_colours, list):
-    #         line_colours = [line_colours]*2* num_percentiles
-    #     else:
-    #         line_colours = line_colours * num_percentiles
-    # else:
-    #     line_colours = colorway  # Set default line colour to match colourway
-    fig = go.Figure()
-
     for i, line in enumerate(ordered_lines):
-        fill_i = (
-            i - 1 if i > 0 else i
-        )  # The first element should be a line, the rest should be fills
+        fill_i = i - 1 if i > 0 else i
+        name_i = fill_i if is_fill else min(i, num_percentiles - 1)
+
         fig.add_trace(
             go.Scatter(
                 x=line["x"],
                 y=line["y"],
-                mode="lines",
-                fill="none" if i == 0 else "tonexty",
+                mode=choose_mode,
+                fill="none" if (i == 0 or not is_fill) else "tonexty",
                 line={"shape": "hv"},
                 fillcolor=colorway[fill_i],
-                name=str(percentile_names[fill_i]),
-                legendgroup=str(percentile_names[fill_i]),
-                showlegend=True if i != 0 else False,
-                marker=dict(color=line_colours[fill_i]),
+                name=str(percentile_names[name_i]),
+                legendgroup=str(percentile_names[name_i]),
+                showlegend=False
+                if (is_fill and i == 0 or not is_fill and i == len(ordered_lines) - 1)
+                else True,
+                marker=dict(
+                    color=line_colours[name_i] if type == "fill" else colorway[name_i]
+                ),
             )
         )
     return fig
 
 
-def plot_eaf(dataset, type="fill", **layout_kwargs):
+def _combine_2d_figures(datasets, names, types):
+    combined_figure = go.Figure()
+    for i, dataset in enumerate(datasets):
+        num_sets = len(np.unique(dataset[:, -1]))
+        colorway = colour.get_default_fill_colorway(num_sets)
+        combined_figure = create_fill_plot(
+            dataset, colorway, colorway, figure=combined_figure, type=types[i]
+        )
+    return combined_figure
+
+
+def plot_eaf(dataset, type="fill", percentiles=[], **layout_kwargs):
     """eaf_plot() conviently plots attainment surfaces in 2d
 
     Parameters
     ----------
     dataset : numpy.ndarray
         The `dataset` argument must be Numpy array produced by the `get_eaf()` function - an array with 3 columns including the objective data and percentiles
+    percentiles : list
+        A list of percentiles to plot. These must exist in the dataset argument 
     type: string
-        The type argument can be "fill", "points", "lines" to define the plot type (See :func:`plot_datasets` for more details)
+        The type argument can be "fill", "points", "lines" to define the plot type (See :func:`plot_datasets` for more details). If multiple EAFs are input \
+        then this can be a list of types
     colorway : list 
         Colorway is a single colour, or list of colours, for the percentile groups. The colours can be CSS colours such as 'black', 8-digit hexedecimal RGBA integers \
         or strings of RGBA values such as `rgba(1,1,0,0.5)`. Default is "black". You can use the :func:`colour.discrete_colour_gradient` to create a gradient between two colours \
@@ -439,23 +458,43 @@ def plot_eaf(dataset, type="fill", **layout_kwargs):
         The same as colorway but defining the boundaries between percentile groups. The default value is to follow colorway. You can set it to `rgb(0,0,0,0)` to make the boundaries invisible
     layout_kwargs : keyword arguments
         Update features of the graph such as title axis titles, colours etc. These additional parameters are passed to \
-        plotly update_layout, See here for all the layout features that can be accessed: `Layout Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Layout/>`_
+        plotly update_layout, See here for all the layout features that can be accessed: `Layout Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Layout.html#plotly.graph_objects.Layout/>`_
 
     Returns
     -------
     Plotly GO figure
-        The function returns a `Plotly GO figure` object `Figure Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure/>`_
+        The function returns a `Plotly GO figure` object `Figure Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure.html#id0/>`_
 
         This means that the user can customise any part of the graph after it is created
 
     """
-    fig = plot_datasets(
-        dataset,
-        type=type,
-        legend_title_text="Percentile",
-        xaxis_title="Objective 0",
-        yaxis_title="Objective 1",
-        title="2d Empirical Attainment Function",
-        **layout_kwargs,
-    )
+    if isinstance(dataset, np.ndarray):
+        if percentiles:
+            # If specific values are given, only select data from these given percentiles
+            dataset = dataset[np.isin(dataset[:, -1], percentiles)]
+
+        fig = plot_datasets(
+            dataset,
+            type=type,
+            legend_title_text="Percentile",
+            xaxis_title="Objective 0",
+            yaxis_title="Objective 1",
+            title="2d Empirical Attainment Function",
+            **layout_kwargs,
+        )
+    elif isinstance(dataset, dict):
+        """Expect dictionaries with this format:
+        {'alg_name' : dataset}
+        """
+        if isinstance(type, str):
+            type = [type] * len(dataset)
+        elif len(type) != len(dataset):
+            raise ValueError("type list must be same length as dataset dictionary")
+        traces_list = []
+        names_list = []
+        for i, (name, set) in enumerate(dataset.items()):
+            names_list.append(name)
+            traces_list.append(set)
+        fig = _combine_2d_figures(traces_list, names_list, type)
+
     return fig

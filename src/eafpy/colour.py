@@ -150,3 +150,7 @@ def discrete_colour_gradient(colour_a, colour_b, num_steps):
         colour_gradient[step, :] = a_rgba + step * (difference / (num_steps - 1))
     colour_gradient_strings = RGBA_arr_to_string(colour_gradient)
     return colour_gradient_strings
+
+
+def get_default_fill_colorway(num_sets):
+    return discrete_opacity_gradient("black", num_sets, start_opacity=0.6)
