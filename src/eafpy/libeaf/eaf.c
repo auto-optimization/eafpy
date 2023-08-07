@@ -1062,7 +1062,6 @@ int *get_cumsizes_(double *data, int ncols, int npoints, int nsets){
     return cumsizes;
 }
 
-
 // Wrapper function for getting array of EAF data, for use in python wrapper. See declaration for more comments
 double *get_eaf_(double *data, int ncols, int npoints, double * percentiles, int npercentiles,
                 bool choose_percentiles, int nsets, int * eaf_npoints, int * sizeof_eaf
@@ -1072,7 +1071,7 @@ double *get_eaf_(double *data, int ncols, int npoints, double * percentiles, int
     int * cumsizes = get_cumsizes_(data, ncols, npoints, nsets); // Remember to free
     int number_levels_selected = 0;
     int *levels;
-    double *calculated_percentiles = malloc(sizeof(double) * nsets);;
+    double *calculated_percentiles = malloc(sizeof(double) * nsets);
     double *percentiles_selected;
 
     if(choose_percentiles == FALSE){

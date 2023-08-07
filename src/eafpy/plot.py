@@ -40,14 +40,13 @@ def _parse_plot_type(line_type, dimension):
     type_arr = line_type.replace(" ", "").lower().split(",")
     if len(type_arr) > 2:
         raise ValueError("Error parsing Type command: Too many commas")
-    allowed_types = ["lines", "points", "surface", "cube"]
+    allowed_types = ["lines", "points", "surface", "cube", "fill"]
     selected_types = [
         t for t in allowed_types if any(t.startswith(x) for x in type_arr)
     ]
 
     if ("surface" in selected_types or "cube" in selected_types) and dimension == 2:
         raise ValueError("Surface and cube types only valid for 3 objective plot")
-
     if "points" in selected_types and "lines" in selected_types:
         return "lines+markers"
     elif "points" in selected_types and "surface" in selected_types:
@@ -60,6 +59,8 @@ def _parse_plot_type(line_type, dimension):
         return "surface"
     elif "cube" in selected_types:
         return "cube"
+    elif "fill" in selected_types:
+        return "fill"
     else:
         raise ValueError(f"Type argument for plot_datasets not recognised: {type}")
 
@@ -196,6 +197,27 @@ def add_extremes(x, y, maximise):
     )
 
 
+def parse_colorway(name, length, default, **kwargs):
+    if name in kwargs:
+        if isinstance(kwargs[name], str):
+            arg_to_parse = colour.parse_colour_to_nparray(kwargs[name], strings=True)
+        elif isinstance(kwargs[name], list):
+            arg_to_parse = [
+                colour.parse_colour_to_nparray(name, strings=True)
+                for name in kwargs[name]
+            ]
+    else:
+        arg_to_parse = default
+    if isinstance(arg_to_parse, list):
+        arg_to_parse = arg_to_parse * 2 * length
+    elif isinstance(arg_to_parse, str):
+        arg_to_parse = [arg_to_parse] * 2 * length
+    else:
+        raise TypeError(f"Type of {name} argument is not recognised")
+
+    return arg_to_parse
+
+
 def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwargs):
     """The `plot_datasets(dataset, type="points")` function plots Pareto front datasets
     It can produce an interactive point graph, stair step graph or 3d surface graph. It accept 2 or 3 objectives
@@ -219,7 +241,7 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
 
         `"surface, points"` produces a smoothed 3d surface with datapoints plotted *(3 objective only*)
 
-        `"cube"` produces a discrete cube surface *(3 objective only*) (Not yet implemented)
+        `"cube"` produces a discrete cube surface *(3 objective only*) 
 
         The function parses the type argument, so accepts abbrieviations such as `p` or `"p,l"`
     filter_dominated : boolean
@@ -255,6 +277,7 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
 
     if filter_dominated:
         datasets = eaf.filter_dominated_sets(datasets)
+    num_sets = len(np.unique(datasets[:, -1]))
 
     type_parsed = _parse_plot_type(type, dim)
 
@@ -268,33 +291,50 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
 
     # Plotly express does not allow you to change the colour sequence after the graph is created
     # So I add this workaround to pass the colour sequence in while it is created instead of to update_figure
-    colorway = px.colors.qualitative.Plotly
-    if "colorway" in layout_kwargs:
-        colorway = layout_kwargs["colorway"] * 10
 
     if dim == 2:
-        # Sort the the points by Objective 1 within each set, while keeping the set order (May be inefficient)
-        for set in sets_df["Set Number"].unique():
-            mask = sets_df["Set Number"] == set
-            sets_df.loc[mask] = sets_df.loc[mask].sort_values(by="Objective 1").values
+        if type_parsed == "fill":
+            figure = create_fill_plot(datasets, **layout_kwargs)
+            layout_kwargs.pop(
+                "line_colours", None
+            )  # If called by plot_datasets remove "linecolours"
+            layout_kwargs.pop(
+                "colorway", None
+            )  # If called by plot_datasets remove "linecolours"
 
-        figure = px.line(
-            sets_df,
-            x="Objective 1",
-            y="Objective 2",
-            color="Set Number",
-            title="Plot of a two objective dataset",
-            color_discrete_sequence=colorway,
-        )
+        else:
+            colorway = parse_colorway(
+                "colorway", num_sets, px.colors.qualitative.Plotly, **layout_kwargs
+            )
+            layout_kwargs["colorway"] = colorway
+            # Sort the the points by Objective 1 within each set, while keeping the set order (May be inefficient)
+            for set in sets_df["Set Number"].unique():
+                mask = sets_df["Set Number"] == set
+                sets_df.loc[mask] = (
+                    sets_df.loc[mask].sort_values(by="Objective 1").values
+                )
 
-        maximise = [False, False]
-        # Extend lines past the figure boundaries.
-        for trace in figure.data:
-            trace.x, trace.y = add_extremes(trace.x, trace.y, maximise)
+            figure = px.line(
+                sets_df,
+                x="Objective 1",
+                y="Objective 2",
+                color="Set Number",
+                title="Plot of a two objective dataset",
+                color_discrete_sequence=colorway,
+            )
 
-        figure.update_traces(line_shape="hv", mode=type_parsed)
+            maximise = [False, False]
+            # Extend lines past the figure boundaries.
+            for trace in figure.data:
+                trace.x, trace.y = add_extremes(trace.x, trace.y, maximise)
+
+            figure.update_traces(line_shape="hv", mode=type_parsed)
 
     elif dim == 3:
+        colorway = parse_colorway(
+            "colorway", num_sets, px.colors.qualitative.Plotly, **layout_kwargs
+        )
+
         if "surface" in type_parsed:
             # Currently creates a surface with points joined for each
             figure = _gen_3d_mesh_plot(sets_df, type_parsed)
@@ -318,17 +358,80 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
             raise NotImplementedError
     else:
         raise NotImplementedError
+
     figure.update_layout(layout_kwargs)
     return figure
 
 
-def plot_eaf(dataset, line_colours=[], **layout_kwargs):
+def create_fill_plot(dataset, **layout_kwargs):
+    # Get a line plot and sort by the last column eg. Set number or percentile
+
+    lines_plot = plot_datasets(dataset, type="line", filter_dominated=False)
+    ordered_lines = sorted(lines_plot.data, key=lambda x: int(x["name"]))
+    float_inf = np.finfo(dataset.dtype).max  # Interpreted as infinite value by plotly
+
+    # Add an line to fill down from infinity to the last percentile
+    infinity_line = dict(
+        x=np.array([0, float_inf]),
+        y=np.array([float_inf, float_inf]),
+        # name=ordered_lines.data[-1].name,
+    )
+    ordered_lines.append(infinity_line)
+    percentile_names = np.unique(dataset[:, -1]).astype(int)
+    num_percentiles = len(percentile_names)
+
+    # Set a default colorway
+    default_colorway = colour.discrete_opacity_gradient(
+        "black", num_percentiles, start_opacity=0.6
+    )
+
+    colorway = parse_colorway(
+        "colorway", num_percentiles, default_colorway, **layout_kwargs
+    )
+    line_colours = parse_colorway(
+        "line_colours", num_percentiles, default=default_colorway, **layout_kwargs
+    )
+
+    # if line_colours:
+    #     # Ensure that if colour is single value eg "red" it still works
+    #     if not isinstance(line_colours, list):
+    #         line_colours = [line_colours]*2* num_percentiles
+    #     else:
+    #         line_colours = line_colours * num_percentiles
+    # else:
+    #     line_colours = colorway  # Set default line colour to match colourway
+    fig = go.Figure()
+
+    for i, line in enumerate(ordered_lines):
+        fill_i = (
+            i - 1 if i > 0 else i
+        )  # The first element should be a line, the rest should be fills
+        fig.add_trace(
+            go.Scatter(
+                x=line["x"],
+                y=line["y"],
+                mode="lines",
+                fill="none" if i == 0 else "tonexty",
+                line={"shape": "hv"},
+                fillcolor=colorway[fill_i],
+                name=str(percentile_names[fill_i]),
+                legendgroup=str(percentile_names[fill_i]),
+                showlegend=True if i != 0 else False,
+                marker=dict(color=line_colours[fill_i]),
+            )
+        )
+    return fig
+
+
+def plot_eaf(dataset, type="fill", **layout_kwargs):
     """eaf_plot() conviently plots attainment surfaces in 2d
 
     Parameters
     ----------
-    dataset : numpy array
+    dataset : numpy.ndarray
         The `dataset` argument must be Numpy array produced by the `get_eaf()` function - an array with 3 columns including the objective data and percentiles
+    type: string
+        The type argument can be "fill", "points", "lines" to define the plot type (See :func:`plot_datasets` for more details)
     colorway : list 
         Colorway is a single colour, or list of colours, for the percentile groups. The colours can be CSS colours such as 'black', 8-digit hexedecimal RGBA integers \
         or strings of RGBA values such as `rgba(1,1,0,0.5)`. Default is "black". You can use the :func:`colour.discrete_colour_gradient` to create a gradient between two colours \
@@ -346,79 +449,13 @@ def plot_eaf(dataset, line_colours=[], **layout_kwargs):
         This means that the user can customise any part of the graph after it is created
 
     """
-    # Get the pareto surfaces
-    lines_plot = plot_datasets(dataset, type="line", filter_dominated=False)
-    # Sort the lines by percentile
-    ordered_lines = sorted(lines_plot.data, key=lambda x: int(x["name"]))
-    dtype = np.finfo(dataset.dtype)
-    float_inf = dtype.max
-
-    # Add an line to fill down from infinity to the last percentile
-    infinity_line = dict(
-        x=np.array([0, float_inf]),
-        y=np.array([float_inf, float_inf]),
-        name=lines_plot.data[-1].name,
-    )
-    ordered_lines.append(infinity_line)
-    percentile_names = np.unique(dataset[:, -1]).astype(int)
-    num_percentiles = len(percentile_names)
-
-    # Set a default colorway
-    colorway = colour.discrete_opacity_gradient(
-        "black", num_percentiles, start_opacity=0.6
-    )
-    if "colorway" in layout_kwargs:
-        colorway = (
-            layout_kwargs["colorway"] * num_percentiles
-        )  # Ensure that if colour is single value eg "red" it still works
-    if line_colours:
-        # Ensure that if colour is single value eg "red" it still works
-        if not isinstance(line_colours, list):
-            line_colours = [line_colours] * num_percentiles
-    else:
-        line_colours = colorway  # Set default line colour to match colourway
-    fig = go.Figure()
-
-    for i, line in enumerate(ordered_lines):
-        # The first point is a line, not a fill
-        if i == 0:
-            fig.add_trace(
-                go.Scatter(
-                    x=line["x"],
-                    y=line["y"],
-                    mode="lines",
-                    line={"shape": "hv"},
-                    showlegend=False,
-                    name=str(percentile_names[i]),
-                    legendgroup=str(percentile_names[i]),
-                    fillcolor=colorway[i],
-                    marker=dict(color=line_colours[i]),
-                )
-            )
-        else:
-            fig.add_trace(
-                go.Scatter(
-                    x=line["x"],
-                    y=line["y"],
-                    mode="lines",
-                    fill="tonexty",
-                    line={"shape": "hv"},
-                    fillcolor=colorway[i - 1],
-                    name=str(
-                        percentile_names[i - 1]
-                    ),  # There is one more scatter than percentiles
-                    legendgroup=str(percentile_names[i - 1]),
-                    showlegend=True,
-                    marker=dict(color=line_colours[i - 1]),
-                )
-            )
-
-    fig.update_layout(
+    fig = plot_datasets(
+        dataset,
+        type=type,
         legend_title_text="Percentile",
         xaxis_title="Objective 0",
         yaxis_title="Objective 1",
         title="2d Empirical Attainment Function",
+        **layout_kwargs,
     )
-
-    fig.update_layout(layout_kwargs)
     return fig

@@ -8,27 +8,31 @@ import re
 def RGBA_arr_to_string(rgba_arr):
     """RGBA array to RGBA string
 
-    Convert a matrix of RGBA values to list of rgba strings
+    Convert a matrix of RGBA values to list of rgba strings. If the input array has only one row, then return single string
 
     Parameters
     ----------
     rgba_arr : numpy array (n, 4)
         Numpy array with n rows and 4 columns, where each row represents a different colour and each column is a float representing one of RGBA
+        If n=1, then return a single string instead of a list
 
     Returns
     -------
     list
         A list of `rgba(w,x,y,z)` strings compatible with a plotly colorscale
     """
-    rgba_strings = []
-    rgba_arr = np.asarray(rgba_arr)
-    for i in range(rgba_arr.shape[0]):
-        rgba = np.round(rgba_arr[i], 4)
-        rgba_strings.append(f"rgba({rgba[0]},{rgba[1]},{rgba[2]},{rgba[3]})")
-    return rgba_strings
+    if len(rgba_arr.shape) != 1:
+        rgba_strings = []
+        rgba_arr = np.asarray(rgba_arr)
+        for i in range(rgba_arr.shape[0]):
+            rgba = np.round(rgba_arr[i], 4)
+            rgba_strings.append(f"rgba({rgba[0]},{rgba[1]},{rgba[2]},{rgba[3]})")
+        return rgba_strings
+    else:
+        return f"rgba({rgba_arr[0]},{rgba_arr[1]},{rgba_arr[2]},{rgba_arr[3]})"
 
 
-def parse_colour_to_nparray(colour):
+def parse_colour_to_nparray(colour, strings=False):
     """parse a single colour argument to a (1,4) numpy array representing its RGBA values
     This can be used to manipulate the values before converting it back to RGBA string using :func:`RGBA_arr_to_string`
 
@@ -39,7 +43,8 @@ def parse_colour_to_nparray(colour):
             Named CSS colour string: "red" or "hotpink"
             RGBA string: "rgba(0.2, 0.5, 0.1, 0.5)"
             8 character hex RGBA integer: 0x1234abcde
-
+    strings : boolean
+        If strings=True then the argument will return a list of 'rgba(w,x,y,z)' strings instead of a numpy array
 
     Returns
     -------
@@ -52,6 +57,11 @@ def parse_colour_to_nparray(colour):
             "rgba\s*\((?=[\d. ]*[\d])\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)",
             colour,
         )
+        rgb_matches = re.findall(
+            "rgb\s*\((?=[\d. ]*[\d])\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)",
+            colour,
+        )
+
         if colors.is_color_like(colour):
             # Allow CSS colour strings such as "blue" or "hotpink"
             rgba_colour = np.array(list(colors.to_rgba(colour)), dtype=np.float64)
@@ -60,6 +70,11 @@ def parse_colour_to_nparray(colour):
             rgba_colour = np.array(
                 [x.strip() for x in list(rgba_matches[0])], dtype=np.float64
             )
+        elif rgb_matches:
+            # Convert RGB match to RGBA by appending alpha=1
+            rgb_matches = list(rgb_matches[0])
+            rgb_matches.append("1")
+            rgba_colour = np.array([x.strip() for x in rgb_matches], dtype=np.float64)
         else:
             raise ValueError(
                 f"String color argument : '{colour}' is not recognised. It must be known CSS4 color or 'rgba(w,x,y,z)' string"
@@ -75,7 +90,10 @@ def parse_colour_to_nparray(colour):
         )
     else:
         raise TypeError(f"Color argument '{colour}' not recognised, may be wrong type")
-    return rgba_colour
+    if strings:
+        return RGBA_arr_to_string(rgba_colour)
+    else:
+        return rgba_colour
 
 
 def discrete_opacity_gradient(colour, num_steps, start_opacity=0.0, end_opacity=1.0):

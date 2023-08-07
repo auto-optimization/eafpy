@@ -744,7 +744,7 @@ def get_eaf(data, percentiles=[]):
     return np.reshape(eaf_arr, (-1, num_data_columns))
 
 
-def get_diff_eaf_(data, num_intervals):
+def get_diff_eaf(data, num_intervals):
     data = np.asfarray(data)
     num_data_columns = data.shape[1]
     data_p, npoints, ncols = np2d_to_double_array(data)
