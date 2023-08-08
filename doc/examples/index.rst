@@ -9,5 +9,6 @@ Examples
 
    plot_datasets_examples.md
    style_plots.md
-   heatmap_prototype.md
    eaf_plot.md
+   heatmap_prototype.md
+   

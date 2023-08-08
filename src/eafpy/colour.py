@@ -5,6 +5,20 @@ import re
 # FIXME add tests for this module
 
 
+class colour_gradient:
+    gradient = []
+    _col_a = ""
+    _col_b = ""
+
+    def __init__(self, colour_a, colour_b):
+        self._col_a = colour_a
+        self._col_b = colour_b
+
+    def create_gradient(self, steps):
+        self.gradient = discrete_colour_gradient(self._col_a, self._col_b, steps)
+        return self.gradient
+
+
 def RGBA_arr_to_string(rgba_arr):
     """RGBA array to RGBA string
 
@@ -145,6 +159,8 @@ def discrete_colour_gradient(colour_a, colour_b, num_steps):
     a_rgba = parse_colour_to_nparray(colour_a)
     b_rgba = parse_colour_to_nparray(colour_b)
     colour_gradient = np.ndarray((num_steps, 4))
+    if num_steps <= 1:
+        return RGBA_arr_to_string(a_rgba)  # If no gradient, return first colour
     for step in range(num_steps):
         difference = b_rgba - a_rgba
         colour_gradient[step, :] = a_rgba + step * (difference / (num_steps - 1))
@@ -152,5 +168,130 @@ def discrete_colour_gradient(colour_a, colour_b, num_steps):
     return colour_gradient_strings
 
 
-def get_default_fill_colorway(num_sets):
-    return discrete_opacity_gradient("black", num_sets, start_opacity=0.6)
+def get_default_fill_colorway(num_steps):
+    return discrete_opacity_gradient("black", num_steps, start_opacity=0.6)
+
+
+def get_2d_colorway_from_colour(num_steps, colour):
+    # Input single colour, return 2d list of colours populated with same colour
+    colour = parse_colour_to_nparray(colour, strings=True)
+    colour_list = []
+    for steps in num_steps:
+        colour_list.append([colour] * steps)
+    return colour_list
+
+
+# Parse different types of colorway arguments into an acceptable format, or choose default
+def parse_single_colorway(length, default, colorway):
+    if colorway:
+        # Change colorway arguments to follow "rgba()" format
+        if isinstance(colorway, str) or isinstance(colorway, int):
+            arg_to_parse = parse_colour_to_nparray(colorway, strings=True)
+        elif isinstance(colorway, list):
+            arg_to_parse = [
+                parse_colour_to_nparray(col, strings=True) for col in colorway
+            ]
+        else:
+            raise TypeError(
+                "Colorway argument needs to be string, int or list of (string or int)"
+            )
+    else:
+        # Set to a default value if argument is not included
+        arg_to_parse = default
+    if isinstance(arg_to_parse, list):
+        # Ensure colorway is not smaller than required size
+        arg_to_parse = arg_to_parse * 2 * length
+    elif isinstance(arg_to_parse, str):
+        # Eg if a colorway is a single string - "red", make it into lsit
+        arg_to_parse = [arg_to_parse] * 2 * length
+    else:
+        raise TypeError(f"Type of colorway argument is not recognised")
+    return arg_to_parse
+
+
+def parse_colorway(length, default, colorway, expect_2d=False):
+    if colorway:
+        if isinstance(colorway, list) and isinstance(colorway[0], list):
+            if not (len(length) == len(colorway)):
+                raise ValueError()
+            # Default is required to be a list in 2d case
+            colorway = [
+                parse_single_colorway(length[i], default[i], colour)
+                for i, colour in enumerate(colorway)
+            ]
+            return colorway
+    # This seems incomplete
+    if expect_2d:
+        if not isinstance(length, list):
+            raise TypeError("length should be list if 2d expected")
+        return [
+            parse_colorway(len, default[i], colorway) for i, len in enumerate(length)
+        ]
+    else:
+        return parse_single_colorway(length, default, colorway)
+
+
+# THese gradients are generated using a language model and are untested so the values may be wrong
+# fmt: off
+def get_example_gradients(num_steps, as_list=False, choice = "arctic_exploration" ):
+    example_gradients = {
+        "arctic_exploration" :{
+            "frosty_blue": colour_gradient(0x93c5fdFF, 0x3693e1FF),
+            "icy_cyan": colour_gradient(0xa8e6cfFF, 0x5eb5a6FF),
+            "glacier_teal": colour_gradient(0x6cc3d5FF, 0x408c9eFF),
+            "snowy_white": colour_gradient(0xf0f8ffFF, 0xc8e1eaFF),
+            "arctic_blue": colour_gradient(0x65c1ecFF, 0x3088abFF),
+            "polar_silver": colour_gradient(0xcfd8dcFF, 0x89979fFF),
+            "frozen_gray": colour_gradient(0xabb9c2FF, 0x6c7d86FF),
+            "cold_ice": colour_gradient(0xb5d9ebFF, 0x7fa8d4FF),
+            "crisp_blue": colour_gradient(0x6daad5FF, 0x3773a0FF),
+            "arctic_sky": colour_gradient(0x9ec9e8FF, 0x4b80a7FF),
+        }, 
+        "scientific" :{
+            "blue_to_gray": colour_gradient(0x1f77b4FF, 0x808080FF),
+            "green_to_gray": colour_gradient(0x2ca02cFF, 0x808080FF),
+            "orange_to_gray": colour_gradient(0xff7f0eFF, 0x808080FF),
+            "purple_to_gray": colour_gradient(0x9467bdFF, 0x808080FF),
+            "teal_to_gray": colour_gradient(0x17becfFF, 0x808080FF),
+            "red_to_gray": colour_gradient(0xd62728FF, 0x808080FF),
+            "pink_to_gray": colour_gradient(0xe377c2FF, 0x808080FF),
+            "brown_to_gray": colour_gradient(0x8c564bFF, 0x808080FF),
+            "gray_to_black": colour_gradient(0x808080FF, 0x000000FF),
+            "blue_to_cyan": colour_gradient(0x1f77b4FF, 0x17becfFF),
+        },
+        "contrast" : {
+            "frosty_blue": colour_gradient(0x93c5fdFF, 0x3693e1FF),
+            "vibrant_green": colour_gradient(0x00ff00FF, 0x00cc00FF),
+            "intense_purple": colour_gradient(0x9b59b6FF, 0x5d328bFF),
+            "brilliant_orange": colour_gradient(0xffa500FF, 0xff8000FF),
+            "deep_cyan": colour_gradient(0x17becfFF, 0x008b8bFF),
+            "hot_pink": colour_gradient(0xff69b4FF, 0xff1493FF),
+            "bright_turquoise": colour_gradient(0x40e0d0FF, 0x00ced1FF),
+            "fiery_red": colour_gradient(0xff0000FF, 0xcc0000FF),
+            "luminous_lime": colour_gradient(0x00ff00FF, 0x32cd32FF),
+            "electric_yellow": colour_gradient(0xffff00FF, 0xffcc00FF),
+        },
+
+        "warm" : {
+            "red_to_yellow": colour_gradient(0xff0000FF, 0xffff00FF),
+            "orange_to_yellow": colour_gradient(0xffa500FF, 0xffff00FF),
+            "orange_to_red": colour_gradient(0xffa500FF, 0xff0000FF),
+            "brown_to_orange": colour_gradient(0x8b4513FF, 0xffa500FF),
+            "red_to_brown": colour_gradient(0xff0000FF, 0x8b4513FF),
+            "yellow_to_brown": colour_gradient(0xffff00FF, 0x8b4513FF),
+            "red_to_pink": colour_gradient(0xff0000FF, 0xff69b4FF),
+            "orange_to_pink": colour_gradient(0xffa500FF, 0xff69b4FF),
+            "yellow_to_red": colour_gradient(0xffff00FF, 0xff0000FF),
+            "yellow_to_orange": colour_gradient(0xffff00FF, 0xffa500FF)}
+        }
+# fmt: on
+    if as_list:
+        if isinstance(num_steps, list):
+            return [gradient.create_gradient(num_steps[i%len(num_steps)]) for i,(name, gradient) in enumerate(example_gradients[choice].items())]
+        elif isinstance(num_steps, int):
+            return [gradient.create_gradient(num_steps) for name, gradient in example_gradients[choice].items()]
+    else:
+        if isinstance(num_steps, list):
+            return {name: gradient.create_gradient(num_steps[i % len(num_steps)]) for i, (name, gradient) in enumerate(example_gradients[choice].items())}
+        elif isinstance(num_steps, int):
+            return {name: gradient.create_gradient(num_steps) for name, gradient in example_gradients[choice].items()}

@@ -769,10 +769,10 @@ def get_diff_eaf(data, num_intervals):
     return np.reshape(eaf_arr, (-1, num_data_columns))
 
 
-def generate_rand_non_dominated_sets(num_points, num_sets=10):
+def rand_non_dominated_sets(num_points, num_sets=10, shape=3, scale=1):
     """Create randomised non-dominated sets
 
-    Create a dataset of random non-dominated sets following a gaussian distribution. This is slow \
+    Create a dataset of random non-dominated sets following a gamma distribution. This is slow \
     for higher number of points (> 100)
 
     
@@ -783,6 +783,8 @@ def generate_rand_non_dominated_sets(num_points, num_sets=10):
     num_sets : integer
         Number of datapoints per set. There should be an equal number of points per set so \
         num_points % num_sets should = 0
+    shape, scale : float
+        Shape and Scale parameters for the gamma distribution
     Returns
     -------
     np.ndarray (n, 3)
@@ -793,8 +795,8 @@ def generate_rand_non_dominated_sets(num_points, num_sets=10):
 
     points = []
     while len(points) < num_points:
-        x = 10 * random.gauss(0, 1)
-        y = 10 * random.gauss(0, 1)
+        x = np.random.gamma(shape, scale)
+        y = np.random.gamma(shape, scale)
         point = (x, y)
         dominated = False
         for p in points:

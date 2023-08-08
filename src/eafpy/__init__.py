@@ -14,6 +14,7 @@ from .eaf import (
     normalise_sets,
     filter_dominated_sets,
     get_eaf,
+    rand_non_dominated_sets,
 )
 from .plot import plot_datasets, plot_eaf
 

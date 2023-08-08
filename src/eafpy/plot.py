@@ -197,32 +197,6 @@ def add_extremes(x, y, maximise):
     )
 
 
-# Parse different types of colorway arguments into an acceptable format, or choose default
-def parse_colorway(name, length, default, **kwargs):
-    if name in kwargs:
-        # Change colorway arguments to follow "rgba()" format
-        if isinstance(kwargs[name], str):
-            arg_to_parse = colour.parse_colour_to_nparray(kwargs[name], strings=True)
-        elif isinstance(kwargs[name], list):
-            arg_to_parse = [
-                colour.parse_colour_to_nparray(name, strings=True)
-                for name in kwargs[name]
-            ]
-    else:
-        # Set to a default value if argument is not included
-        arg_to_parse = default
-    if isinstance(arg_to_parse, list):
-        # Ensure colorway is not smaller than required size
-        arg_to_parse = arg_to_parse * 2 * length
-    elif isinstance(arg_to_parse, str):
-        # Eg if a colorway is a single string - "red", make it into lsit
-        arg_to_parse = [arg_to_parse] * 2 * length
-    else:
-        raise TypeError(f"Type of {name} argument is not recognised")
-
-    return arg_to_parse
-
-
 def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwargs):
     """The `plot_datasets(dataset, type="points")` function plots Pareto front datasets
     It can produce an interactive point graph, stair step graph or 3d surface graph. It accept 2 or 3 objectives
@@ -298,24 +272,28 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
     if dim == 2:
         if type_parsed == "fill":
             num_percentiles = len(np.unique(datasets[:, -1]))
-            default_fill_colorway = colour.get_default_fill_colorway(num_percentiles)
+            def_colours = colour.get_default_fill_colorway(num_percentiles)
 
-            colorway = parse_colorway(
-                "colorway", num_sets, default_fill_colorway, **layout_kwargs
+            colorway = colour.parse_colorway(
+                num_sets, def_colours, dict.get(layout_kwargs, "colorway", None)
             )
-            line_colours = parse_colorway(
-                "line_colours", num_sets, default_fill_colorway, **layout_kwargs
+            fill_border_colours = colour.parse_colorway(
+                num_sets,
+                def_colours,
+                dict.get(layout_kwargs, "fill_border_colours", None),
             )
 
-            figure = create_fill_plot(datasets, colorway, line_colours)
+            figure = create_2d_eaf_plot(datasets, colorway, fill_border_colours)
             layout_kwargs.pop(
-                "line_colours", None
+                "fill_border_colours", None
             )  # Make sure these arguments are not used twice
             layout_kwargs.pop("colorway", None)
 
         else:
-            colorway = parse_colorway(
-                "colorway", num_sets, px.colors.qualitative.Plotly, **layout_kwargs
+            colorway = colour.parse_colorway(
+                num_sets,
+                px.colors.qualitative.Plotly,
+                dict.get(layout_kwargs, "colorway", None),
             )
             layout_kwargs["colorway"] = colorway
             # Sort the the points by Objective 1 within each set, while keeping the set order (May be inefficient)
@@ -342,8 +320,10 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
             figure.update_traces(line_shape="hv", mode=type_parsed)
 
     elif dim == 3:
-        colorway = parse_colorway(
-            "colorway", num_sets, px.colors.qualitative.Plotly, **layout_kwargs
+        colorway = colour.parse_colorway(
+            num_sets,
+            px.colors.qualitative.Plotly,
+            dict.get(layout_kwargs, "colorway", None),
         )
 
         if "surface" in type_parsed:
@@ -375,8 +355,11 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
 
 
 # Create a fill plot -> Such as EAF percentile  plot.
-# If a figure is given, update the figure insteaf of creating a new one
-def create_fill_plot(dataset, colorway, line_colours, figure=None, type="points"):
+# If a figure is given, update the figure instead of creating a new one
+# If no name is given, the last column eg. Percentile is chosen. Names can be a list or a
+def create_2d_eaf_plot(
+    dataset, colorway, fill_border_colours, figure=None, type="fill", names=None
+):
     # Get a line plot and sort by the last column eg. Set number or percentile
     lines_plot = plot_datasets(dataset, type="line", filter_dominated=False)
     ordered_lines = sorted(lines_plot.data, key=lambda x: int(x["name"]))
@@ -386,7 +369,6 @@ def create_fill_plot(dataset, colorway, line_colours, figure=None, type="points"
     infinity_line = dict(
         x=np.array([0, float_inf]),
         y=np.array([float_inf, float_inf]),
-        # name=ordered_lines.data[-1].name,
     )
     ordered_lines.append(infinity_line)
     percentile_names = np.unique(dataset[:, -1]).astype(int)
@@ -397,6 +379,15 @@ def create_fill_plot(dataset, colorway, line_colours, figure=None, type="points"
         fig = figure
     else:
         fig = go.Figure()
+
+    if names:
+        if isinstance(names, str):
+            names = [names] * num_percentiles
+        elif isinstance(names, list) and len(names) < num_percentiles:
+            raise ValueError(
+                f"Names list (len {len(names)}) should equal number of different traces (len {num_percentiles})"
+            )
+
     is_fill = "fill" in type
     choose_mode = (
         "lines"
@@ -404,9 +395,17 @@ def create_fill_plot(dataset, colorway, line_colours, figure=None, type="points"
         else ("markers" if "points" in type else "lines")
     )
     for i, line in enumerate(ordered_lines):
-        fill_i = i - 1 if i > 0 else i
+        # In fill graphs the first two traces should be the same colour
+        # In non-fill graphs the last
+        fill_i = i - 1 if i > 0 else i  #
         name_i = fill_i if is_fill else min(i, num_percentiles - 1)
 
+        select_names = (
+            f"{names[name_i]} - {percentile_names[name_i]}"
+            if names
+            else percentile_names[name_i]
+        )
+        select_legend_group = names[name_i] if names else percentile_names[name_i]
         fig.add_trace(
             go.Scatter(
                 x=line["x"],
@@ -415,47 +414,73 @@ def create_fill_plot(dataset, colorway, line_colours, figure=None, type="points"
                 fill="none" if (i == 0 or not is_fill) else "tonexty",
                 line={"shape": "hv"},
                 fillcolor=colorway[fill_i],
-                name=str(percentile_names[name_i]),
-                legendgroup=str(percentile_names[name_i]),
+                name=str(select_names),
+                legendgroup=str(select_legend_group),
                 showlegend=False
                 if (is_fill and i == 0 or not is_fill and i == len(ordered_lines) - 1)
-                else True,
+                else True,  # Don't show extra traces in case
                 marker=dict(
-                    color=line_colours[name_i] if type == "fill" else colorway[name_i]
+                    color=fill_border_colours[name_i]
+                    if type == "fill"
+                    else colorway[name_i]
                 ),
             )
         )
     return fig
 
 
-def _combine_2d_figures(datasets, names, types):
+def _combine_2d_figures(datasets, names, types, colorways, fill_border_colours):
+    num_sets = [len(np.unique(set[:, -1])) for set in datasets]
+    def_colours = colour.get_example_gradients(
+        num_sets, choice="contrast", as_list=True
+    )
+    colourway = colour.parse_colorway(num_sets, def_colours, colorways, expect_2d=True)
+    def_line = colour.get_2d_colorway_from_colour(num_sets, "rgba(0,0,0,0.7)")
+    fill_border_colours = colour.parse_colorway(
+        num_sets, def_line, fill_border_colours, expect_2d=True
+    )
     combined_figure = go.Figure()
     for i, dataset in enumerate(datasets):
-        num_sets = len(np.unique(dataset[:, -1]))
-        colorway = colour.get_default_fill_colorway(num_sets)
-        combined_figure = create_fill_plot(
-            dataset, colorway, colorway, figure=combined_figure, type=types[i]
+        combined_figure = create_2d_eaf_plot(
+            dataset,
+            colourway[i],
+            fill_border_colours[i],
+            figure=combined_figure,
+            type=types[i],
+            names=names[i],
         )
     return combined_figure
 
 
-def plot_eaf(dataset, type="fill", percentiles=[], **layout_kwargs):
+def plot_eaf(
+    dataset,
+    type="fill",
+    percentiles=[],
+    colorway=[],
+    fill_border_colours=[],
+    trace_names=[],
+    **layout_kwargs,
+):
     """eaf_plot() conviently plots attainment surfaces in 2d
 
     Parameters
     ----------
     dataset : numpy.ndarray
-        The `dataset` argument must be Numpy array produced by the `get_eaf()` function - an array with 3 columns including the objective data and percentiles
-    percentiles : list
-        A list of percentiles to plot. These must exist in the dataset argument 
+        The `dataset` argument must be Numpy array of EAF values (2 objectives and percentile marker), or it can be a dictionary of such values. \
+        The dictionary must have this format: {'alg_name_1' : dataset1, 'alg_name_2' : dataset2}.
+    percentiles : list or 2d list
+        A list of percentiles to plot. These must exist in the dataset argument. If multiple datasets are provided, this can also be a list of lists - \
+        selecting percentile groups for each algorithm
     type: string
         The type argument can be "fill", "points", "lines" to define the plot type (See :func:`plot_datasets` for more details). If multiple EAFs are input \
-        then this can be a list of types
+        then this can be a list of types (equal to the number of different datasets provided)
     colorway : list 
         Colorway is a single colour, or list of colours, for the percentile groups. The colours can be CSS colours such as 'black', 8-digit hexedecimal RGBA integers \
         or strings of RGBA values such as `rgba(1,1,0,0.5)`. Default is "black". You can use the :func:`colour.discrete_colour_gradient` to create a gradient between two colours \
-    line_colours :
+    fill_border_colours : list or 2d list
         The same as colorway but defining the boundaries between percentile groups. The default value is to follow colorway. You can set it to `rgb(0,0,0,0)` to make the boundaries invisible
+    trace names: list of strings
+        Overide the default trace names by providing a list of strings
     layout_kwargs : keyword arguments
         Update features of the graph such as title axis titles, colours etc. These additional parameters are passed to \
         plotly update_layout, See here for all the layout features that can be accessed: `Layout Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Layout.html#plotly.graph_objects.Layout/>`_
@@ -469,10 +494,10 @@ def plot_eaf(dataset, type="fill", percentiles=[], **layout_kwargs):
 
     """
     if isinstance(dataset, np.ndarray):
+        # Plot single EAF data
         if percentiles:
             # If specific values are given, only select data from these given percentiles
             dataset = dataset[np.isin(dataset[:, -1], percentiles)]
-
         fig = plot_datasets(
             dataset,
             type=type,
@@ -480,21 +505,58 @@ def plot_eaf(dataset, type="fill", percentiles=[], **layout_kwargs):
             xaxis_title="Objective 0",
             yaxis_title="Objective 1",
             title="2d Empirical Attainment Function",
-            **layout_kwargs,
+            colorway=colorway,
+            fill_border_colours=fill_border_colours,
         )
     elif isinstance(dataset, dict):
-        """Expect dictionaries with this format:
+        # Plot multiple EAFs onto one plot
+        if percentiles:
+            for i, (name, set) in enumerate(dataset.items()):
+                if isinstance(percentiles[0], list):
+                    # If You want to choose percentiles inside each algorithm, use 2d list
+                    if len(percentiles) != len(dataset):
+                        raise ValueError("percentile len != dataset len")
+                    dataset[name] = set[np.isin(set[:, -1], percentiles[i])]
+                elif isinstance(percentiles[0], (int, float)):
+                    # Use same percentiles for all datasets
+                    dataset[name] = set[np.isin(set[:, -1], percentiles)]
+                else:
+                    raise TypeError("Incorrect type for percentiles")
+
+        """Plot multiple Eaf data. Expect dictionaries with this format:
         {'alg_name' : dataset}
         """
         if isinstance(type, str):
-            type = [type] * len(dataset)
+            type = [type] * len(dataset)  # Set all types to be single type argument
         elif len(type) != len(dataset):
             raise ValueError("type list must be same length as dataset dictionary")
+
         traces_list = []
         names_list = []
         for i, (name, set) in enumerate(dataset.items()):
             names_list.append(name)
             traces_list.append(set)
-        fig = _combine_2d_figures(traces_list, names_list, type)
+        fig = _combine_2d_figures(
+            traces_list, names_list, type, colorway, fill_border_colours
+        )
+
+        fig.update_layout(
+            legend_title_text="Algorithm",
+            xaxis_title="Objective 0",
+            yaxis_title="Objective 1",
+            title="2d Empirical Attainment Function",
+        )
+        fig.update_layout(layout_kwargs)
+    if trace_names:
+        current_names = [
+            trace["name"] for trace in fig.data if trace["showlegend"] == True
+        ]
+
+        if len(trace_names) != len(current_names):
+            raise ValueError(
+                f"Your names list of len {len(trace_names)} is differenet to the number of traces: {len(current_names)}"
+            )
+        for i, tracename in enumerate(current_names):
+            fig.update_traces(name=trace_names[i], selector=({"name": tracename}))
 
     return fig

@@ -34,7 +34,7 @@ subset = eaf.subset(sets, range = [6,10])
 plot = eaf.plot_datasets(subset, type="lines", template="plotly_dark")
 plot.show()
 ```
-
+(colorway-section)=
 ## Changing graph colour scheme
 Use the `colorway` argument to change the color sequence of the traces. This can be:
 * a list of colours in string form `['red', 'green', 'blue']`
@@ -57,7 +57,7 @@ plot = eaf.plot_datasets(subset, type="lines", template="plotly_dark", colorway=
 plot.show()
 ```
 ## Creating colour gradients using the eaf.colour module
-Use the `eaf.colour.discrete_colour_gradient` to create objects for the "colorway" argument. This function lerps between two colours in a discrete number of steps. It accepts the following type of colour arguments:
+Use the `eaf.colour.discrete_colour_gradient` to create objects for the `colorway` argument. This function lerps between two colours in a discrete number of steps. It accepts the following type of colour arguments:
 * Standard CSS4 color name strings - Eg. "blue"
 * Strings of rgba values, 0-1 or 0-255 - Eg. 'rgba(123,54,22, 0.8)' -> this is a brown colour with 80% opacity
 * 8 digit hexedecimal numbers representing RGBA values Eg. #abcdefFF ->   #abcdef is a light blue colour with alpha = (FF) = 100% opacity 
