@@ -182,53 +182,50 @@ def get_2d_colorway_from_colour(num_steps, colour):
 
 
 # Parse different types of colorway arguments into an acceptable format, or choose default
-def parse_single_colorway(length, default, colorway):
-    if colorway:
-        # Change colorway arguments to follow "rgba()" format
-        if isinstance(colorway, str) or isinstance(colorway, int):
-            arg_to_parse = parse_colour_to_nparray(colorway, strings=True)
-        elif isinstance(colorway, list):
-            arg_to_parse = [
-                parse_colour_to_nparray(col, strings=True) for col in colorway
-            ]
-        else:
-            raise TypeError(
-                "Colorway argument needs to be string, int or list of (string or int)"
+def parse_colorway(
+    colorway,
+    default,
+    length,
+):
+    parsed_colorway = colorway if colorway else default
+    if isinstance(parsed_colorway, str) or isinstance(parsed_colorway, int):
+        parsed_colorway = parse_colour_to_nparray(colorway, strings=True)
+        parsed_colorway = [parsed_colorway] * length
+    elif isinstance(parsed_colorway, list):
+        parsed_colorway = [
+            parse_colour_to_nparray(col, strings=True) for col in parsed_colorway
+        ]
+        # If list smaller than expected, repeat it until it reaches length
+        parsed_colorway = (
+            parsed_colorway * (length // len(parsed_colorway))
+            + parsed_colorway[: length % len(parsed_colorway)]
+        )
+    else:
+        raise TypeError(
+            "Colorway argument needs to be string, int or list of (string or int)"
+        )
+    return parsed_colorway
+
+
+# Parse "list of list" colourway arguments
+def parse_2d_colorway(colorway, default, size_list):
+    parsed_2d = colorway if colorway else default
+    if isinstance(parsed_2d, str):
+        # Set all traces to be same single value
+        parsed_2d = [parse_colorway(parsed_2d, default, size) for size in size_list]
+    elif isinstance(parsed_2d, list):
+        # Can individually select each trace, or set to the same for each
+        if len(parsed_2d) != len(size_list):
+            raise ValueError(
+                "2d colorway list should be same length as number of traces"
             )
-    else:
-        # Set to a default value if argument is not included
-        arg_to_parse = default
-    if isinstance(arg_to_parse, list):
-        # Ensure colorway is not smaller than required size
-        arg_to_parse = arg_to_parse * 2 * length
-    elif isinstance(arg_to_parse, str):
-        # Eg if a colorway is a single string - "red", make it into lsit
-        arg_to_parse = [arg_to_parse] * 2 * length
-    else:
-        raise TypeError(f"Type of colorway argument is not recognised")
-    return arg_to_parse
-
-
-def parse_colorway(length, default, colorway, expect_2d=False):
-    if colorway:
-        if isinstance(colorway, list) and isinstance(colorway[0], list):
-            if not (len(length) == len(colorway)):
-                raise ValueError()
-            # Default is required to be a list in 2d case
-            colorway = [
-                parse_single_colorway(length[i], default[i], colour)
-                for i, colour in enumerate(colorway)
-            ]
-            return colorway
-    # This seems incomplete
-    if expect_2d:
-        if not isinstance(length, list):
-            raise TypeError("length should be list if 2d expected")
-        return [
-            parse_colorway(len, default[i], colorway) for i, len in enumerate(length)
+        parsed_2d = [
+            parse_colorway(color_i, default, size_list[i])
+            for i, color_i in enumerate(parsed_2d)
         ]
     else:
-        return parse_single_colorway(length, default, colorway)
+        raise TypeError(f"type {type(parsed_2d)} not recognised for colorway argument")
+    return parsed_2d
 
 
 # THese gradients are generated using a language model and are untested so the values may be wrong
@@ -286,6 +283,7 @@ def get_example_gradients(num_steps, as_list=False, choice = "arctic_exploration
         }
 # fmt: on
     if as_list:
+        # FIXME this is not working properly
         if isinstance(num_steps, list):
             return [gradient.create_gradient(num_steps[i%len(num_steps)]) for i,(name, gradient) in enumerate(example_gradients[choice].items())]
         elif isinstance(num_steps, int):
