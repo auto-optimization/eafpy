@@ -6,7 +6,7 @@ kernelspec:
 # Empirical attainment function plot
 ## Plot a 2d EAF surface
 The empirical attainment function can used to visualise the spread of solutions when looking at a multi-objective optimisation problem. This can be especially usefuly when comparing two different algorithms, or different parameters of the same algorithm.
-When plotting a single algorithm,the `plot_eaf` function a numpy array of EAF points, such as is created by the `get_eaf` function. 
+When plotting a single algorithm,the `plot_eaf` function requires a numpy array of EAF points, such as is created by the `get_eaf` function. 
 
 ```{code-cell}
 import eafpy as eaf
@@ -16,7 +16,7 @@ fig = eaf.plot_eaf(eafs)
 fig.show()
 ```
 ## Plot multiple algorithms on the same graph
-To plot multiple EAF data on the same graph, such as comparing the mean result of two algorithms, the `dataset` argument should be a dictionary. The `type` argument can be any of `lines`, `fill` or `points`. 
+To plot multiple EAF data on the same graph, such as comparing the median  result of two algorithms, the `dataset` argument should be a dictionary. The `type` argument can be any of `lines`, `fill` or `points`. 
 
 ```{code-cell}
 import eafpy as eaf
@@ -60,7 +60,7 @@ fig = eaf.plot_eaf({'NSGA-II' : eaf1, 'MOEA/D ' : eaf2},
                    percentiles=[[0,50,100], [50]],
                    colorway= [colorway1, "darkblue"], 
                    fill_border_colours = "rgba(0,0,0,0)",
-                   trace_names=["Algorithm 1 Best", "Algorithm 1 Mean", "Algorithm 1 Worst", "Algorithm 2 Mean"],
+                   trace_names=["Algorithm 1 Best", "Algorithm 1 Median", "Algorithm 1 Worst", "Algorithm 2 Median"],
                    legend_title_text="Cool legend title"
                    )
 fig.show()
@@ -106,7 +106,7 @@ The `legend_preset` argument of `plot_eaf` can be used to configure the legends 
 You can set the text argument to "" to make the legend title disappear, or set the colour a "invisible" to remove the legend background or border.
 
 For any more complex legend requirements, see the [plotly legend documentation](https://plotly.com/python/legend/)
-### Legend example - Position and backgrund colour
+### Legend example - Position and background colour
 Here the legend is set to be outside the plot, the legend title is removed, and it's background is set to a transparent blue colour
 ```{code-cell}
 import eafpy as eaf
@@ -121,11 +121,10 @@ In this example the dictionary interface is used. The legend position and legend
 ```{code-cell}
 import eafpy as eaf
 dat = eaf.rand_non_dominated_sets(60)
-eafs = eaf.get_eaf(dat, percentiles=[0,25,50,75,100])
-colorway = eaf.colour.discrete_colour_gradient("lightblue", "darkblue",5)
-fig = eaf.plot_eaf(eafs, colorway = colorway,legend_preset=dict(position="centre_bottom_left", border_colour="darkblue" ))
+eafs = eaf.get_eaf(dat, percentiles=[0,33,66,100])
+colorway = eaf.colour.discrete_colour_gradient("lightblue", "darkblue",4)
+fig = eaf.plot_eaf(eafs, type="lines", colorway = colorway, line_width =4, legend_preset=dict(position="top_right", border_colour="darkblue"))
 fig.show()
-
 ```
 
 

@@ -7,7 +7,7 @@ kernelspec:
 # Style plots with plot_datasets
 The plot_datasets function has a parameter `layout_kwargs` - any extra named arguments will be passed into `figure.update_layout()` (a plotly function for changing graphs after they are created), this is how plots should be styled.
 
-For a list of all available layout options see [layout plotly reference](https://plotly.com/python-api-reference/generated/plotly.graph_objects.Layout). Here are some examples:
+For a list of all available layout options see [layout plotly reference](https://plotly.com/python/reference/layout/). Here are some examples:
 
 ## Changing title and axis titles 
 
