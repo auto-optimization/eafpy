@@ -325,9 +325,9 @@ def plot_datasets(datasets, type="points", filter_dominated=True, **layout_kwarg
 
     elif dim == 3:
         colorway = colour.parse_colorway(
-            num_sets,
-            px.colors.qualitative.Plotly,
             dict.get(layout_kwargs, "colorway", None),
+            px.colors.qualitative.Plotly,
+            num_sets,
         )
 
         if "surface" in type_parsed:
@@ -453,9 +453,7 @@ def _combine_2d_figures(
         len(np.unique(set[:, -1])) for set in datasets
     ]  # A list containing the number of traces in each plot
     # FIXME fix this colour thing
-    def_colours = []
-    for set in num_sets:
-        def_colours.append(colour.discrete_colour_gradient("grey", "black", set))
+    def_colours = colour.get_example_gradients(num_sets, choice="scientific")
     def_line = colour.get_2d_colorway_from_colour(num_sets, "rgba(0,0,0,0.7)")
 
     line_dashes = parse_2d_line_dash(line_dashes, num_sets, default="solid")
@@ -480,6 +478,77 @@ def _combine_2d_figures(
     return combined_figure
 
 
+def apply_legend_preset(fig, preset="centre_top_right"):
+    """Apply a preset to the legend, changing it's position, text or colour 
+
+    For more advanced legend behaviour 
+    
+    Parameters
+    ----------
+    fig : plotly GO figure
+        Figure to apply preset to
+    preset : string or list
+        If `preset` is a string, this will change the position of the legend. It must be one of the following: "outside_top_right", "outside_top_left", "top_right", "bottom_right", "top_left", \
+        "bottom_left","centre_top_right", "centre_top_left","centre_bottom_right", "centre_bottom_left".
+
+        Set it to a list [preset_position_name, title_text, background_colour, border_colour] to change position, title text, background colour and border colour
+    """
+    colour = None
+    text = None
+    border_colour = None
+    if isinstance(preset, list):
+        position = preset[0]
+        text = preset[1]
+        colour = preset[2]
+        border_colour = preset[3]
+    elif isinstance(preset, dict):
+        position = preset.get("position")
+        text = preset.get("text")
+        colour = preset.get("colour")
+        border_colour = preset.get("border_colour")
+    elif isinstance(preset, str):
+        position = preset
+    else:
+        raise TypeError("preset argument type not recognised")
+
+    pos_presets = dict(
+        outside_top_right=(1.02, 1),
+        outside_top_left=(-0.2, 1),
+        top_right=(1, 1),
+        bottom_right=(1, 0),
+        top_left=(0, 1),
+        bottom_left=(0, 0),
+        centre_top_right=(0.975, 0.95),
+        centre_top_left=(0.025, 0.95),
+        centre_bottom_right=(0.975, 0.05),
+        centre_bottom_left=(0.025, 0.05),
+    )
+    position = position if position else "centre_top_right"
+    xanchor = "left" if "left" in position or "outside" in position else "right"
+    yanchor = "top" if "top" in position or "outside" in position else "bottom"
+
+    colour = "rgba(0,0,0,0)" if colour == "invisible" else colour
+    border_colour = "rgba(0,0,0,0)" if colour == "invisible" else border_colour
+
+    fig.update_layout(
+        legend=dict(
+            x=pos_presets[position][0],
+            y=pos_presets[position][1],
+            xanchor=xanchor,
+            yanchor=yanchor,
+            bgcolor=colour,
+            bordercolor=border_colour,
+            borderwidth=0 if not border_colour else 2.5,
+        )
+    )
+    if text or text == "":
+        fig.update_layout(
+            legend=dict(
+                title_text=text,
+            )
+        )
+
+
 def plot_eaf(
     dataset,
     type="fill",
@@ -489,6 +558,8 @@ def plot_eaf(
     trace_names=[],
     line_dashes="solid",
     line_width=[],
+    legend_preset="centre_top_right",
+    template="simple_white",
     **layout_kwargs,
 ):
     """eaf_plot() conviently plots attainment surfaces in 2d
@@ -518,6 +589,12 @@ def plot_eaf(
     line_width: integer, list of integer, 2d list of integers
         Select the line width (default = 2) of the traces.   Similar interface to line_dashes, colorway etc -> Enter a single value to set all traces. For single datset, a list sets size for all setz \
         For a dictionary of datsets: a list sets the same value for all traces assosciated with that dataset. A list of list individually sets width for every trace in every dataset   
+    legend_preset: string or  list
+        See "preset" argument for :func:`apply_legend_preset`
+    template: String or Plotly template
+        Choose layout template for the plot - see `Plotly template tutorial <https://plotly.com/python/templates/>`_
+
+        Default is "simple_white"
     layout_kwargs : keyword arguments
         Update features of the graph such as title axis titles, colours etc. These additional parameters are passed to \
         plotly update_layout, See here for all the layout features that can be accessed: `Layout Plotly reference <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Layout.html#plotly.graph_objects.Layout/>`_
@@ -600,7 +677,8 @@ def plot_eaf(
             yaxis_title="Objective 1",
             title="2d Empirical Attainment Function",
         )
-    fig.update_layout(layout_kwargs)
+    apply_legend_preset(fig, legend_preset)
+    fig.update_layout(layout_kwargs, template=template)
     if trace_names:
         # Change trace names
         current_names = [

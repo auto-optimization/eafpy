@@ -16,6 +16,8 @@ class colour_gradient:
 
     def create_gradient(self, steps):
         self.gradient = discrete_colour_gradient(self._col_a, self._col_b, steps)
+        if not isinstance(self.gradient, list):
+            self.gradient = [self.gradient]
         return self.gradient
 
 
@@ -230,7 +232,7 @@ def parse_2d_colorway(colorway, default, size_list):
 
 # THese gradients are generated using a language model and are untested so the values may be wrong
 # fmt: off
-def get_example_gradients(num_steps, as_list=False, choice = "arctic_exploration" ):
+def get_example_gradients(num_steps, choice = "scientific" ):
     example_gradients = {
         "arctic_exploration" :{
             "frosty_blue": colour_gradient(0x93c5fdFF, 0x3693e1FF),
@@ -245,6 +247,7 @@ def get_example_gradients(num_steps, as_list=False, choice = "arctic_exploration
             "arctic_sky": colour_gradient(0x9ec9e8FF, 0x4b80a7FF),
         }, 
         "scientific" :{
+            "gray_to_black": colour_gradient(0x808080FF, 0x000000FF),
             "blue_to_gray": colour_gradient(0x1f77b4FF, 0x808080FF),
             "green_to_gray": colour_gradient(0x2ca02cFF, 0x808080FF),
             "orange_to_gray": colour_gradient(0xff7f0eFF, 0x808080FF),
@@ -253,7 +256,7 @@ def get_example_gradients(num_steps, as_list=False, choice = "arctic_exploration
             "red_to_gray": colour_gradient(0xd62728FF, 0x808080FF),
             "pink_to_gray": colour_gradient(0xe377c2FF, 0x808080FF),
             "brown_to_gray": colour_gradient(0x8c564bFF, 0x808080FF),
-            "gray_to_black": colour_gradient(0x808080FF, 0x000000FF),
+           
             "blue_to_cyan": colour_gradient(0x1f77b4FF, 0x17becfFF),
         },
         "contrast" : {
@@ -282,14 +285,12 @@ def get_example_gradients(num_steps, as_list=False, choice = "arctic_exploration
             "yellow_to_orange": colour_gradient(0xffff00FF, 0xffa500FF)}
         }
 # fmt: on
-    if as_list:
-        # FIXME this is not working properly
-        if isinstance(num_steps, list):
-            return [gradient.create_gradient(num_steps[i%len(num_steps)]) for i,(name, gradient) in enumerate(example_gradients[choice].items())]
-        elif isinstance(num_steps, int):
-            return [gradient.create_gradient(num_steps) for name, gradient in example_gradients[choice].items()]
-    else:
-        if isinstance(num_steps, list):
-            return {name: gradient.create_gradient(num_steps[i % len(num_steps)]) for i, (name, gradient) in enumerate(example_gradients[choice].items())}
-        elif isinstance(num_steps, int):
-            return {name: gradient.create_gradient(num_steps) for name, gradient in example_gradients[choice].items()}
+    if isinstance(num_steps, list):
+        final = []
+        gradient_list = list(example_gradients[choice].items())
+        for i,step in enumerate(num_steps):
+            gradient = gradient_list[i][1].create_gradient(step)
+            final.append(gradient)
+        return final
+    elif isinstance(num_steps, int):
+        return [gradient.create_gradient(num_steps) for name, gradient in example_gradients[choice].items()]

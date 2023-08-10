@@ -54,6 +54,10 @@ html_context = {
     "github_version": "main",
     "doc_path": "doc",
 }
+html_static_path = ["_static"]
+html_css_files = [
+    "css/custom.css",
+]
 
 suppress_warnings = ["mystnb.unknown_mime_type"]
 
@@ -63,10 +67,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-# Sphinx awesome theme currently breaks the jupyter plotly example
 # html_permalinks_icon = "<span>#</span>"
 
-# html_static_path = ["_static"]
 
 # Napoleon settings
 napoleon_google_docstring = False
