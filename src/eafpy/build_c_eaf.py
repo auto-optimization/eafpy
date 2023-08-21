@@ -45,9 +45,9 @@ ffibuilder.set_source(
     sources=[
         "src/eafpy/libeaf/io.c",
         "src/eafpy/libeaf/hv.c",
-        # "src/eafpy/libeaf/avl.c",
+        "src/eafpy/libeaf/avl.c",
         "src/eafpy/libeaf/eaf.c",
-        # "src/eafpy/libeaf/eaf3d.c",
+        "src/eafpy/libeaf/eaf3d.c",
     ],
     include_dirs=[libeaf_path],
 )

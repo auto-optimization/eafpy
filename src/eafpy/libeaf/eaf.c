@@ -1062,13 +1062,24 @@ int *get_cumsizes_(double *data, int ncols, int npoints, int nsets){
     return cumsizes;
 }
 
+static eaf_t **
+compute_eaf_helper (double *data, int npoints, int nobj, int nsets, int * levels, int nlevels)
+{
+    int * cumsizes = get_cumsizes_(data, nobj+1, npoints, nsets);
+    int k;
+
+    eaf_t **eaf = attsurf (data, nobj, cumsizes, nsets, levels, nlevels);
+    free (levels);
+    free(cumsizes);
+    return eaf;
+}
+
+
 // Wrapper function for getting array of EAF data, for use in python wrapper. See declaration for more comments
 double *get_eaf_(double *data, int ncols, int npoints, double * percentiles, int npercentiles,
                 bool choose_percentiles, int nsets, int * eaf_npoints, int * sizeof_eaf
     ){
     int nobj = ncols -1;
-    // Calculate cumulative size of each set
-    int * cumsizes = get_cumsizes_(data, ncols, npoints, nsets); // Remember to free
     int number_levels_selected = 0;
     int *levels;
     double *calculated_percentiles = malloc(sizeof(double) * nsets);
@@ -1092,7 +1103,7 @@ double *get_eaf_(double *data, int ncols, int npoints, double * percentiles, int
         levels[k] = percentile2level(percentiles_selected[k], nsets);
     }
     
-    eaf_t **eaf = attsurf (data, nobj, cumsizes, nsets, levels, number_levels_selected);
+    eaf_t **eaf = compute_eaf_helper(data, npoints, nobj, nsets, levels, number_levels_selected);
 
     int totalpoints = eaf_totalpoints(eaf, number_levels_selected);
     
@@ -1115,8 +1126,6 @@ double *get_eaf_(double *data, int ncols, int npoints, double * percentiles, int
     } 
     
     free(calculated_percentiles);
-    free (levels);
-    free(cumsizes);
     free(eaf);
     *sizeof_eaf = sizeof_eaf_;
     *eaf_npoints = totalpoints;
@@ -1126,10 +1135,8 @@ double *get_eaf_(double *data, int ncols, int npoints, double * percentiles, int
  
 double *compute_eafdiff_(double *data, int ncols, int npoints, int nsets, int num_intervals, int *return_num_points, int * sizeof_return_vector)
 {
-    // FIXME there is a lot of repeated code compared to get_eaf_()
+
     int nobj = ncols -1;
-    // Calculate cumulative size of each set
-    int *cumsizes = get_cumsizes_(data, ncols, npoints, nsets); // Remember to free
     int *levels;
     double *calculated_percentiles = malloc(sizeof(double) * nsets);;
     int number_levels_selected = nsets;
@@ -1139,11 +1146,11 @@ double *compute_eafdiff_(double *data, int ncols, int npoints, int nsets, int nu
     // Convert the selected percentiles to levels
     levels = malloc(sizeof(int) * nsets);
     for (int k = 0; k < number_levels_selected; k++){
-        levels[k] = percentile2level(calculated_percentiles[k], nsets);
-    }
+        levels[k] = percentile2level(calculated_percentiles[k], nsets);    }
+    free(calculated_percentiles);
     
-    eaf_t **eaf = attsurf (data, nobj, cumsizes, nsets, levels, number_levels_selected);
-   
+    eaf_t **eaf = compute_eaf_helper(data, npoints, nobj, nsets, levels, number_levels_selected);
+
     int nsets1 = nsets / 2;
     int nsets2 = nsets - nsets1;
     int totalpoints = eaf_totalpoints (eaf, number_levels_selected);
@@ -1165,6 +1172,7 @@ double *compute_eafdiff_(double *data, int ncols, int npoints, int nsets, int nu
             pos++;
         }
     }
+    // FIXME this loop returns the diff eaf values in Col Major order. It could be changed to Row maj order to make it consistent with get_eaf and standard convention
     pos += (nobj - 1) * totalpoints;
     for (k = 0; k < nsets; k++) {
         int i;
@@ -1183,9 +1191,6 @@ double *compute_eafdiff_(double *data, int ncols, int npoints, int nsets, int nu
         eaf_delete (eaf[k]);
     }
     
-    free(calculated_percentiles);
-    free (levels);
-    free(cumsizes);
     free(eaf);
     *sizeof_return_vector = sizeof_eaf_;
     *return_num_points = totalpoints;

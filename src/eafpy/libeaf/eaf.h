@@ -120,9 +120,9 @@ eaf2d (const objective_t *data,    /* the objective vectors            */
        int nlevels                 /* the number of att levels         */
     );
 
-// eaf_t **
-// eaf3d (objective_t *data, const int *cumsize, int nruns,
-//        const int *attlevel, const int nlevels);
+eaf_t **
+eaf3d (objective_t *data, const int *cumsize, int nruns,
+       const int *attlevel, const int nlevels);
 
 static inline eaf_t **
 attsurf (objective_t *data,    /* the objective vectors            */
@@ -138,8 +138,8 @@ attsurf (objective_t *data,    /* the objective vectors            */
           return eaf2d (data, cumsize, nruns, attlevel, nlevels);
           break;
       case 3:
-        //   return eaf3d (data, cumsize, nruns, attlevel, nlevels);
-          break;
+          return eaf3d (data, cumsize, nruns, attlevel, nlevels);
+          break;    
       default:
           fatal_error("this implementation only supports two or three dimensions.\n");
     }

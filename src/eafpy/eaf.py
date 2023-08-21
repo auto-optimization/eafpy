@@ -758,15 +758,16 @@ def get_diff_eaf(data, num_intervals):
         data_p,
         ncols,
         npoints,
-        num_intervals,
         nsets,
+        num_intervals,
         eaf_npoints,
         sizeof_eaf,
     )
 
     eaf_buf = ffi.buffer(eaf_diff_data, sizeof_eaf[0])
     eaf_arr = np.frombuffer(eaf_buf)
-    return np.reshape(eaf_arr, (-1, num_data_columns))
+    # The C code gets diff EAF in Column Major order so I return it in column major order than transpose to fix into row major order
+    return np.reshape(eaf_arr, (num_data_columns, -1)).T
 
 
 def rand_non_dominated_sets(num_points, num_sets=10, shape=3, scale=1):
