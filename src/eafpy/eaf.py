@@ -533,7 +533,7 @@ def normalise_sets(dataset, range=[0, 1], lower="na", upper="na", maximise=False
     return dataset
 
 
-def subset(dataset, set=-2, range=[]):
+def subset(dataset, set=-2, range=None):
     """Subset is a convenience function for extracting a set or range of sets from a larger dataset. 
     It takes a dataset with multiple set numbers, and returns 1 or more sets (with their set numbers)
     

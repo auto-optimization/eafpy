@@ -31,7 +31,8 @@ extensions = [
     "myst_nb",
     "sphinx.ext.autosectionlabel",
 ]
-html_theme = "pydata_sphinx_theme"
+html_theme = "sphinxawesome_theme"
+# html_theme = "pydata_sphinx_theme"
 html_theme_options = {
     "use_edit_page_button": True,
     "primary_sidebar_end": ["indices.html", "sidebar-ethical-ads.html"],
