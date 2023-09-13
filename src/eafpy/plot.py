@@ -693,3 +693,7 @@ def plot_eaf(
             fig.update_traces(name=trace_names[i], selector=({"name": tracename}))
 
     return fig
+
+
+def diff_eaf_plot(x, y, n_intervals):
+    pass

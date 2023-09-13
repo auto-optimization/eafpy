@@ -10,8 +10,7 @@ import eafpy as eaf
 
 def test_read_datasets_data():
     """
-    Check that the eaf.read_datasets() functions returns the same array as the
-    one that I pre-calculated earlier.
+    Check that the eaf.read_datasets() functions returns the same array as that which is calculated from the R library
     """
     test_names = [
         "input1.dat",
@@ -22,12 +21,12 @@ def test_read_datasets_data():
         "ALG_1_dat.xz",
     ]
     expected_names = [
-        "input1.npy",
-        "spherical-250-10-3d.npy",
-        "uniform-250-10-3d.npy",
-        "wrots_l10w100_dat.npy",
-        "wrots_l100w10_dat.npy",
-        "",  # TODO
+        "dat1_read_datasets.txt",
+        "spherical_read_datasets.txt",
+        "uniform_read_datasets.txt",
+        "wrots_l10_read_datasets.txt",
+        "wrots_l100_read_datasets.txt",
+        "ALG_1_dat_read_datasets.txt" "",
     ]
     expected_shapes = [(100, 3), (2500, 4), (2500, 4), (3262, 3), (888, 3), (23260, 3)]
 
@@ -39,7 +38,9 @@ def test_read_datasets_data():
             testdata.shape == expected_shape
         ), f"Read data array has incorrect shape, should be {expected_shape} but is {testdata.shape}"
         if expected_name != "":
-            check_data = np.load(f"tests/test_data/expected_output/{expected_name}")
+            check_data = np.loadtxt(
+                f"tests/test_data/expected_output/read_datasets/{expected_name}"
+            )
             assert np.allclose(
                 testdata, check_data
             ), f"read_datasets does not produce expected array for file {test}"
@@ -234,24 +235,64 @@ def test_docstrings():
 
 
 def test_get_eaf():
-    datasets = eaf.read_datasets("tests/test_data/input1.dat")
-    eaf_input1 = eaf.get_eaf(datasets)
-    expected_eaf_input1 = np.load("tests/test_data/expected_output/eaf_input1.npy")
-    assert np.allclose(eaf_input1, expected_eaf_input1)
-    # FIXME: Linux and Windows are having very slightly different results
-    # dataset_3d = eaf.read_datasets("tests/test_data/spherical-250-10-3d.txt")
-    # eaf_spherical_3d = eaf.get_eaf(dataset_3d)
-    # expected_spherical_3d = np.load(
-    #     "tests/test_data/expected_output/eaf_3d_spherical.npy"
-    # )
-    # assert np.allclose(eaf_spherical_3d, expected_spherical_3d)
+    # FIXME ALG_1_dat is creating slightly different percentile values than expected in its EAF output
+
+    test_names = [
+        "input1.dat",
+        "spherical-250-10-3d.txt",
+        "uniform-250-10-3d.txt",
+        "wrots_l10w100_dat",
+        "wrots_l100w10_dat",
+        # "ALG_1_dat.xz",
+    ]
+    expected_eaf_names = [
+        "dat1_get_eaf.txt",
+        "spherical_get_eaf.txt",
+        "uniform_get_eaf.txt",
+        "wrots_l10_get_eaf.txt",
+        "wrots_l100_get_eaf.txt",
+        # "ALG_1_dat_get_eaf.txt"
+    ]
+    expected_eaf_pct_names = [f"pct_{name}" for name in expected_eaf_names]
+    expected_eaf_results = [
+        np.loadtxt(f"tests/test_data/expected_output/get_eaf/{name}")
+        for name in expected_eaf_names
+    ]
+    expected_eaf_pct_results = [
+        np.loadtxt(f"tests/test_data/expected_output/get_eaf/{name}")
+        for name in expected_eaf_pct_names
+    ]
+
+    datasets = [eaf.read_datasets(f"tests/test_data/{name}") for name in test_names]
+    eaf_test = [eaf.get_eaf(dataset) for dataset in datasets]
+
+    eaf_pct_test = [
+        eaf.get_eaf(dataset, percentiles=[0, 50, 100]) for dataset in datasets
+    ]
+
+    for test, expected, test_name in zip(eaf_test, expected_eaf_results, test_names):
+        print("\n\n\n\n")
+        print(test_name)
+        assert np.allclose(test, expected), f"{test_name} test for get_eaf failed"
+
+    for test, expected in zip(eaf_pct_test, expected_eaf_pct_results):
+        assert np.allclose(test, expected)
+
+    # datasets = eaf.read_datasets("tests/test_data/input1.dat")
+    # eaf_input1 = eaf.get_eaf(datasets)
+    # expected_eaf_input1 = np.load("tests/test_data/expected_output/eaf_input1.npy")
+    # assert np.allclose(eaf_input1, expected_eaf_input1)
 
 
 def test_get_diff_eaf():
-    datasets = eaf.read_datasets("tests/test_data/input1.dat")
-    diff_eaf = eaf.get_diff_eaf(datasets, num_intervals=5)
-    expected_diff = np.load("tests/test_data/expected_output/diff_eaf_input1.npy")
-    assert np.allclose(diff_eaf, expected_diff)
+    diff1 = np.loadtxt("tests/test_data/100_diff_points_1.txt")
+    diff2 = np.loadtxt("tests/test_data/100_diff_points_2.txt")
+    diff = eaf.get_diff_eaf(diff1, diff2)
+    expected = np.loadtxt(
+        "tests/test_data/expected_output/get_diff_eaf/points12_get_diff_eaf.txt"
+    )
+    assert np.allclose(diff, expected)
+    # FIXME add more tests including intervals
 
 
 # TODO add tests for subset, data_subset, normalise_sets, filer_dominated_sets

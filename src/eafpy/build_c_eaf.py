@@ -23,8 +23,8 @@ ffibuilder.cdef(
     bool * is_nondominated_(const double * data, int nobj, int npoint, const bool * maximise, bool keep_weakly);
     double epsilon_ (const double *data, int nobj, int data_npoints, const double *ref, int ref_npoints, const bool * maximise, bool is_add);
     void normalise_(double *data, int nobj, int npoints, const bool * maximise, const double lower_range, const double upper_range, const double * lbounds, const double * ubounds);
-    double * get_eaf_(double *data, int ncols, int npoints, double * percentiles, int npercentiles, bool choose_percentiles, int nsets, int * eaf_npoints, int * sizeof_eaf);
-    double * compute_eafdiff_(double *data, int ncols, int npoints, int nsets, int num_intervals, int *return_num_points, int * sizeof_return_vector);
+    double * get_eaf_(double *data, int ncols, int npoints, double * percentiles, int npercentiles, bool choose_percentiles, int nsets, int * eaf_npoints, int * sizeof_eaf, bool debug);
+    double * compute_eafdiff_(double *data, int ncols, int npoints, int nsets, int num_intervals, int *return_num_points, int * sizeof_return_vector, bool debug);
     """
 )
 

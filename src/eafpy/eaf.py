@@ -659,7 +659,7 @@ def data_subset(dataset, set):
     return np.ascontiguousarray(subset(dataset, set, range=[])[:, :-1])
 
 
-def get_eaf(data, percentiles=[]):
+def get_eaf(data, percentiles=[], debug=False):
     """Empiracal attainment function (EAF) calculation
     
     Calculate EAF in 2d or 3d from the input dataset
@@ -671,6 +671,8 @@ def get_eaf(data, percentiles=[]):
          of the :func:`read_datasets` function
     percentiles : list
         A list of percentiles to calculate. If empty, all possible percentiles are calculated. Note the maximum 
+    debug : bool
+        (For developers) print out debugging information in the C code
 
     Returns
     -------
@@ -683,28 +685,26 @@ def get_eaf(data, percentiles=[]):
     >>> dataset = eaf.read_datasets("./doc/examples/input1.dat")
     >>> subset = eaf.subset(dataset, range = [7,10])
     >>> eaf.get_eaf(subset)
-    array([[  0.36688707,   7.        ,  25.        ],
-           [  1.06855707,   6.7102429 ,  25.        ],
-           [  1.58498886,   2.87955367,  25.        ],
-           [  8.        ,   1.44806325,  25.        ],
-           [  9.        ,   0.79293574,  25.        ],
-           [  1.50186503,   9.        ,  50.        ],
-           [  1.58498886,   6.7102429 ,  50.        ],
-           [  3.34035397,   2.89377444,  50.        ],
-           [  8.        ,   2.87955367,  50.        ],
-           [  9.        ,   1.44806325,  50.        ],
-           [  2.0113941 ,   9.38738442,  75.        ],
-           [  2.62349839,   7.20701734,  75.        ],
-           [  3.34035397,   6.7102429 ,  75.        ],
-           [  4.93663823,   6.20957074,  75.        ],
-           [  7.        ,   4.5359082 ,  75.        ],
-           [  8.        ,   2.89377444,  75.        ],
+    array([[  0.62230271,   3.56945324,  25.        ],
+           [  0.86723965,   1.58599089,  25.        ],
+           [  6.43135537,   1.00153569,  25.        ],
+           [  9.7398055 ,   0.36688707,  25.        ],
+           [  0.6510164 ,   9.42381213,  50.        ],
+           [  0.79293574,   6.46605414,  50.        ],
+           [  1.30291449,   4.50417698,  50.        ],
+           [  1.58498886,   2.87955367,  50.        ],
+           [  7.04694467,   1.83484358,  50.        ],
+           [  9.7398055 ,   1.00153569,  50.        ],
+           [  0.99008784,   8.84691923,  75.        ],
+           [  1.06855707,   6.7102429 ,  75.        ],
+           [  3.34035397,   2.89377444,  75.        ],
            [  9.30137043,   2.14328532,  75.        ],
-           [  2.62349839,   9.38738442, 100.        ],
-           [  3.34035397,   7.20701734, 100.        ],
-           [  4.93663823,   6.7102429 , 100.        ],
-           [  7.        ,   6.20957074, 100.        ],
-           [  8.        ,   4.5359082 , 100.        ]])
+           [  9.7398055 ,   1.83484358,  75.        ],
+           [  9.94332713,   1.50186503,  75.        ],
+           [  1.06855707,   8.84691923, 100.        ],
+           [  3.34035397,   6.7102429 , 100.        ],
+           [  4.93663823,   6.20957074, 100.        ],
+           [  7.92511295,   3.92669598, 100.        ]])
 
     """
     data = np.asfarray(data)
@@ -727,7 +727,7 @@ def get_eaf(data, percentiles=[]):
     eaf_npoints = ffi.new("int *", 0)
     sizeof_eaf = ffi.new("int *", 0)
     nsets = ffi.cast("int", len(np.unique(data[:, -1])))  # Get nu,m of sets from data
-
+    debug = ffi.cast("bool", debug)
     eaf_data = lib.get_eaf_(
         data_p,
         ncols,
@@ -738,6 +738,7 @@ def get_eaf(data, percentiles=[]):
         nsets,
         eaf_npoints,
         sizeof_eaf,
+        debug,
     )
 
     eaf_buf = ffi.buffer(eaf_data, sizeof_eaf[0])
@@ -745,23 +746,33 @@ def get_eaf(data, percentiles=[]):
     return np.reshape(eaf_arr, (-1, num_data_columns))
 
 
-def get_diff_eaf(data, num_intervals):
-    data = np.asfarray(data)
+def get_diff_eaf(x, y, num_intervals=None, debug=False):
+    x = np.asfarray(x)
+    y = np.asfarray(y)
+
+    if np.min(x[:, -1]) != 1 or np.min(y[:, -1]) != 1:
+        raise ValueError("x and y should contain set numbers starting from 1")
+    y[:, -1] = y[:, -1] + np.max(x[:, -1])  # Make Y sets start from end of X sets
+    data = np.vstack((x, y))  # Combine X and Y datasets to one matrix
+    nsets = len(np.unique(data[:, -1]))
+    if num_intervals is None:
+        intervals = nsets / 2.0
+    else:
+        intervals = min(num_intervals, nsets / 2.0)
+    intervals = int(intervals)
+
+    data = np.ascontiguousarray(
+        np.asfarray(data)
+    )  # C function requires contiguous data
     num_data_columns = data.shape[1]
     data_p, npoints, ncols = np2d_to_double_array(data)
     eaf_npoints = ffi.new("int *", 0)
     sizeof_eaf = ffi.new("int *", 0)
-    nsets = ffi.cast("int", len(np.unique(data[:, -1])))  # Get num of sets from data
-    num_intervals = ffi.cast("int", num_intervals)
-
+    nsets = ffi.cast("int", nsets)  # Get num of sets from data
+    num_intervals = ffi.cast("int", intervals)
+    debug = ffi.cast("bool", debug)
     eaf_diff_data = lib.compute_eafdiff_(
-        data_p,
-        ncols,
-        npoints,
-        nsets,
-        num_intervals,
-        eaf_npoints,
-        sizeof_eaf,
+        data_p, ncols, npoints, nsets, num_intervals, eaf_npoints, sizeof_eaf, debug
     )
 
     eaf_buf = ffi.buffer(eaf_diff_data, sizeof_eaf[0])
@@ -775,7 +786,6 @@ def rand_non_dominated_sets(num_points, num_sets=10, shape=3, scale=1):
 
     Create a dataset of random non-dominated sets following a gamma distribution. This is slow \
     for higher number of points (> 100)
-
     
     Parameters
     ----------

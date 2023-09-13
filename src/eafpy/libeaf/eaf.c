@@ -1047,7 +1047,6 @@ int *get_cumsizes_(double *data, int ncols, int npoints, int nsets){
     int cumlative_pointer = 0;
     int cumlative_sum = 0;
     int data_pointer = 0;
-
     for(int i = 0; i < npoints; i++){
         data_pointer = ncols-1 + i*ncols;
         this_data = data[data_pointer];
@@ -1062,57 +1061,107 @@ int *get_cumsizes_(double *data, int ncols, int npoints, int nsets){
     return cumsizes;
 }
 
+// Take data including data + set number columns and return array of only data
+double * copy_data_no_setnums(double * data, int ncols, int npoints){
+    int data_ncols = ncols-1;
+    double *data_no_sets = malloc(sizeof(double)* data_ncols*npoints);
+    
+    for(int i=0;i<npoints;i++){ 
+        for(int k=0; k<data_ncols; k++){
+            data_no_sets[data_ncols*i+k] = data[ncols*i+k];
+        }
+    }
+    return data_no_sets;
+}
+
 static eaf_t **
-compute_eaf_helper (double *data, int npoints, int nobj, int nsets, int * levels, int nlevels)
+compute_eaf_helper (double *data, int npoints, int nobj, int nsets, int * levels, int nlevels, bool debug)
 {
+    // Calculated cumsizes matrix from Data + set number data
     int * cumsizes = get_cumsizes_(data, nobj+1, npoints, nsets);
+    // Remove set numbers from data. Attsurf function takes data without set numbers
+    double * data_no_setnums = copy_data_no_setnums(data, nobj+1, npoints);
+
     int k;
 
-    eaf_t **eaf = attsurf (data, nobj, cumsizes, nsets, levels, nlevels);
-    free (levels);
+    if(debug == TRUE){
+        printf ("attsurf ({(%f, %f", data[0], data[1]);
+        for (k = 2; k < nobj; k++) {
+            printf (", %f", data_no_setnums[k]);
+        }
+        printf (")...}, %d, { %d", nobj, cumsizes[0]);
+        for (k = 1; k < nsets; k++) {
+            printf (", %d", cumsizes[k]);
+        }
+        printf ("}, %d, { %d", nsets, levels[0]);
+        for (k = 1; k < nlevels; k++) {
+            printf (", %d", levels[k]);
+        }
+        printf ("}, %d)\n", nlevels);
+        printf("Data: \n");
+        for(int i=0;i<cumsizes[nlevels-1]/2+1;i++){
+            printf("%f %f\n", data_no_setnums[2*i], data_no_setnums[2*i+1]);
+        }
+    }
+    eaf_t **eaf = attsurf (data_no_setnums, nobj, cumsizes, nsets, levels, nlevels);
+    if(debug == TRUE){
+        for (k = 0; k < nlevels; k++) {
+                printf ("Points in level: eaf[%d] = %lu\n", k, eaf[k]->size);
+        };
+    }
+    free(data_no_setnums);
+    free(levels);
     free(cumsizes);
     return eaf;
 }
 
-
-// Wrapper function for getting array of EAF data, for use in python wrapper. See declaration for more comments
+// Wrapper function for getting array of EAF data, for use in python wrapper. See header for more comments
 double *get_eaf_(double *data, int ncols, int npoints, double * percentiles, int npercentiles,
-                bool choose_percentiles, int nsets, int * eaf_npoints, int * sizeof_eaf
+                bool choose_percentiles, int nsets, int * eaf_npoints, int * sizeof_eaf, bool debug
     ){
     int nobj = ncols -1;
     int number_levels_selected = 0;
     int *levels;
-    double *calculated_percentiles = malloc(sizeof(double) * nsets);
     double *percentiles_selected;
 
     if(choose_percentiles == FALSE){
         // Calculate the percentiles based on number of sets -> Number of levels = number of sets
-        for(int i = 1;i<nsets+1;i++){
-            calculated_percentiles[i-1] = (i * 100)/nsets;
+        levels = malloc(sizeof(int) * nsets);
+        for (int k = 0; k < nsets; k++){
+            levels[k] = k + 1;
         }
         number_levels_selected = nsets;
-        percentiles_selected = calculated_percentiles; 
+        percentiles_selected = malloc(sizeof(double) * nsets);
+        for(int i = 0;i<nsets;i++){
+            percentiles_selected[i] = ((i+1) * 100)/nsets;
+        }
     }else{
         // Use the percentiles array to select the percentiles
+        levels = malloc(sizeof(int) * npercentiles);
+        for (int k = 0; k < npercentiles; k++){
+            levels[k] = percentile2level(percentiles[k], nsets);
+        }
         number_levels_selected = npercentiles; // 1 percentile maps to one level
         percentiles_selected = percentiles;
     }
-    // Convert the selected percentiles to levels
-    levels = malloc(sizeof(int) * number_levels_selected);
-    for (int k = 0; k < number_levels_selected; k++){
-        levels[k] = percentile2level(percentiles_selected[k], nsets);
-    }
     
-    eaf_t **eaf = compute_eaf_helper(data, npoints, nobj, nsets, levels, number_levels_selected);
+    eaf_t **eaf = compute_eaf_helper(data, npoints, nobj, nsets, levels, number_levels_selected, debug);
 
     int totalpoints = eaf_totalpoints(eaf, number_levels_selected);
+    if(debug==TRUE) printf("Total points %d \n", totalpoints);
     
     int sizeof_eaf_ = sizeof(double) * totalpoints * (nobj + 1);
     
     double * return_matrix = malloc(sizeof_eaf_);
+
     int point_count = 0;
     for (int k = 0; k < number_levels_selected; k++) {
+        
         int this_level_npoints = eaf[k]->size;
+        if(debug==TRUE){
+            int totalsize = this_level_npoints * nobj;
+            printf ("totalpoints eaf[%d] = %d\n", k, totalsize);
+        }
         for (int i = 0; i < this_level_npoints; i++) {
             for (int j = 0; j < nobj; j++) {
                 // Add EAF co-oordinates to flat array in row major order
@@ -1125,7 +1174,6 @@ double *get_eaf_(double *data, int ncols, int npoints, double * percentiles, int
         eaf_delete(eaf[k]);
     } 
     
-    free(calculated_percentiles);
     free(eaf);
     *sizeof_eaf = sizeof_eaf_;
     *eaf_npoints = totalpoints;
@@ -1133,7 +1181,7 @@ double *get_eaf_(double *data, int ncols, int npoints, double * percentiles, int
 }
 
  
-double *compute_eafdiff_(double *data, int ncols, int npoints, int nsets, int num_intervals, int *return_num_points, int * sizeof_return_vector)
+double *compute_eafdiff_(double *data, int ncols, int npoints, int nsets, int num_intervals, int *return_num_points, int * sizeof_return_vector, bool debug)
 {
 
     int nobj = ncols -1;
@@ -1149,11 +1197,13 @@ double *compute_eafdiff_(double *data, int ncols, int npoints, int nsets, int nu
         levels[k] = percentile2level(calculated_percentiles[k], nsets);    }
     free(calculated_percentiles);
     
-    eaf_t **eaf = compute_eaf_helper(data, npoints, nobj, nsets, levels, number_levels_selected);
+    eaf_t **eaf = compute_eaf_helper(data, npoints, nobj, nsets, levels, number_levels_selected, debug);
 
     int nsets1 = nsets / 2;
     int nsets2 = nsets - nsets1;
     int totalpoints = eaf_totalpoints (eaf, number_levels_selected);
+    if(debug==TRUE) printf("Total points %d \n", totalpoints);
+
     int sizeof_eaf_ = sizeof(double) * totalpoints * (nobj + 1);
     double * return_matrix = malloc(sizeof_eaf_);
 
@@ -1172,11 +1222,15 @@ double *compute_eafdiff_(double *data, int ncols, int npoints, int nsets, int nu
             pos++;
         }
     }
-    // FIXME this loop returns the diff eaf values in Col Major order. It could be changed to Row maj order to make it consistent with get_eaf and standard convention
+   
     pos += (nobj - 1) * totalpoints;
     for (k = 0; k < nsets; k++) {
         int i;
         int npoints = eaf[k]->size;
+        if(debug==TRUE){
+            int totalsize = npoints * nobj;
+            printf ("totalpoints eaf[%d] = %d\n", k, totalsize);
+        }
         for (i = 0; i < npoints; i++) {
             int count_left;
             int count_right;

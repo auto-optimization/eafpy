@@ -204,6 +204,8 @@ double * get_eaf_(double *data, /*Flat row major order data matrix input, includ
                 bool choose_percentiles, /*If true,  */
                 int nsets, /*Number of different sets in the data input matrix */
                 int * eaf_npoints, /*Return single integer containing the number of rows in the output matrix  */
-                int * sizeof_eaf /*Size in bytes of the returned matrix of EAF data points */
+                int * sizeof_eaf, /*Size in bytes of the returned matrix of EAF data points */
+                bool debug /*Print out debugging information */
                 );  /*-> Returns pointer to row major order array containing the EAF data points and relevant percentiles  */
-double *compute_eafdiff_(double *data, int ncols, int npoints, int nsets, int num_intervals, int *return_num_points, int * sizeof_return_vector);
+double *compute_eafdiff_(double *data, int ncols, int npoints, int nsets, int num_intervals, int *return_num_points, int * sizeof_return_vector, bool debug);
+int *get_cumsizes_(double *data, int ncols, int npoints, int nsets);
