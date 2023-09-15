@@ -746,19 +746,25 @@ def get_eaf(data, percentiles=[], debug=False):
     return np.reshape(eaf_arr, (-1, num_data_columns))
 
 
-def get_diff_eaf(x, y, num_intervals=None, debug=False):
+def get_diff_eaf(x, y, intervals=None, debug=False):
     x = np.asfarray(x)
     y = np.asfarray(y)
 
     if np.min(x[:, -1]) != 1 or np.min(y[:, -1]) != 1:
         raise ValueError("x and y should contain set numbers starting from 1")
-    y[:, -1] = y[:, -1] + np.max(x[:, -1])  # Make Y sets start from end of X sets
-    data = np.vstack((x, y))  # Combine X and Y datasets to one matrix
+    ycopy = np.copy(
+        y
+    )  # Do hard copy so that the matrix is not corrupted. This could be optimised
+    ycopy[:, -1] = ycopy[:, -1] + np.max(
+        x[:, -1]
+    )  # Make Y sets start from end of X sets
+
+    data = np.vstack((x, ycopy))  # Combine X and Y datasets to one matrix
     nsets = len(np.unique(data[:, -1]))
-    if num_intervals is None:
+    if intervals is None:
         intervals = nsets / 2.0
     else:
-        intervals = min(num_intervals, nsets / 2.0)
+        intervals = min(intervals, nsets / 2.0)
     intervals = int(intervals)
 
     data = np.ascontiguousarray(
@@ -769,10 +775,10 @@ def get_diff_eaf(x, y, num_intervals=None, debug=False):
     eaf_npoints = ffi.new("int *", 0)
     sizeof_eaf = ffi.new("int *", 0)
     nsets = ffi.cast("int", nsets)  # Get num of sets from data
-    num_intervals = ffi.cast("int", intervals)
+    intervals = ffi.cast("int", intervals)
     debug = ffi.cast("bool", debug)
     eaf_diff_data = lib.compute_eafdiff_(
-        data_p, ncols, npoints, nsets, num_intervals, eaf_npoints, sizeof_eaf, debug
+        data_p, ncols, npoints, nsets, intervals, eaf_npoints, sizeof_eaf, debug
     )
 
     eaf_buf = ffi.buffer(eaf_diff_data, sizeof_eaf[0])

@@ -271,27 +271,29 @@ def test_get_eaf():
     ]
 
     for test, expected, test_name in zip(eaf_test, expected_eaf_results, test_names):
-        print("\n\n\n\n")
-        print(test_name)
         assert np.allclose(test, expected), f"{test_name} test for get_eaf failed"
 
     for test, expected in zip(eaf_pct_test, expected_eaf_pct_results):
-        assert np.allclose(test, expected)
-
-    # datasets = eaf.read_datasets("tests/test_data/input1.dat")
-    # eaf_input1 = eaf.get_eaf(datasets)
-    # expected_eaf_input1 = np.load("tests/test_data/expected_output/eaf_input1.npy")
-    # assert np.allclose(eaf_input1, expected_eaf_input1)
+        assert np.allclose(
+            test, expected
+        ), f"{test_name} test for get_eaf with percentiles failed"
 
 
 def test_get_diff_eaf():
     diff1 = np.loadtxt("tests/test_data/100_diff_points_1.txt")
     diff2 = np.loadtxt("tests/test_data/100_diff_points_2.txt")
     diff = eaf.get_diff_eaf(diff1, diff2)
-    expected = np.loadtxt(
+    diff_intervals = eaf.get_diff_eaf(diff1, diff2, intervals=3)
+
+    expected_diff12 = np.loadtxt(
         "tests/test_data/expected_output/get_diff_eaf/points12_get_diff_eaf.txt"
     )
-    assert np.allclose(diff, expected)
+    expected_diff12_intervals3 = np.loadtxt(
+        "tests/test_data/expected_output/get_diff_eaf/int3_points12_get_diff_eaf.txt"
+    )
+    assert np.allclose(diff, expected_diff12)
+    assert np.allclose(diff_intervals, expected_diff12_intervals3)
+
     # FIXME add more tests including intervals
 
 
